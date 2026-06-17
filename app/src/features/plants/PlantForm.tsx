@@ -34,7 +34,7 @@ export function PlantForm({ form, submitLabel }: PlantFormProps) {
         label="植物名称"
         maxLength={PLANT_NAME_MAX_LENGTH}
         onChange={(event) => form.setFieldValue("name", event.target.value)}
-        placeholder="蝴蝶兰"
+        placeholder="给它起个名字"
         required
         value={form.values.name}
       />
@@ -44,7 +44,7 @@ export function PlantForm({ form, submitLabel }: PlantFormProps) {
         label="简介"
         maxLength={PLANT_DESCRIPTION_MAX_LENGTH}
         onChange={(event) => form.setFieldValue("description", event.target.value)}
-        placeholder="喜欢散射光，放在客厅窗边。"
+        placeholder="简单介绍一下这盆植物"
         rows={3}
         value={form.values.description}
       />
@@ -54,7 +54,7 @@ export function PlantForm({ form, submitLabel }: PlantFormProps) {
         label="养护备注"
         maxLength={PLANT_NOTE_MAX_LENGTH}
         onChange={(event) => form.setFieldValue("note", event.target.value)}
-        placeholder="每周日转盆一次，注意窗边叶缘发干。"
+        placeholder="记录养护习惯或注意事项"
         rows={3}
         value={form.values.note}
       />
@@ -65,7 +65,7 @@ export function PlantForm({ form, submitLabel }: PlantFormProps) {
         label="摆放位置"
         maxLength={PLANT_LOCATION_MAX_LENGTH}
         onChange={(event) => form.setFieldValue("location", event.target.value)}
-        placeholder="客厅置物架"
+        placeholder="它放在哪里？"
         value={form.values.location}
       />
       <PlantImageField
