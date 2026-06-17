@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "convex/react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { Bell, ChevronRight, DoorOpen, Home, LogOut, Pencil, Users } from "lucide-react";
@@ -95,6 +95,58 @@ export function FamilySettingsPage() {
 
   // 真实的通知开关状态：基于后端是否有有效订阅
   const notificationsEnabled = hasSubscription === true;
+
+  // 自动同步：系统已授权通知但后端无订阅记录时，自动补录一次订阅
+  const autoSyncTriggered = useRef(false);
+  useEffect(() => {
+    if (autoSyncTriggered.current) return;
+    if (hasSubscription !== false) return; // 还在加载或已有订阅
+    if (
+      !("Notification" in window) ||
+      !("serviceWorker" in navigator) ||
+      !("PushManager" in window)
+    ) {
+      return;
+    }
+    if (Notification.permission !== "granted") return;
+
+    autoSyncTriggered.current = true;
+
+    // 异步补录订阅
+    void (async () => {
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as
+          | string
+          | undefined;
+
+        const existingSub = await registration.pushManager.getSubscription();
+        const subscription =
+          existingSub ??
+          (await registration.pushManager.subscribe(
+            vapidPublicKey
+              ? {
+                  userVisibleOnly: true,
+                  applicationServerKey: toApplicationServerKey(vapidPublicKey),
+                }
+              : { userVisibleOnly: true },
+          ));
+
+        const json = subscription.toJSON();
+        const normalized = normalizeSubscription(json as {
+          endpoint: string;
+          keys?: { auth?: string | null; p256dh?: string | null } | null;
+        });
+
+        await savePushSubscription({
+          ...normalized,
+          deviceLabel: deriveDeviceLabel(),
+        });
+      } catch {
+        // 自动同步失败时静默处理，用户仍可通过手动点击开关重试
+      }
+    })();
+  }, [hasSubscription, savePushSubscription]);
 
   async function handleSignOut() {
     setIsSigningOut(true);
