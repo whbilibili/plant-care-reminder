@@ -1,0 +1,494 @@
+{
+  "project": "plant-care-reminder",
+  "prd": "docs/design-docs/2026-06-17-settings-detail-interaction-plan.md",
+  "created_at": "2026-06-17",
+  "module": "settings-detail-continuity-v0.8",
+  "description": "设置页主设计稿派生交互补全：先按 2026-06-17 settings detail drafts 落地个人资料、成员管理、成员详情、移除确认、邀请详情、通知详情，再回接设置主页面入口。",
+  "design_references": [
+    "docs/design-docs/2026-06-16-system-ui-drafts/07-settings-v2.png",
+    "docs/design-docs/2026-06-17-settings-detail-drafts/README.md",
+    "docs/design-docs/2026-06-17-settings-detail-interaction-plan.md"
+  ],
+  "tasks": [
+    {
+      "task_id": "SETD-001",
+      "description": "设置细节页路由与页面壳：扩展 /settings/profile、/settings/members、/settings/members/:memberId、/settings/invite、/settings/notifications；二级页统一 ScreenNav，不显示底部 TabBar。",
+      "priority": "0-Critical",
+      "status": "pending",
+      "depends_on": [
+        "FLOW-001",
+        "UI-SYS-008"
+      ],
+      "contracts": {
+        "routing": {
+          "paths": [
+            "/settings/profile",
+            "/settings/members",
+            "/settings/members/:memberId",
+            "/settings/invite",
+            "/settings/notifications"
+          ],
+          "notes": "若暂不扩展 URL，可先用设置域内子页面状态实现，但需保留同等返回合同。"
+        },
+        "component_tree": {
+          "entry_components": [
+            "ProfileEditPage",
+            "MemberManagementPage",
+            "MemberDetailPage",
+            "InviteDetailPage",
+            "NotificationSettingsPage"
+          ],
+          "shared": [
+            "ScreenNav",
+            "GroupedSurface",
+            "ConfirmSheet"
+          ]
+        },
+        "design_contract": {
+          "draft_refs": [
+            "01-profile-edit.png",
+            "02-members-manage.png",
+            "03-member-detail.png",
+            "05-invite-share-fallback.png",
+            "06-notification-detail.png"
+          ],
+          "acceptance": "二级设置页继承设置主稿视觉，不出现新的后台式页面。"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test -- AppRouter.smoke.test.tsx",
+        "visual": "375px 截五个设置子页面空壳，确认无底部 TabBar。",
+        "manual": "从设置页进入各入口并可返回设置页。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/app/router.tsx",
+          "app/src/app/AppShell.tsx",
+          "app/src/features/family/*"
+        ],
+        "layer": "frontend-routing"
+      },
+      "acceptance_criteria": [
+        "所有设置子路径可被 normalizePath 识别。",
+        "二级页使用 ScreenNav 返回，不显示底部导航。",
+        "设置主页面仍保留底部导航 active 态。",
+        "刷新设置子路径不会落回 /todo 或空白页。"
+      ]
+    },
+    {
+      "task_id": "SETD-002",
+      "description": "个人资料编辑页：从设置页右上头像进入，支持头像上传、HEIC 转 JPEG、上传中/已保存/错误三态、显示名称编辑、脏数据返回确认。",
+      "priority": "1-High",
+      "status": "pending",
+      "depends_on": [
+        "SETD-001",
+        "SET3-007",
+        "SET3-008",
+        "SET3-009"
+      ],
+      "contracts": {
+        "component_tree": {
+          "entry_component": "ProfileEditPage",
+          "children": [
+            "AvatarUploadField",
+            "InputField",
+            "ConfirmSheet"
+          ]
+        },
+        "data_layer": {
+          "queries": [
+            "users.getCurrentUserContext",
+            "users.getAvatarUrl"
+          ],
+          "mutations": [
+            "users.generateAvatarUploadUrl",
+            "users.updateMyAvatar",
+            "users.updateMyProfile or existing equivalent"
+          ]
+        },
+        "routing": {
+          "entry": "/settings -> /settings/profile",
+          "success_target": "/settings",
+          "cancel_target": "/settings"
+        },
+        "design_contract": {
+          "draft_ref": "docs/design-docs/2026-06-17-settings-detail-drafts/01-profile-edit.png"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test",
+        "visual": "截图覆盖默认、上传中、保存成功、错误、脏数据确认。",
+        "manual": "上传失败保留原头像；保存名称后设置页和成员列表同步。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/family/ProfileEditPage.tsx",
+          "app/src/features/family/AvatarUploadField.tsx",
+          "app/convex/users.ts"
+        ],
+        "layer": "frontend-form"
+      },
+      "acceptance_criteria": [
+        "设置页右上头像可进入个人资料页。",
+        "头像上传成功后设置页头像同步。",
+        "名称非空和长度校验可读。",
+        "有未保存改动时返回需确认。"
+      ]
+    },
+    {
+      "task_id": "SETD-003",
+      "description": "管理成员列表页：从设置页「管理成员」进入，展示家庭名、成员数量、成员头像、角色、当前用户标记、最后活跃，并提供邀请更多家人的入口。",
+      "priority": "1-High",
+      "status": "pending",
+      "depends_on": [
+        "SETD-001",
+        "SET3-009"
+      ],
+      "contracts": {
+        "component_tree": {
+          "entry_component": "MemberManagementPage",
+          "children": [
+            "MemberAvatar",
+            "GroupedSurface",
+            "MemberRow"
+          ]
+        },
+        "data_layer": {
+          "queries": [
+            "families.getFamilySettingsSummary"
+          ]
+        },
+        "routing": {
+          "entry": "/settings -> /settings/members",
+          "member_target": "/settings/members/:memberId",
+          "invite_target": "/settings/invite"
+        },
+        "auth": {
+          "notes": "MVP 建议仅管理员显示管理入口；普通成员继续在设置主页面查看成员摘要。"
+        },
+        "design_contract": {
+          "draft_ref": "docs/design-docs/2026-06-17-settings-detail-drafts/02-members-manage.png"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test",
+        "visual": "截图覆盖管理员成员列表、无头像 fallback、长名称截断。",
+        "manual": "点击成员行进入成员资料；点击邀请更多家人进入邀请页。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/family/MemberManagementPage.tsx",
+          "app/src/features/family/FamilySettingsPage.tsx",
+          "app/src/features/family/MemberAvatar.tsx"
+        ],
+        "layer": "frontend"
+      },
+      "acceptance_criteria": [
+        "管理成员入口不再是静态文案。",
+        "成员列表与设置主页面数据一致。",
+        "当前用户和管理员角色清晰标记。",
+        "普通成员权限表现不误导。"
+      ]
+    },
+    {
+      "task_id": "SETD-004",
+      "description": "成员资料页：点击成员行进入，展示成员头像、名称、角色、加入时间、最后活跃、近期养护摘要；管理员可对非自己成员打开移除确认。",
+      "priority": "1-High",
+      "status": "pending",
+      "depends_on": [
+        "SETD-003"
+      ],
+      "contracts": {
+        "component_tree": {
+          "entry_component": "MemberDetailPage",
+          "children": [
+            "MemberAvatar",
+            "GroupedSurface",
+            "RemoveMemberConfirmSheet"
+          ]
+        },
+        "data_layer": {
+          "queries": [
+            "families.getFamilySettingsSummary",
+            "optional families.getMemberDetail"
+          ]
+        },
+        "routing": {
+          "entry": "/settings/members -> /settings/members/:memberId",
+          "missing_target": "/settings/members"
+        },
+        "design_contract": {
+          "draft_refs": [
+            "docs/design-docs/2026-06-17-settings-detail-drafts/03-member-detail.png",
+            "docs/design-docs/2026-06-17-settings-detail-drafts/04-remove-member-confirm.png"
+          ]
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test",
+        "visual": "截图覆盖成员资料、自己成员、非管理员只读、成员不存在。",
+        "manual": "自己不显示移除按钮；目标成员不存在时可返回成员列表。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/family/MemberDetailPage.tsx",
+          "app/src/features/family/MemberManagementPage.tsx"
+        ],
+        "layer": "frontend"
+      },
+      "acceptance_criteria": [
+        "成员资料页可从成员列表进入。",
+        "角色和加入信息展示稳定。",
+        "近期养护摘要没有数据时有弱占位。",
+        "管理员不能在成员资料页移除自己。"
+      ]
+    },
+    {
+      "task_id": "SETD-005",
+      "description": "移除成员确认与后端接线：ConfirmSheet danger-solid 调用 families.removeMember，成功返回成员列表并刷新，失败在 sheet 内展示友好错误。",
+      "priority": "1-High",
+      "status": "pending",
+      "depends_on": [
+        "SETD-004",
+        "settings-page-v2"
+      ],
+      "contracts": {
+        "component_tree": {
+          "entry_component": "RemoveMemberConfirmSheet",
+          "children": [
+            "ConfirmSheet"
+          ]
+        },
+        "data_layer": {
+          "mutations": [
+            "families.removeMember"
+          ]
+        },
+        "auth": {
+          "notes": "后端仍为 admin-only；前端隐藏非管理员入口但不能替代后端权限。"
+        },
+        "design_contract": {
+          "draft_ref": "docs/design-docs/2026-06-17-settings-detail-drafts/04-remove-member-confirm.png"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test",
+        "visual": "截图覆盖确认、提交中、失败。",
+        "manual": "移除成员后列表减少；该成员无法继续访问家庭数据。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/family/RemoveMemberConfirmSheet.tsx",
+          "app/src/features/family/MemberDetailPage.tsx",
+          "app/convex/families.ts"
+        ],
+        "layer": "frontend-backend"
+      },
+      "acceptance_criteria": [
+        "移除操作必须二次确认。",
+        "确认文案说明后果和养护记录保留。",
+        "成功后返回成员列表并刷新。",
+        "失败时不关闭 sheet 且展示可读错误。"
+      ]
+    },
+    {
+      "task_id": "SETD-006",
+      "description": "邀请家人详情页：从 InviteCard 或管理成员页进入，展示完整链接和邀请码，支持复制链接、复制邀请码、复制成功反馈和复制失败手动兜底。",
+      "priority": "1-High",
+      "status": "pending",
+      "depends_on": [
+        "SETD-001",
+        "SET3-013",
+        "UI-SYS-008"
+      ],
+      "contracts": {
+        "component_tree": {
+          "entry_component": "InviteDetailPage",
+          "children": [
+            "GroupedSurface",
+            "copy feedback surface"
+          ]
+        },
+        "data_layer": {
+          "queries": [
+            "families.getFamilySettingsSummary"
+          ]
+        },
+        "routing": {
+          "paths": [
+            "/settings/invite",
+            "/join/:code"
+          ]
+        },
+        "design_contract": {
+          "draft_ref": "docs/design-docs/2026-06-17-settings-detail-drafts/05-invite-share-fallback.png"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test",
+        "visual": "截图覆盖默认、复制链接成功、复制邀请码成功、复制失败。",
+        "manual": "clipboard 被拒时仍能看到完整链接和邀请码。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/family/InviteDetailPage.tsx",
+          "app/src/components/ui/InviteCard.tsx",
+          "app/src/features/family/FamilySettingsPage.tsx"
+        ],
+        "layer": "frontend"
+      },
+      "acceptance_criteria": [
+        "手动查看邀请码不再停留在设置主页面。",
+        "完整邀请链接可见且可复制。",
+        "邀请码可单独复制。",
+        "复制失败有手动兜底说明。"
+      ]
+    },
+    {
+      "task_id": "SETD-007",
+      "description": "提醒通知详情页：设置页通知行进入详情页，展示提醒开关、当前本地/账号级状态说明、浏览器通知权限检查和添加到主屏幕排障入口。",
+      "priority": "2-Medium",
+      "status": "pending",
+      "depends_on": [
+        "SETD-001",
+        "care-reminders"
+      ],
+      "contracts": {
+        "component_tree": {
+          "entry_component": "NotificationSettingsPage",
+          "children": [
+            "GroupedSurface",
+            "permission status row",
+            "install help row"
+          ]
+        },
+        "state_management": {
+          "states": [
+            "local_only",
+            "permission_unknown",
+            "permission_granted",
+            "permission_denied",
+            "needs_install"
+          ]
+        },
+        "design_contract": {
+          "draft_ref": "docs/design-docs/2026-06-17-settings-detail-drafts/06-notification-detail.png"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test",
+        "visual": "截图覆盖 local-only、permission denied、needs install。",
+        "manual": "未接后端持久化前，界面不得暗示开关已同步账号。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/family/NotificationSettingsPage.tsx",
+          "app/src/features/family/FamilySettingsPage.tsx"
+        ],
+        "layer": "frontend"
+      },
+      "acceptance_criteria": [
+        "通知行进入详情页而不是只切换本地开关。",
+        "本地状态和账号级状态边界说清楚。",
+        "浏览器权限被拒时有排障说明。",
+        "PWA 未安装时有添加到主屏幕提示。"
+      ]
+    },
+    {
+      "task_id": "SETD-008",
+      "description": "设置主页面入口回接：右上头像、管理成员、成员行、手动查看邀请码、通知行全部接入对应二级页；未实现入口不再作为静态可点击样式出现。",
+      "priority": "0-Critical",
+      "status": "pending",
+      "depends_on": [
+        "SETD-002",
+        "SETD-003",
+        "SETD-006",
+        "SETD-007"
+      ],
+      "contracts": {
+        "component_tree": {
+          "entry_component": "FamilySettingsPage",
+          "children": [
+            "MemberAvatar",
+            "InviteCard",
+            "GroupedSurface rows"
+          ]
+        },
+        "routing": {
+          "entry_map": {
+            "header_avatar": "/settings/profile",
+            "manage_members": "/settings/members",
+            "member_row": "/settings/members/:memberId",
+            "manual_invite": "/settings/invite",
+            "notification_row": "/settings/notifications"
+          }
+        },
+        "design_contract": {
+          "source_ref": "docs/design-docs/2026-06-16-system-ui-drafts/07-settings-v2.png"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test -- AppRouter.smoke.test.tsx",
+        "visual": "截图设置主页面，核对入口视觉与主稿一致。",
+        "manual": "逐个点击设置页入口，确认进入正确页面且返回正确。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/family/FamilySettingsPage.tsx",
+          "app/src/components/ui/InviteCard.tsx"
+        ],
+        "layer": "frontend-integration"
+      },
+      "acceptance_criteria": [
+        "主页面所有可点击入口都有真实交互。",
+        "不可用功能不呈现为可点击入口。",
+        "二级页返回后设置页滚动和数据状态合理。",
+        "普通成员和管理员入口差异符合权限。"
+      ]
+    },
+    {
+      "task_id": "SETD-009",
+      "description": "设置细节页视觉与流程回归：按 6 张补充设计稿做 375/390/430px 截图验收，覆盖管理员/普通成员、复制失败、权限失败、长名称和无头像 fallback。",
+      "priority": "1-High",
+      "status": "pending",
+      "depends_on": [
+        "SETD-008"
+      ],
+      "contracts": {
+        "visual_qa": {
+          "viewports": [
+            375,
+            390,
+            430
+          ],
+          "drafts": [
+            "01-profile-edit.png",
+            "02-members-manage.png",
+            "03-member-detail.png",
+            "04-remove-member-confirm.png",
+            "05-invite-share-fallback.png",
+            "06-notification-detail.png"
+          ]
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test",
+        "visual": "保存补充设置页 6 张实现截图并逐项比对。",
+        "manual": "真实浏览器走通设置主页面到所有二级页。"
+      },
+      "metadata": {
+        "files_affected": [
+          "docs/design-docs/2026-06-17-settings-detail-drafts/README.md",
+          "app/src/features/family/*"
+        ],
+        "layer": "qa"
+      },
+      "acceptance_criteria": [
+        "6 张细节稿对应页面均有实现截图。",
+        "二级页无底部导航，一级设置页有底部导航。",
+        "长名称、无头像、复制失败、权限失败都不破坏布局。",
+        "实现与设计稿在层级、间距、按钮和状态上基本一致。"
+      ]
+    }
+  ]
+}

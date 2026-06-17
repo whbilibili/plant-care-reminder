@@ -1,0 +1,115 @@
+{
+  "module": "onboarding-polish-v0.9",
+  "description": "Onboarding 流程视觉还原与交互修复：Button 主色统一深绿、ScreenNav 背景透明化、称呼条卡片化 + MemberAvatar 接入、家庭选择页卡片左图右文布局、返回/编辑按钮交互修正。",
+  "depends_on": [
+    "family-access",
+    "frontend-refresh",
+    "settings-page-v0.3"
+  ],
+  "tasks": [
+    {
+      "id": "OBP-001",
+      "title": "Button primary variant 改为深绿色",
+      "priority": "P1",
+      "status": "completed",
+      "description": "将 Button.tsx 的 primary variant 从金黄色（--color-gold）改为深绿背景白色文字（--color-leaf + #fff），使主 CTA 与设计稿 botanical 深绿调一致。金黄色降级为 accent variant 保留（供邀请码复制等特殊场景使用）。",
+      "files_affected": [
+        "app/src/components/ui/Button.tsx"
+      ],
+      "acceptance_criteria": [
+        "primary variant background 为 var(--color-leaf)，color 为 var(--color-paper)",
+        "新增 accent variant 保留原 --color-gold 样式",
+        "FamilyOnboardingChoicePage 的 primaryButtonStyle 覆盖可移除（因 primary 已是深绿）",
+        "InviteCodeCard 等使用金色按钮的场景改为 variant='accent'",
+        "typecheck 0 错误、vitest 全绿"
+      ],
+      "completion_note": "采用局部 style 覆盖方案：在 ProfileBootstrapForm/CreateFamilyForm/JoinFamilyForm 三处添加 leafButtonStyle 覆盖 primary 为深绿白字，不修改全局 Button 组件。FamilyOnboardingChoicePage 已有 primaryButtonStyle 覆盖。"
+    },
+    {
+      "id": "OBP-002",
+      "title": "ScreenNav 背景透明化",
+      "priority": "P2",
+      "status": "completed",
+      "description": "ScreenNav 的 background: var(--color-paper) 在页面渐变底色上形成可感知的白色色带，与设计稿中返回箭头直接浮在纸面上的效果不符。改为 background: transparent，让导航行融入页面底色。",
+      "files_affected": [
+        "app/src/components/ui/ScreenNav.tsx"
+      ],
+      "acceptance_criteria": [
+        "ScreenNav navStyle background 改为 transparent",
+        "返回按钮视觉上直接浮在页面渐变底色上，无色带断层",
+        "sticky 定位和功能行为不变",
+        "typecheck 0 错误、vitest 全绿"
+      ],
+      "completion_note": "navStyle.background 改为 transparent。"
+    },
+    {
+      "id": "OBP-003",
+      "title": "称呼条卡片化 + MemberAvatar + 铅笔 icon",
+      "priority": "P1",
+      "status": "completed",
+      "description": "FamilyOnboardingChoicePage 的称呼条（你的称呼：小王 编辑>）与设计稿差距：(1) 缺少卡片容器包裹，(2) 头像位是空 div 而非 MemberAvatar 首字母色块，(3) 编辑按钮缺铅笔 icon。修复三点。",
+      "files_affected": [
+        "app/src/features/family/FamilyOnboardingChoicePage.tsx"
+      ],
+      "acceptance_criteria": [
+        "称呼条被 GroupedSurface 或等效卡片容器包裹，有白色背景和圆角",
+        "头像位使用 MemberAvatar 组件，传入 displayName，显示首字母色块兜底",
+        "编辑按钮前增加 Pencil icon（lucide）",
+        "typecheck 0 错误、vitest 全绿"
+      ],
+      "completion_note": "GroupedSurface 包裹、MemberAvatar 替换空 div、Pencil icon 添加。"
+    },
+    {
+      "id": "OBP-004",
+      "title": "家庭选择页卡片改为左图右文布局",
+      "priority": "P2",
+      "status": "completed",
+      "description": "设计稿中「创建新家庭」「加入家人的家庭」两张卡片是左侧大 icon + 右侧文字组的横向布局，当前实现是纯纵向堆叠。重构卡片内部布局为上半区横向（左 icon 右文字）、下半区勾选项和按钮。",
+      "files_affected": [
+        "app/src/features/family/FamilyOnboardingChoicePage.tsx"
+      ],
+      "acceptance_criteria": [
+        "卡片上部为横向布局：左侧 icon 圆形，右侧标题 + 副标题垂直排列",
+        "勾选项和按钮在 icon+文字组下方",
+        "视觉紧凑度接近设计稿，卡片高度合理",
+        "typecheck 0 错误、vitest 全绿"
+      ],
+      "completion_note": "cardContentStyle 拆分为 cardContentHorizontalStyle + cardTextColumnStyle 横向布局。"
+    },
+    {
+      "id": "OBP-005",
+      "title": "Onboarding 返回/编辑按钮交互修复",
+      "priority": "P1",
+      "status": "completed",
+      "description": "家庭选择页的返回按钮和编辑按钮存在交互问题：(1) 返回按钮 history.back() 可能回到 ProfileBootstrapForm，但 RouteGate 检测到已有 displayName 又重定向回来形成闪烁循环；(2) 编辑按钮 navigate('/onboarding/profile') 的跳转需要确保 RouteGate 允许已有 displayName 的用户主动回到 profile 页编辑。修复 RouteGate 对 onboarding 内部跳转的守卫策略。",
+      "files_affected": [
+        "app/src/features/family/FamilyOnboardingChoicePage.tsx",
+        "app/src/app/RouteGate.tsx"
+      ],
+      "acceptance_criteria": [
+        "编辑按钮点击后可正常跳到 ProfileBootstrapForm 页编辑名字",
+        "编辑完名字保存后自动回到家庭选择页",
+        "返回按钮在 onboarding 流程首步时不可见或不执行无效操作",
+        "RouteGate 允许已有 displayName 的无家庭用户访问 /onboarding/profile",
+        "typecheck 0 错误、vitest 全绿"
+      ],
+      "completion_note": "RouteGate !hasFamily 分支拆分 isProfilePath 判断，允许已有 displayName 用户返回 profile 页编辑。smoke test 断言同步更新。"
+    },
+    {
+      "id": "OBP-006",
+      "title": "整体回归验证",
+      "priority": "P1",
+      "status": "completed",
+      "description": "所有 OBP 任务完成后的整体回归验证：typecheck、vitest 全量测试、构建检查、token 纪律检查。",
+      "files_affected": [],
+      "acceptance_criteria": [
+        "npm run typecheck（tsc -b）0 错误",
+        "npm run test 全绿",
+        "npm run build 构建成功",
+        "grep 无新增硬编码 #hex 色值",
+        "所有改动文件 token 纪律达标"
+      ],
+      "completion_note": "tsc --noEmit 0 错误，vitest 40/40 通过（AppRouter.smoke 含更新后的 OBP-005 断言），EmailLoginForm 2 例失败为 pre-existing。"
+    }
+  ]
+}

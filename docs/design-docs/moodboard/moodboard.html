@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Plant Care Reminder Moodboard</title>
+    <style>
+      :root {
+        --ink: #16342f;
+        --muted: #637b71;
+        --line: #d8e4da;
+        --paper: #fbfcf7;
+        --mist: #edf5f1;
+        --leaf: #1f473d;
+        --gold: #f1c567;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: var(--ink);
+        background:
+          linear-gradient(135deg, rgba(235, 246, 238, .95), rgba(246, 249, 239, .88)),
+          radial-gradient(circle at 82% 8%, rgba(181, 212, 220, .55), transparent 34%),
+          #f7faf3;
+      }
+
+      main {
+        width: min(1180px, calc(100vw - 40px));
+        margin: 0 auto;
+        padding: 54px 0 72px;
+      }
+
+      header {
+        display: grid;
+        gap: 14px;
+        margin-bottom: 34px;
+      }
+
+      .eyebrow {
+        color: #467061;
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        max-width: 760px;
+        font-size: clamp(34px, 5vw, 64px);
+        line-height: 1.02;
+        letter-spacing: 0;
+      }
+
+      .summary {
+        max-width: 760px;
+        margin: 0;
+        color: var(--muted);
+        font-size: 18px;
+        line-height: 1.65;
+      }
+
+      .constraints {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .pill {
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, .76);
+        border-radius: 999px;
+        padding: 8px 12px;
+        color: #315c4d;
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      figure {
+        margin: 0;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, .82);
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 18px 42px rgba(36, 73, 63, .12);
+      }
+
+      figure.recommended {
+        border-color: #87af9a;
+        box-shadow: 0 22px 54px rgba(31, 71, 61, .2);
+      }
+
+      img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 3 / 4;
+        object-fit: cover;
+        background: var(--mist);
+      }
+
+      figcaption {
+        min-height: 118px;
+        padding: 16px;
+      }
+
+      h2 {
+        margin: 0 0 8px;
+        font-size: 16px;
+        line-height: 1.25;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .tag {
+        display: inline-block;
+        margin-bottom: 10px;
+        color: var(--leaf);
+        background: #e7f1ea;
+        border-radius: 999px;
+        padding: 5px 9px;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      @media (max-width: 960px) {
+        .grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 560px) {
+        main {
+          width: min(100vw - 24px, 420px);
+          padding-top: 32px;
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="eyebrow">Moodboard · Plant Care Reminder</div>
+        <h1>清爽、安静、任务优先的家庭园艺工具</h1>
+        <p class="summary">这版 moodboard 面向 iPhone PWA，不做营销感首页，也不做复杂园艺社区。每张图都是一个单独视觉参考，用来约束后续移动端设计稿的布局、色彩、节奏和操作密度。</p>
+        <div class="constraints">
+          <span class="pill">家庭植物养护提醒 PWA</span>
+          <span class="pill">iPhone first</span>
+          <span class="pill">叶绿 + 雾蓝 + 暖白</span>
+          <span class="pill">待办优先</span>
+          <span class="pill">手机紧凑</span>
+        </div>
+      </header>
+
+      <section class="grid" aria-label="Moodboard tiles">
+        <figure class="recommended">
+          <img src="./01-task-first-dashboard.svg" alt="Task-first dashboard visual reference">
+          <figcaption>
+            <span class="tag">推荐主方向</span>
+            <h2>Task-first dashboard</h2>
+            <p>首屏直接服务“今天要做什么”，完成按钮清晰，适合家庭成员快速处理。</p>
+          </figcaption>
+        </figure>
+        <figure>
+          <img src="./02-botanical-card-system.svg" alt="Botanical plant card visual reference">
+          <figcaption>
+            <h2>Botanical card system</h2>
+            <p>植物资料卡更像图鉴，但保留工具效率，可用于植物列表和详情页。</p>
+          </figcaption>
+        </figure>
+        <figure>
+          <img src="./03-ios-pwa-notification.svg" alt="iPhone PWA notification visual reference">
+          <figcaption>
+            <h2>iPhone notification path</h2>
+            <p>强调 PWA 通知体验，从提醒进入待办，再完成并计算下次时间。</p>
+          </figcaption>
+        </figure>
+        <figure>
+          <img src="./04-plant-detail-ritual.svg" alt="Plant detail and care ritual visual reference">
+          <figcaption>
+            <h2>Plant detail ritual</h2>
+            <p>详情页把照片、备注和养护任务合在一个稳定操作面板里。</p>
+          </figcaption>
+        </figure>
+        <figure>
+          <img src="./05-quiet-form-flow.svg" alt="Quiet plant form visual reference">
+          <figcaption>
+            <h2>Quiet form flow</h2>
+            <p>新增植物表单要少字段、低噪音，图片上传失败也不打断用户填写。</p>
+          </figcaption>
+        </figure>
+        <figure>
+          <img src="./06-family-sync-settings.svg" alt="Family sync settings visual reference">
+          <figcaption>
+            <h2>Family sync</h2>
+            <p>家庭空间不是后台配置页，而是能让成员理解“共享状态”的地方。</p>
+          </figcaption>
+        </figure>
+        <figure>
+          <img src="./07-care-task-editor.svg" alt="Care task editor visual reference">
+          <figcaption>
+            <h2>Care task editor</h2>
+            <p>养护周期用步进器和分段选择表达，减少手机键盘输入。</p>
+          </figcaption>
+        </figure>
+        <figure>
+          <img src="./08-photo-led-plant-list.svg" alt="Photo-led plant list visual reference">
+          <figcaption>
+            <h2>Photo-led plant list</h2>
+            <p>列表以真实植物照片为主信号，任务状态作为第二层扫描信息。</p>
+          </figcaption>
+        </figure>
+      </section>
+    </main>
+  </body>
+</html>

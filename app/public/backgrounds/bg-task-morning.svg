@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1170" height="2532" viewBox="0 0 1170 2532">
+  <defs>
+    
+    <filter id="paperNoise" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="4" seed="7"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncA type="table" tableValues="0 0.22"/>
+      </feComponentTransfer>
+    </filter>
+    <pattern id="fiberLines" width="180" height="180" patternUnits="userSpaceOnUse" patternTransform="rotate(32)">
+      <line x1="0" y1="18" x2="180" y2="18" stroke="#c8d8c3" stroke-width="2" opacity="0.18"/>
+      <line x1="0" y1="96" x2="180" y2="96" stroke="#e1c979" stroke-width="1" opacity="0.1"/>
+    </pattern>
+    <radialGradient id="bg-task-morning-top" cx="80%" cy="0%" r="70%">
+      <stop offset="0%" stop-color="#dbe8d1" stop-opacity="0.88"/>
+      <stop offset="52%" stop-color="#f4f8f0" stop-opacity="0.62"/>
+      <stop offset="100%" stop-color="#fbfcf7" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="bg-task-morning-warm" cx="14%" cy="92%" r="58%">
+      <stop offset="0%" stop-color="#eadb9a" stop-opacity="0.18"/>
+      <stop offset="55%" stop-color="#f7f5ea" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#fbfcf7" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bg-task-morning-paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fbfcf7"/>
+      <stop offset="100%" stop-color="#f0f7ee"/>
+    </linearGradient>
+    <filter id="bg-task-morning-softBlur">
+      <feGaussianBlur stdDeviation="9"/>
+    </filter>
+  </defs>
+  <rect width="1170" height="2532" fill="url(#bg-task-morning-paper)"/>
+  <rect width="1170" height="2532" fill="url(#bg-task-morning-top)"/>
+  <rect width="1170" height="2532" fill="url(#bg-task-morning-warm)"/>
+  <rect width="1170" height="2532" fill="url(#fiberLines)" opacity="0.42"/>
+  <rect width="1170" height="2532" filter="url(#paperNoise)" opacity="0.34"/>
+  
+      <radialGradient id="task-water" cx="78%" cy="18%" r="48%">
+        <stop offset="0%" stop-color="#b9d8df" stop-opacity="0.34"/>
+        <stop offset="100%" stop-color="#b9d8df" stop-opacity="0"/>
+      </radialGradient>
+      <rect width="1170" height="2532" fill="url(#task-water)"/>
+      <circle cx="920" cy="330" r="92" fill="#9fc9d7" opacity="0.13" filter="url(#bg-task-morning-softBlur)"/>
+      <circle cx="1030" cy="490" r="54" fill="#7fb1c8" opacity="0.1" filter="url(#bg-task-morning-softBlur)"/>
+      
+    <g transform="translate(760 120) rotate(-18) scale(1)" opacity="0.14">
+      <path d="M0 0 C38 -70 118 -98 180 -64 C116 -34 62 8 0 0Z" fill="#8fa67f"/>
+      <path d="M0 0 C62 -16 118 -38 180 -64" fill="none" stroke="#6f8a70" stroke-width="5" stroke-linecap="round"/>
+    </g>
+      
+    <g transform="translate(70 2200) rotate(214) scale(1.15)" opacity="0.11">
+      <path d="M0 0 C38 -70 118 -98 180 -64 C116 -34 62 8 0 0Z" fill="#8fa67f"/>
+      <path d="M0 0 C62 -16 118 -38 180 -64" fill="none" stroke="#6f8a70" stroke-width="5" stroke-linecap="round"/>
+    </g>
+      <path d="M210 300 C340 220 520 236 664 336" fill="none" stroke="#90b9c8" stroke-width="4" opacity="0.1"/>
+    
+</svg>

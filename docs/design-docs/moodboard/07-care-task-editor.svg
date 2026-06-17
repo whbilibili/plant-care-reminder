@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200">
+  <rect width="900" height="1200" fill="#f3f7ee"/>
+  <g transform="translate(188 70)">
+    <rect width="524" height="1060" rx="48" fill="#17342f"/>
+    <rect x="20" y="22" width="484" height="1016" rx="38" fill="#fffdf7"/>
+    <text x="58" y="104" font-family="Arial, sans-serif" font-size="36" font-weight="700" fill="#183c34">设置养护</text>
+    <text x="58" y="140" font-family="Arial, sans-serif" font-size="17" fill="#6e8379">龟背竹</text>
+    <g transform="translate(58 196)">
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#60776c">任务类型</text>
+      <rect y="24" width="368" height="62" rx="18" fill="#e9f2eb"/>
+      <rect x="10" y="34" width="88" height="42" rx="14" fill="#1e473d"/>
+      <text x="36" y="62" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#fffaf2">浇水</text>
+      <text x="122" y="62" font-family="Arial, sans-serif" font-size="16" fill="#5f776d">施肥</text>
+      <text x="204" y="62" font-family="Arial, sans-serif" font-size="16" fill="#5f776d">喷雾</text>
+      <text x="286" y="62" font-family="Arial, sans-serif" font-size="16" fill="#5f776d">修剪</text>
+    </g>
+    <g transform="translate(58 326)">
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#60776c">间隔天数</text>
+      <rect y="28" width="368" height="130" rx="24" fill="#f0f5ef"/>
+      <circle cx="78" cy="92" r="34" fill="#dceadd"/>
+      <text x="69" y="102" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#1e473d">-</text>
+      <text x="184" y="106" text-anchor="middle" font-family="Arial, sans-serif" font-size="54" font-weight="700" fill="#183c34">5</text>
+      <text x="184" y="136" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#6e8379">天一次</text>
+      <circle cx="290" cy="92" r="34" fill="#1e473d"/>
+      <text x="280" y="104" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#fffaf2">+</text>
+    </g>
+    <g transform="translate(58 540)">
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#60776c">下次提醒</text>
+      <rect y="28" width="368" height="86" rx="20" fill="#1e473d"/>
+      <text x="24" y="78" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#fffaf2">6 月 10 日 早上</text>
+    </g>
+    <g transform="translate(58 710)">
+      <rect width="368" height="76" rx="22" fill="#f1c567"/>
+      <text x="184" y="49" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#17342f">保存任务</text>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,571 @@
+{
+  "project": "plant-care-reminder",
+  "prd": "docs/product-specs/2026-06-05-mvp-requirements.md",
+  "created_at": "2026-06-05",
+  "tasks": [
+    {
+      "task_id": "ACCESS-001",
+      "description": "Build the email login UI and session bootstrap flow that routes users into onboarding or the main app shell.",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "users"
+            ],
+            "key_fields": {
+              "users": [
+                "email",
+                "displayName"
+              ]
+            },
+            "indexes": [],
+            "relations": "Auth creates or reuses the current user profile.",
+            "notes": "Reuse Convex Auth identity data."
+          },
+          "queries": {
+            "read": "Read current auth session and user context.",
+            "write": "Create/update the current user profile only as needed."
+          },
+          "migration_strategy": "Uses INFRA-002 schema."
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [
+            {
+              "method": "query",
+              "path": "convex/getCurrentUserContext",
+              "request": {},
+              "response": {
+                "userId": "string|null",
+                "familyId": "string|null"
+              },
+              "auth_required": false
+            }
+          ],
+          "notes": "The UI stays thin; routing decisions use shared context helpers."
+        },
+        "component_tree": {
+          "entry_component": "AuthPage",
+          "children": [
+            "EmailLoginForm",
+            "SessionBootstrapGate"
+          ],
+          "notes": "The bootstrap gate decides where the user lands after auth."
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "useQuery current user context",
+          "local_state": "Form input, loading and error state"
+        },
+        "routing": {
+          "path": "/login",
+          "guard": "public",
+          "middleware": "redirect authenticated users away from login"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "email-based sign-in",
+          "rls_or_rbac": "Profile writes require an authenticated session."
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "cd app && npx convex dev --once --typecheck",
+        "visual": "Check login layout, focus states and loading states on mobile width.",
+        "manual": "Authenticated users leave /login and land on onboarding or /plants based on family status."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/auth/AuthPage.tsx",
+          "app/src/features/auth/EmailLoginForm.tsx"
+        ],
+        "modules": [
+          "family-access"
+        ],
+        "layer": "fullstack",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Users can sign in by email.",
+        "Existing sessions bootstrap correctly on page load.",
+        "Authenticated users are redirected away from the login screen."
+      ]
+    },
+    {
+      "task_id": "ACCESS-002",
+      "description": "Capture and persist the user display name after first login so household activity can show a human-friendly actor.",
+      "priority": "2-Medium",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "users"
+            ],
+            "key_fields": {
+              "users": [
+                "displayName",
+                "email"
+              ]
+            },
+            "indexes": [],
+            "relations": "The current user profile is updated in place.",
+            "notes": "Display name is optional in schema but required by this flow before continuing."
+          },
+          "queries": {
+            "read": "Read the current user profile and detect missing displayName.",
+            "write": "Patch the current user record."
+          },
+          "migration_strategy": "Uses INFRA-002 schema."
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [
+            {
+              "method": "mutation",
+              "path": "convex/updateMyProfile",
+              "request": {
+                "displayName": "string"
+              },
+              "response": {
+                "ok": true
+              },
+              "auth_required": true
+            }
+          ],
+          "notes": "The profile step can be inline in onboarding or shown as a lightweight modal."
+        },
+        "component_tree": {
+          "entry_component": "ProfileBootstrapForm",
+          "children": [
+            "DisplayNameField"
+          ],
+          "notes": "Keep the flow short and skippable only if a display name already exists."
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "useMutation updateMyProfile",
+          "local_state": "Form draft and validation state"
+        },
+        "routing": {
+          "path": "/onboarding/profile",
+          "guard": "authenticated users missing displayName",
+          "middleware": "redirect completed profiles away"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "session",
+          "rls_or_rbac": "Users may only update their own profile."
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "cd app && npx convex dev --once --typecheck",
+        "visual": "Confirm the profile bootstrap step is concise on mobile width.",
+        "manual": "A new user can save a display name and continue into family onboarding."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/auth/ProfileBootstrapForm.tsx",
+          "app/convex/users.ts"
+        ],
+        "modules": [
+          "family-access"
+        ],
+        "layer": "fullstack",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "A missing display name is collected once after login.",
+        "The saved name is available to later activity and membership views.",
+        "Users cannot overwrite another user's profile."
+      ]
+    },
+    {
+      "task_id": "ACCESS-003",
+      "description": "Implement the onboarding chooser that lets an authenticated user without a family pick create-family or join-family.",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "familyMembers"
+            ],
+            "key_fields": {
+              "familyMembers": [
+                "userId",
+                "familyId"
+              ]
+            },
+            "indexes": [
+              "familyMembers.by_userId"
+            ],
+            "relations": "The chooser is shown only when no family membership exists.",
+            "notes": "Read-only task."
+          },
+          "queries": {
+            "read": "Use current user context to detect family status.",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "baas-sdk",
+          "endpoints": [],
+          "notes": "This screen depends on shared current-user context helpers only."
+        },
+        "component_tree": {
+          "entry_component": "FamilyOnboardingChoicePage",
+          "children": [
+            "CreateFamilyCard",
+            "JoinFamilyCard"
+          ],
+          "notes": "Explain the two paths in plain household language."
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "useQuery current user context",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "/onboarding",
+          "guard": "authenticated users without a family",
+          "middleware": "redirect joined users to /plants"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "session",
+          "rls_or_rbac": "N/A"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "N/A",
+        "visual": "Confirm the two onboarding actions are immediately understandable on iPhone width.",
+        "manual": "Users without a family can reach create or join in one tap."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/family/FamilyOnboardingChoicePage.tsx"
+        ],
+        "modules": [
+          "family-access"
+        ],
+        "layer": "frontend",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "The onboarding chooser appears only for users without a family.",
+        "Users can reach create-family or join-family in one tap.",
+        "Joined users no longer see this screen."
+      ]
+    },
+    {
+      "task_id": "ACCESS-004",
+      "description": "Implement family creation with invite-code generation and automatic admin membership for the creator.",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "families",
+              "familyMembers"
+            ],
+            "key_fields": {
+              "families": [
+                "name",
+                "inviteCode",
+                "createdBy"
+              ],
+              "familyMembers": [
+                "familyId",
+                "userId",
+                "role"
+              ]
+            },
+            "indexes": [
+              "familyMembers.by_userId"
+            ],
+            "relations": "Creating a family must also create the creator's admin membership in one mutation.",
+            "notes": "The invite code is surfaced immediately after creation."
+          },
+          "queries": {
+            "read": "Check whether the current user already belongs to a family.",
+            "write": "Insert family and first membership atomically."
+          },
+          "migration_strategy": "Uses INFRA-002 schema."
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [
+            {
+              "method": "mutation",
+              "path": "convex/createFamily",
+              "request": {
+                "name": "string"
+              },
+              "response": {
+                "familyId": "string",
+                "inviteCode": "string"
+              },
+              "auth_required": true
+            }
+          ],
+          "notes": "Reject duplicate family membership in the same mutation."
+        },
+        "component_tree": {
+          "entry_component": "CreateFamilyPage",
+          "children": [
+            "CreateFamilyForm",
+            "InviteCodeCard"
+          ],
+          "notes": "Show the invite code immediately on success."
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "useMutation createFamily",
+          "local_state": "Form draft and success state"
+        },
+        "routing": {
+          "path": "/onboarding/create-family",
+          "guard": "authenticated users without a family",
+          "middleware": "redirect joined users away"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "session",
+          "rls_or_rbac": "Only the current user can create their own family record and membership."
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "cd app && npx convex dev --once --typecheck",
+        "visual": "Check the invite-code card on mobile width.",
+        "manual": "Creating a family produces one family record and one admin membership for the current user."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/family/CreateFamilyPage.tsx",
+          "app/src/features/family/CreateFamilyForm.tsx",
+          "app/convex/families.ts"
+        ],
+        "modules": [
+          "family-access"
+        ],
+        "layer": "fullstack",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "A logged-in user can create a family.",
+        "The creator becomes the initial family admin.",
+        "The generated invite code is displayed immediately."
+      ]
+    },
+    {
+      "task_id": "ACCESS-005",
+      "description": "Implement joining an existing family by invite code while enforcing the MVP rule that a user can belong to only one family.",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "families",
+              "familyMembers"
+            ],
+            "key_fields": {
+              "families": [
+                "inviteCode"
+              ],
+              "familyMembers": [
+                "userId",
+                "familyId"
+              ]
+            },
+            "indexes": [
+              "familyMembers.by_userId",
+              "familyMembers.by_familyId"
+            ],
+            "relations": "A valid invite code maps the current user into one family membership.",
+            "notes": "Reject invalid code and already-joined scenarios explicitly."
+          },
+          "queries": {
+            "read": "Find family by invite code and existing membership by userId.",
+            "write": "Insert a new member record only when the user has no family."
+          },
+          "migration_strategy": "Uses INFRA-002 schema."
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [
+            {
+              "method": "mutation",
+              "path": "convex/joinFamilyByInviteCode",
+              "request": {
+                "inviteCode": "string"
+              },
+              "response": {
+                "familyId": "string"
+              },
+              "auth_required": true
+            }
+          ],
+          "notes": "Return explicit failure states for invalid codes and duplicate membership."
+        },
+        "component_tree": {
+          "entry_component": "JoinFamilyPage",
+          "children": [
+            "JoinFamilyForm"
+          ],
+          "notes": "Keep the flow fast: one field, one action, clear error feedback."
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "useMutation joinFamilyByInviteCode",
+          "local_state": "Invite code input and error state"
+        },
+        "routing": {
+          "path": "/onboarding/join-family",
+          "guard": "authenticated users without a family",
+          "middleware": "redirect joined users away"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "session",
+          "rls_or_rbac": "Membership write is scoped to the current user only."
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "cd app && npx convex dev --once --typecheck",
+        "visual": "Check error and success states on iPhone width.",
+        "manual": "A valid code joins the family and routes the user to /plants; invalid codes do not create memberships."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/family/JoinFamilyPage.tsx",
+          "app/src/features/family/JoinFamilyForm.tsx",
+          "app/convex/families.ts"
+        ],
+        "modules": [
+          "family-access"
+        ],
+        "layer": "fullstack",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "A valid invite code creates one family membership for the current user.",
+        "Invalid invite codes show an actionable error.",
+        "Users cannot join a second family in the MVP."
+      ]
+    },
+    {
+      "task_id": "ACCESS-006",
+      "description": "Render family settings with household summary, current invite code and members list for the shared family space.",
+      "priority": "2-Medium",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "families",
+              "familyMembers",
+              "users"
+            ],
+            "key_fields": {
+              "familyMembers": [
+                "familyId",
+                "userId",
+                "role"
+              ]
+            },
+            "indexes": [
+              "familyMembers.by_familyId"
+            ],
+            "relations": "Household summary joins the family record with member display names or email labels.",
+            "notes": "Read-only in MVP."
+          },
+          "queries": {
+            "read": "Query current family summary and members by familyId.",
+            "write": "Invite code regeneration is deferred."
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [
+            {
+              "method": "query",
+              "path": "convex/getFamilySettingsSummary",
+              "request": {},
+              "response": {
+                "familyName": "string",
+                "inviteCode": "string",
+                "members": []
+              },
+              "auth_required": true
+            }
+          ],
+          "notes": "Keep the settings page lightweight; no role-management UI in MVP."
+        },
+        "component_tree": {
+          "entry_component": "FamilySettingsPage",
+          "children": [
+            "FamilySummaryCard",
+            "InviteCodePanel",
+            "MembersList"
+          ],
+          "notes": "Settings is informational and collaboration-focused."
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "useQuery getFamilySettingsSummary",
+          "local_state": "Invite-code copy feedback state"
+        },
+        "routing": {
+          "path": "/settings",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "session",
+          "rls_or_rbac": "Read only inside the current family."
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "cd app && npx convex dev --once --typecheck",
+        "visual": "Check readability of the household summary and member rows on mobile width.",
+        "manual": "A family member can open Settings and see the household name, invite code and member list."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/family/FamilySettingsPage.tsx",
+          "app/src/features/family/MembersList.tsx",
+          "app/convex/families.ts"
+        ],
+        "modules": [
+          "family-access"
+        ],
+        "layer": "fullstack",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Settings shows the current family summary.",
+        "Member rows are derived from the shared household membership.",
+        "The current invite code is visible and copyable."
+      ]
+    }
+  ]
+}

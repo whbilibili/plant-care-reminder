@@ -1,0 +1,818 @@
+{
+  "project": "plant-care-reminder",
+  "prd": "docs/product-specs/2026-06-05-mvp-requirements.md",
+  "created_at": "2026-06-05",
+  "tasks": [
+    {
+      "task_id": "CARE-001",
+      "description": "Create shared care-task enums, labels and next-due scheduling helpers that all task flows use.",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "plantTasks"
+            ],
+            "key_fields": {
+              "plantTasks": [
+                "taskType",
+                "customTaskName",
+                "intervalDays",
+                "lastCompletedAt",
+                "nextDueAt"
+              ]
+            },
+            "indexes": [],
+            "relations": "The shared scheduler logic is reused by create, edit and complete flows.",
+            "notes": "Custom task name is required only for custom task type."
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "shared-contract",
+          "endpoints": [],
+          "notes": "Shared domain helper layer only."
+        },
+        "component_tree": {
+          "entry_component": "N/A",
+          "children": [
+            "formatTaskTypeLabel",
+            "computeNextDueAt"
+          ],
+          "notes": "Keep business rules centralized."
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "shared helper layer",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "N/A",
+        "visual": "N/A",
+        "manual": "Shared helpers can represent preset and custom task types and compute nextDueAt from a completion timestamp."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/tasks/taskTypes.ts",
+          "app/src/features/tasks/scheduling.ts"
+        ],
+        "modules": [
+          "care-reminders"
+        ],
+        "layer": "shared",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Task types are centralized in one shared contract.",
+        "Next-due calculation is reusable across create, edit and complete flows.",
+        "Custom task validation rules are not duplicated across files."
+      ]
+    },
+    {
+      "task_id": "CARE-002",
+      "description": "Implement the create-task flow for interval-based care tasks under a plant.",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "plantTasks",
+              "plants"
+            ],
+            "key_fields": {
+              "plantTasks": [
+                "plantId",
+                "familyId",
+                "taskType",
+                "customTaskName",
+                "intervalDays",
+                "enabled",
+                "lastCompletedAt",
+                "nextDueAt"
+              ]
+            },
+            "indexes": [
+              "plantTasks.by_plantId",
+              "plantTasks.by_familyId"
+            ],
+            "relations": "New tasks inherit familyId from the parent plant.",
+            "notes": "nextDueAt is computed on the backend from the supplied base time."
+          },
+          "queries": {
+            "read": "Read parent plant and family ownership.",
+            "write": "Insert a new plantTask record."
+          },
+          "migration_strategy": "Uses INFRA-002 schema."
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [
+            {
+              "method": "mutation",
+              "path": "convex/createPlantTask",
+              "request": {
+                "plantId": "string",
+                "taskType": "string",
+                "customTaskName": "string|null",
+                "intervalDays": 5,
+                "baseCompletedAt": "number|null"
+              },
+              "response": {
+                "taskId": "string"
+              },
+              "auth_required": true
+            }
+          ],
+          "notes": "The backend owns interval validation and nextDueAt generation."
+        },
+        "component_tree": {
+          "entry_component": "CreateTaskPage",
+          "children": [
+            "TaskForm"
+          ],
+          "notes": "Reachable from the plant detail page."
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "useMutation createPlantTask",
+          "local_state": "Task form draft state"
+        },
+        "routing": {
+          "path": "/plants/:plantId/tasks/new",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "session",
+          "rls_or_rbac": "Creation is limited to the current family."
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "cd app && npx convex dev --once --typecheck",
+        "visual": "Check task creation form layout and validation states on mobile width.",
+        "manual": "Users can add interval-based care tasks to a plant and immediately see the computed next due time."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/tasks/CreateTaskPage.tsx",
+          "app/src/features/tasks/TaskForm.tsx",
+          "app/convex/tasks.ts"
+        ],
+        "modules": [
+          "care-reminders"
+        ],
+        "layer": "fullstack",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Task creation supports preset and custom task types.",
+        "The backend computes nextDueAt on create.",
+        "New tasks appear in the parent plant detail after creation."
+      ]
+    },
+    {
+      "task_id": "CARE-003",
+      "description": "Implement the edit, enable-disable and delete flows for existing care tasks.",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "plantTasks"
+            ],
+            "key_fields": {
+              "plantTasks": [
+                "id",
+                "enabled",
+                "intervalDays",
+                "nextDueAt"
+              ]
+            },
+            "indexes": [
+              "plantTasks.by_plantId",
+              "plantTasks.by_familyId"
+            ],
+            "relations": "Updating or disabling a task preserves its record identity for future logs.",
+            "notes": "Disabled tasks should be excluded from due views."
+          },
+          "queries": {
+            "read": "Load task by id and parent plant ownership.",
+            "write": "Patch or remove task records according to action."
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [
+            {
+              "method": "mutation",
+              "path": "convex/updatePlantTask",
+              "request": {
+                "taskId": "string",
+                "taskType": "string",
+                "customTaskName": "string|null",
+                "intervalDays": 5,
+                "enabled": true
+              },
+              "response": {
+                "ok": true
+              },
+              "auth_required": true
+            },
+            {
+              "method": "mutation",
+              "path": "convex/deletePlantTask",
+              "request": {
+                "taskId": "string"
+              },
+              "response": {
+                "ok": true
+              },
+              "auth_required": true
+            }
+          ],
+          "notes": "If interval changes, the backend recomputes nextDueAt from the current baseline."
+        },
+        "component_tree": {
+          "entry_component": "EditTaskPage",
+          "children": [
+            "TaskForm",
+            "EnabledToggle",
+            "DeleteTaskAction"
+          ],
+          "notes": "Delete should remain a secondary, confirmed action."
+        },
+        "state_management": {
+          "global_store": "Dialog state only",
+          "server_state": "useQuery task detail + useMutation update/delete",
+          "local_state": "Edit form and confirm state"
+        },
+        "routing": {
+          "path": "/plants/:plantId/tasks/:taskId/edit",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "session",
+          "rls_or_rbac": "Task updates and deletes are scoped to the current family."
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "cd app && npx convex dev --once --typecheck",
+        "visual": "Check edit, disable and delete affordances on iPhone width.",
+        "manual": "Editing a task updates the detail page, disabling removes it from due views, and deleting removes it from the plant."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/tasks/EditTaskPage.tsx",
+          "app/src/features/tasks/DeleteTaskAction.tsx",
+          "app/convex/tasks.ts"
+        ],
+        "modules": [
+          "care-reminders"
+        ],
+        "layer": "fullstack",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Existing task settings can be edited safely.",
+        "Disabled tasks stop participating in due lists and notifications.",
+        "Delete requires explicit confirmation."
+      ]
+    },
+    {
+      "task_id": "CARE-004",
+      "description": "Render the reusable task list section inside the plant detail page, including add, edit and complete entry points.",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "plantTasks"
+            ],
+            "key_fields": {
+              "plantTasks": [
+                "plantId",
+                "enabled",
+                "nextDueAt"
+              ]
+            },
+            "indexes": [
+              "plantTasks.by_plantId"
+            ],
+            "relations": "The section renders enabled tasks already scoped by the plant detail query.",
+            "notes": "This task primarily consumes data prepared by PLANT-006."
+          },
+          "queries": {
+            "read": "Use plant detail task data from the parent page.",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "baas-sdk",
+          "endpoints": [],
+          "notes": "This section consumes existing plant detail and task actions."
+        },
+        "component_tree": {
+          "entry_component": "TaskSection",
+          "children": [
+            "TaskSectionHeader",
+            "TaskListItem",
+            "AddTaskButton",
+            "CompleteTaskButton"
+          ],
+          "notes": "This section is shared by the daily completion flow."
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "Reactive task list from plant detail query",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "/plants/:plantId",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "session",
+          "rls_or_rbac": "Same as plant detail."
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "N/A",
+        "visual": "Check task list density, due labels and action placement on mobile width.",
+        "manual": "The plant detail page shows each enabled task with due info and direct add/edit/complete actions."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/tasks/TaskSection.tsx",
+          "app/src/features/tasks/TaskListItem.tsx"
+        ],
+        "modules": [
+          "care-reminders"
+        ],
+        "layer": "frontend",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Enabled tasks are clearly visible inside plant detail.",
+        "Users can reach add, edit and complete flows from the section.",
+        "Due information is readable without opening another screen."
+      ]
+    },
+    {
+      "task_id": "CARE-005",
+      "description": "Build the due inbox that groups care tasks into overdue, due today and upcoming buckets with quick-complete affordances.",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "plantTasks",
+              "plants"
+            ],
+            "key_fields": {
+              "plantTasks": [
+                "familyId",
+                "nextDueAt",
+                "enabled"
+              ],
+              "plants": [
+                "name",
+                "imageStorageId"
+              ]
+            },
+            "indexes": [
+              "plantTasks.by_familyId",
+              "plantTasks.by_nextDueAt"
+            ],
+            "relations": "Each due row joins task data with plant name and image summary.",
+            "notes": "Upcoming can be defined as the next 3 days in MVP."
+          },
+          "queries": {
+            "read": "Return grouped due tasks for the current family.",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [
+            {
+              "method": "query",
+              "path": "convex/listDueTasks",
+              "request": {},
+              "response": {
+                "overdue": [],
+                "today": [],
+                "upcoming": []
+              },
+              "auth_required": true
+            }
+          ],
+          "notes": "Return grouped view data so the page does not re-derive urgency client-side."
+        },
+        "component_tree": {
+          "entry_component": "TodoPage",
+          "children": [
+            "DueTaskGroup",
+            "DueTaskCard",
+            "CompleteTaskButton"
+          ],
+          "notes": "The due inbox is the primary daily-use surface."
+        },
+        "state_management": {
+          "global_store": "Optional UI-only collapse state",
+          "server_state": "useQuery listDueTasks",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "/todo",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "session",
+          "rls_or_rbac": "Due queries are scoped to the current family."
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "cd app && npx convex dev --once --typecheck",
+        "visual": "Check group headings, card spacing and quick-complete visibility on mobile width.",
+        "manual": "Due tasks appear grouped by urgency, with overdue tasks first and quick-complete always visible."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/tasks/TodoPage.tsx",
+          "app/src/features/tasks/DueTaskGroup.tsx",
+          "app/src/features/tasks/DueTaskCard.tsx",
+          "app/convex/tasks.ts"
+        ],
+        "modules": [
+          "care-reminders"
+        ],
+        "layer": "fullstack",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "The todo page groups due tasks by urgency.",
+        "Overdue items appear before today and upcoming items.",
+        "Every due row exposes a direct completion action."
+      ]
+    },
+    {
+      "task_id": "CARE-006",
+      "description": "Implement task completion, completion-log writes and realtime next-due recomputation across shared family sessions.",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "plantTasks",
+              "taskCompletionLogs"
+            ],
+            "key_fields": {
+              "plantTasks": [
+                "id",
+                "intervalDays",
+                "lastCompletedAt",
+                "nextDueAt"
+              ],
+              "taskCompletionLogs": [
+                "taskId",
+                "completedBy",
+                "completedAt"
+              ]
+            },
+            "indexes": [
+              "taskCompletionLogs.by_taskId"
+            ],
+            "relations": "A successful completion writes one log and patches one task atomically.",
+            "notes": "The backend computes nextDueAt from the completion timestamp."
+          },
+          "queries": {
+            "read": "Load task and ownership by taskId.",
+            "write": "Insert completion log and patch task state in one mutation."
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [
+            {
+              "method": "mutation",
+              "path": "convex/completePlantTask",
+              "request": {
+                "taskId": "string"
+              },
+              "response": {
+                "taskId": "string",
+                "lastCompletedAt": "number",
+                "nextDueAt": "number"
+              },
+              "auth_required": true
+            }
+          ],
+          "notes": "Keep all timing logic on the backend to avoid client drift."
+        },
+        "component_tree": {
+          "entry_component": "CompleteTaskButton",
+          "children": [
+            "CompletionSpinner"
+          ],
+          "notes": "The same completion action is reused on the todo and plant detail screens."
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "useMutation completePlantTask with reactive query refresh",
+          "local_state": "Pending state only"
+        },
+        "routing": {
+          "path": "/todo and /plants/:plantId",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "session",
+          "rls_or_rbac": "Task completion is scoped to the current family."
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "cd app && npx convex dev --once --typecheck",
+        "visual": "Check completion feedback and state refresh without visual flicker on mobile.",
+        "manual": "Completing a task updates the local session and any second family session with the new next due time."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/tasks/CompleteTaskButton.tsx",
+          "app/convex/tasks.ts",
+          "app/tests/unit/tasks/nextDueAt.test.ts"
+        ],
+        "modules": [
+          "care-reminders"
+        ],
+        "layer": "fullstack",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Each completion writes a log entry.",
+        "nextDueAt is recomputed correctly by the backend.",
+        "Other family sessions observe the updated state."
+      ]
+    },
+    {
+      "task_id": "CARE-007",
+      "description": "Implement notification permission prompts, browser capability checks and push-subscription persistence tied to the current family member.",
+      "priority": "2-Medium",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "pushSubscriptions"
+            ],
+            "key_fields": {
+              "pushSubscriptions": [
+                "userId",
+                "familyId",
+                "endpoint",
+                "p256dh",
+                "auth",
+                "deviceLabel",
+                "lastSeenAt"
+              ]
+            },
+            "indexes": [
+              "pushSubscriptions.by_userId"
+            ],
+            "relations": "A user can have multiple device subscriptions inside one family.",
+            "notes": "Keep browser capability detection explicit for iPhone PWA constraints."
+          },
+          "queries": {
+            "read": "Optionally list current user subscriptions for settings UI.",
+            "write": "Create or update one subscription after permission is granted."
+          },
+          "migration_strategy": "Uses INFRA-002 schema."
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [
+            {
+              "method": "mutation",
+              "path": "convex/savePushSubscription",
+              "request": {
+                "endpoint": "string",
+                "p256dh": "string",
+                "auth": "string",
+                "deviceLabel": "string"
+              },
+              "response": {
+                "ok": true
+              },
+              "auth_required": true
+            }
+          ],
+          "notes": "Normalize the browser subscription JSON before persisting it."
+        },
+        "component_tree": {
+          "entry_component": "NotificationPromptCard",
+          "children": [
+            "EnableNotificationsButton",
+            "PermissionHintList"
+          ],
+          "notes": "Show guidance only when the browser is capable and permission is not already granted."
+        },
+        "state_management": {
+          "global_store": "Optional dismissal state",
+          "server_state": "useMutation savePushSubscription",
+          "local_state": "Permission and subscription request state"
+        },
+        "routing": {
+          "path": "/settings and contextual banners",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "session",
+          "rls_or_rbac": "Subscriptions attach only to the current family member."
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "cd app && npx convex dev --once --typecheck",
+        "visual": "Check notification prompt copy and unsupported-browser fallback on mobile width.",
+        "manual": "Granting permission creates or updates a push-subscription record for the current user."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/notifications/NotificationPromptCard.tsx",
+          "app/src/features/notifications/normalizeSubscription.ts",
+          "app/convex/notifications.ts"
+        ],
+        "modules": [
+          "care-reminders"
+        ],
+        "layer": "fullstack",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Supported users can request notification permission.",
+        "Granted permission persists a usable subscription record.",
+        "Unsupported browsers still receive non-blocking guidance."
+      ]
+    },
+    {
+      "task_id": "CARE-008",
+      "description": "Implement scheduled due scanning and deduplicated reminder delivery, with the in-app due inbox remaining the fallback reminder surface.",
+      "priority": "2-Medium",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "plantTasks",
+              "pushSubscriptions"
+            ],
+            "key_fields": {
+              "plantTasks": [
+                "familyId",
+                "nextDueAt",
+                "enabled"
+              ],
+              "pushSubscriptions": [
+                "userId",
+                "familyId",
+                "endpoint"
+              ]
+            },
+            "indexes": [
+              "plantTasks.by_nextDueAt",
+              "pushSubscriptions.by_userId"
+            ],
+            "relations": "Due tasks fan out to all subscribed members in the same family.",
+            "notes": "If send dedupe requires task notification metadata, add it before wiring the cron."
+          },
+          "queries": {
+            "read": "Find enabled due tasks and their subscribed family members within the send window.",
+            "write": "Mark or log successful notification sends for dedupe."
+          },
+          "migration_strategy": "convex schema push if notification tracking fields are added"
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [
+            {
+              "method": "query",
+              "path": "convex/listNotifiableDueTasks",
+              "request": {
+                "now": "number"
+              },
+              "response": {
+                "tasks": []
+              },
+              "auth_required": false
+            },
+            {
+              "method": "mutation",
+              "path": "convex/markTaskNotified",
+              "request": {
+                "taskId": "string",
+                "notifiedAt": "number"
+              },
+              "response": {
+                "ok": true
+              },
+              "auth_required": false
+            }
+          ],
+          "notes": "Cron or an action orchestrates these internal reminder functions."
+        },
+        "component_tree": {
+          "entry_component": "N/A",
+          "children": [],
+          "notes": "This task is backend-heavy; UI fallback remains the todo inbox."
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "Todo page remains the fallback reminder surface",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "N/A",
+          "guard": "scheduled backend work",
+          "middleware": "Convex cron"
+        },
+        "auth": {
+          "provider": "Convex backend",
+          "strategy": "scheduled execution",
+          "rls_or_rbac": "Send only to subscriptions in the task's family."
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "cd app && npx convex dev --once --typecheck",
+        "visual": "N/A",
+        "manual": "A due task is notified at most once per reminder window while remaining visible in the due inbox."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/convex/cron.ts",
+          "app/convex/notifications.ts",
+          "app/tests/unit/notifications/shouldNotify.test.ts"
+        ],
+        "modules": [
+          "care-reminders"
+        ],
+        "layer": "backend",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Scheduled scans can find due tasks in the configured window.",
+        "Push sends are deduplicated per task reminder window.",
+        "Reminder delivery failure does not hide tasks from the in-app due inbox."
+      ]
+    }
+  ]
+}

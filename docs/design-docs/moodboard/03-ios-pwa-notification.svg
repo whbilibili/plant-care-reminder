@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200">
+  <defs>
+    <linearGradient id="wall" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#d5e7e4"/>
+      <stop offset="1" stop-color="#f7f3e8"/>
+    </linearGradient>
+    <filter id="blur" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="10"/>
+    </filter>
+  </defs>
+  <rect width="900" height="1200" fill="url(#wall)"/>
+  <g opacity=".4" filter="url(#blur)">
+    <circle cx="235" cy="306" r="148" fill="#9bc5aa"/>
+    <circle cx="676" cy="725" r="186" fill="#b5d4dc"/>
+  </g>
+  <g transform="translate(250 72)">
+    <rect width="400" height="1050" rx="58" fill="#122b27"/>
+    <rect x="17" y="22" width="366" height="1006" rx="42" fill="#eff6ef"/>
+    <text x="50" y="96" font-family="Arial, sans-serif" font-size="16" fill="#5d756b">9:41</text>
+    <circle cx="330" cy="88" r="8" fill="#587067"/>
+    <g transform="translate(38 172)">
+      <rect width="324" height="116" rx="24" fill="#ffffff" opacity=".94"/>
+      <circle cx="54" cy="58" r="25" fill="#dcefe3"/>
+      <path d="M45 64c7-28 22-38 43-29-3 30-19 41-43 29Z" fill="#407f61"/>
+      <text x="96" y="46" font-family="Arial, sans-serif" font-size="19" font-weight="700" fill="#173f35">该浇水了</text>
+      <text x="96" y="74" font-family="Arial, sans-serif" font-size="15" fill="#60776c">龟背竹 · 客厅西窗</text>
+      <text x="96" y="96" font-family="Arial, sans-serif" font-size="13" fill="#8ca096">点开完成并计算下次提醒</text>
+    </g>
+    <g transform="translate(44 420)">
+      <rect width="312" height="300" rx="28" fill="#ffffff"/>
+      <text x="28" y="48" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#173f35">今日养护</text>
+      <text x="28" y="80" font-family="Arial, sans-serif" font-size="16" fill="#6d8278">4 项需要处理</text>
+      <rect x="28" y="120" width="256" height="54" rx="16" fill="#1e473d"/>
+      <text x="58" y="154" font-family="Arial, sans-serif" font-size="17" font-weight="700" fill="#fffaf2">打开待办</text>
+      <rect x="28" y="194" width="256" height="54" rx="16" fill="#e7f1ea"/>
+      <text x="58" y="228" font-family="Arial, sans-serif" font-size="17" font-weight="700" fill="#1e473d">稍后提醒</text>
+    </g>
+  </g>
+</svg>

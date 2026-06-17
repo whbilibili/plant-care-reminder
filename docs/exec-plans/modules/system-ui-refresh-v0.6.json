@@ -1,0 +1,853 @@
+{
+  "project": "plant-care-reminder",
+  "prd": "docs/product-specs/2026-06-05-mvp-requirements.md",
+  "created_at": "2026-06-16",
+  "module": "system-ui-refresh-v0.6",
+  "description": "基于 2026-06-16 系统级 UI 设计稿进行主路径页面改造：轻量原生导航、GroupedSurface 分组表面、Photo-led 植物识别、Quiet Form 表单模板、设置页邀请协作卡，目标主页面 95% 还原设计稿。",
+  "design_references": [
+    "docs/design-docs/2026-06-16-system-ui-drafts/README.md",
+    "docs/design-docs/2026-06-16-system-ui-implementation-plan.md",
+    "docs/DESIGN.md"
+  ],
+  "tasks": [
+    {
+      "task_id": "UI-SYS-001",
+      "description": "建立系统级 UI 改造共享基元：ScreenNav、GroupedSurface、ObjectSummaryBand、TaskActionRow、InviteCard 的组件接口、样式基线与视觉 QA 截图规范。保持全部 token 化，不新增 #hex，不引入新视觉库。",
+      "priority": "0-Critical",
+      "status": "pending",
+      "depends_on": [
+        "frontend-refresh",
+        "icon-system-v0.4",
+        "long-text-hardening-v0.5"
+      ],
+      "plan_path": "docs/design-docs/2026-06-16-system-ui-implementation-plan.md",
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "notes": "纯前端 UI 基元，不涉及数据模型。"
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "N/A"
+          },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": {
+          "type": "frontend",
+          "endpoints": [],
+          "notes": "不涉及接口。"
+        },
+        "component_tree": {
+          "entry_component": "components/ui/system",
+          "children": [
+            "ScreenNav",
+            "GroupedSurface",
+            "ObjectSummaryBand",
+            "TaskActionRow",
+            "InviteCard"
+          ],
+          "notes": "优先复用现有 Button/Icon/InputField/StorageImage。ScreenNav 先替代 FormNavBar/DetailNavBar 的视觉方向，避免全宽白条。"
+        },
+        "state_management": {
+          "notes": "组件只接收 props；InviteCard 允许本地复制状态。"
+        },
+        "routing": {
+          "notes": "不改路由。"
+        },
+        "auth": {
+          "notes": "不改鉴权。"
+        },
+        "design_contract": {
+          "ui_spec_ref": "2026-06-16-system-ui-implementation-plan.md §4",
+          "tokens_new": [],
+          "tokens_reuse": [
+            "--color-paper",
+            "--color-surface",
+            "--color-mist",
+            "--color-line",
+            "--color-leaf",
+            "--color-gold",
+            "--radius-card",
+            "--radius-button",
+            "--shadow-card"
+          ],
+          "visual_spec": {
+            "ScreenNav": "48-56px 高，左侧 44px icon-only 返回，中间标题单行省略，默认透明/纸面背景，不画突兀白色横条。",
+            "GroupedSurface": "单个 surface 内使用标题行和 row divider，不允许行项目再套大卡。",
+            "ObjectSummaryBand": "缩略图 + 主标题 + 次信息 + 状态 + 可选操作，紧凑承接 ScreenNav。",
+            "InviteCard": "主按钮复制邀请链接，次级快捷按钮复制邀请码，失败时展示手动查看路径。"
+          },
+          "acceptance": "基元可被后续页面任务复用；Story/smoke 或页面截图证明没有卡片套卡片和白条贴片。"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test",
+        "visual": "基于任一试点页面截 375px 图，确认 ScreenNav/GroupedSurface/ObjectSummaryBand 三个基元视觉成立。",
+        "manual": "键盘聚焦返回、复制、主操作按钮，确认 focus 可见且 accessible name 正确。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/components/ui/*",
+          "app/src/components/ui/system/* (new if needed)"
+        ],
+        "modules": [
+          "system-ui-refresh-v0.6"
+        ],
+        "layer": "ui-foundation"
+      },
+      "acceptance_criteria": [
+        "ScreenNav / GroupedSurface / ObjectSummaryBand / TaskActionRow / InviteCard 至少完成可复用组件或明确等价封装。",
+        "全部样式引用既有 token，不新增 #hex。",
+        "ScreenNav 不渲染全宽白色硬条。",
+        "GroupedSurface 不产生 card inside card。",
+        "typecheck + test 执行并记录结果。"
+      ]
+    },
+    {
+      "task_id": "UI-SYS-002",
+      "description": "改造登录/注册页为 v2 同页双模式表单：保留 /login 单路由，通过 登录/注册 segmented control 切换模式；首屏展示输入框和主按钮；支持邀请链接上下文提示。",
+      "priority": "1-High",
+      "status": "pending",
+      "depends_on": [
+        "UI-SYS-001",
+        "family-access",
+        "settings-page-v0.3"
+      ],
+      "plan_path": "docs/design-docs/2026-06-16-system-ui-implementation-plan.md",
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "notes": "不涉及数据模型。"
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "N/A"
+          },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": {
+          "type": "auth-ui-consumer",
+          "endpoints": [
+            "existing login/register handlers"
+          ],
+          "notes": "不新增独立注册路由；保留现有 auth 行为。"
+        },
+        "component_tree": {
+          "entry_component": "AuthPage",
+          "children": [
+            "EmailLoginForm",
+            "segmented mode control"
+          ],
+          "notes": "登录和注册共用同一视觉表单容器；主按钮文案随模式变化。"
+        },
+        "state_management": {
+          "local_state": "authMode: login | register"
+        },
+        "routing": {
+          "path": "/login",
+          "guard": "unauthenticated",
+          "notes": "不新增 /register。"
+        },
+        "auth": {
+          "strategy": "沿用现有邮箱密码认证。"
+        },
+        "design_contract": {
+          "ui_spec_ref": "01-login-v2.png + implementation-plan.md §5.1",
+          "visual_spec": {
+            "mode": "同页 登录/注册 segmented control。",
+            "layout": "植物氛围背景仅用于 auth；输入区首屏可见。",
+            "invite_hint": "收到家人邀请时提示登录或注册后继续加入。"
+          },
+          "acceptance": "不拆路由，不出现两套并列表单，375px 首屏能看到输入和主按钮。"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test -- AppRouter.smoke.test.tsx -t \"login|register|join\"",
+        "visual": "375px 截 /login，对照 01-login-v2.png。",
+        "manual": "切换登录/注册模式，确认字段、按钮文案、错误提示、邀请链接暂存链路不回归。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/auth/AuthPage.tsx",
+          "app/src/features/auth/EmailLoginForm.tsx",
+          "app/src/test/AppRouter.smoke.test.tsx"
+        ],
+        "modules": [
+          "system-ui-refresh-v0.6"
+        ],
+        "layer": "frontend"
+      },
+      "acceptance_criteria": [
+        "/login 保持单页双模式，不新增注册路由。",
+        "登录/注册切换不改变页面路由。",
+        "375px 首屏可见输入框和主按钮。",
+        "邀请链接场景提示保留且不影响自动加入链路。"
+      ]
+    },
+    {
+      "task_id": "UI-SYS-003",
+      "description": "改造家庭接入选择页：以 02-family-onboarding.png 为目标，压缩说明文案，突出创建新家庭/加入家人的家庭两个决策 surface，并保留现有 profile/create/join 链路。",
+      "priority": "1-High",
+      "status": "pending",
+      "depends_on": [
+        "UI-SYS-001",
+        "UI-SYS-002"
+      ],
+      "plan_path": "docs/design-docs/2026-06-16-system-ui-implementation-plan.md",
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "notes": "不涉及。"
+          },
+          "queries": {
+            "read": "current user context",
+            "write": "N/A"
+          },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": {
+          "type": "frontend",
+          "endpoints": [],
+          "notes": "不改 create/join mutation。"
+        },
+        "component_tree": {
+          "entry_component": "FamilyOnboardingChoicePage",
+          "children": [
+            "GroupedSurface",
+            "choice action rows"
+          ],
+          "notes": "复用 GroupedSurface，两个入口权重清晰但不做厚重卡片。"
+        },
+        "state_management": {
+          "notes": "保留 pending invite 自动加入状态。"
+        },
+        "routing": {
+          "path": "/onboarding",
+          "guard": "authenticated without family"
+        },
+        "auth": {
+          "notes": "不改。"
+        },
+        "design_contract": {
+          "ui_spec_ref": "02-family-onboarding.png + implementation-plan.md §5.2",
+          "visual_spec": {
+            "title": "加入家庭空间",
+            "choices": "创建新家庭 / 加入家人的家庭",
+            "density": "无大 Hero，少说明，两个主决策首屏可见。"
+          }
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test -- AppRouter.smoke.test.tsx -t \"onboarding|create-family|join-family\"",
+        "visual": "375px 截 /onboarding，对照 02-family-onboarding.png。",
+        "manual": "创建家庭/加入家庭按钮跳转正确；pending invite 自动加入不回归。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/family/FamilyOnboardingChoicePage.tsx"
+        ],
+        "modules": [
+          "system-ui-refresh-v0.6"
+        ],
+        "layer": "frontend"
+      },
+      "acceptance_criteria": [
+        "首屏只突出创建和加入两个决策。",
+        "说明文案不超过两行。",
+        "两个入口按钮路由正确。",
+        "pending invite 中间态仍可用。"
+      ]
+    },
+    {
+      "task_id": "UI-SYS-004",
+      "description": "改造待办首页：以 03-todo-home.png 为目标，登录后任务首页首屏优先展示逾期/今天任务、完成进度、右侧圆形完成按钮和即将到期轻列表。",
+      "priority": "1-High",
+      "status": "pending",
+      "depends_on": [
+        "UI-SYS-001",
+        "todo-page-v2"
+      ],
+      "plan_path": "docs/design-docs/2026-06-16-system-ui-implementation-plan.md",
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "notes": "不涉及。"
+          },
+          "queries": {
+            "read": "existing due task queries",
+            "write": "existing complete/postpone mutations"
+          },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": {
+          "type": "convex-query-consumer",
+          "endpoints": [
+            "tasks due queries",
+            "completion mutations"
+          ],
+          "notes": "不改任务完成语义。"
+        },
+        "component_tree": {
+          "entry_component": "TodoPage",
+          "children": [
+            "GroupedSurface",
+            "TaskActionRow",
+            "CompleteAllButton",
+            "UndoToast",
+            "BottomNav"
+          ],
+          "notes": "保留 v2 功能，重做外壳和行布局。"
+        },
+        "state_management": {
+          "server_state": "Convex due task data",
+          "local_state": "existing undo/postpone UI state"
+        },
+        "routing": {
+          "path": "/todo",
+          "guard": "authenticated family member"
+        },
+        "auth": {
+          "notes": "不改。"
+        },
+        "design_contract": {
+          "ui_spec_ref": "03-todo-home.png + implementation-plan.md §5.3",
+          "visual_spec": {
+            "header": "今日待办 + 日期 + 紧凑进度条。",
+            "groups": "逾期 / 今天 / 即将到期 grouped surface。",
+            "action": "完成按钮右侧圆形，可单手点击。"
+          },
+          "acceptance": "主任务首屏可见，不被大说明文案占据。"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test -- AppRouter.smoke.test.tsx -t \"due inbox|complete|todo\"",
+        "visual": "375px 截 /todo，分别覆盖有逾期、有今天任务、空状态。",
+        "manual": "完成/撤销/批量完成/推迟提示不回归。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/tasks/TodoPage.tsx",
+          "app/src/features/tasks/*Task*.tsx",
+          "app/src/components/navigation/BottomNav.tsx"
+        ],
+        "modules": [
+          "system-ui-refresh-v0.6"
+        ],
+        "layer": "frontend"
+      },
+      "acceptance_criteria": [
+        "待办首屏展示任务分组和完成动作。",
+        "逾期与今天任务有清晰视觉区分。",
+        "完成按钮位于行右侧且触控区不小于 44px。",
+        "已有完成/撤销/推迟功能不回归。"
+      ]
+    },
+    {
+      "task_id": "UI-SYS-005",
+      "description": "改造植物看板：以 04-plant-board.png 为目标，重建 photo-led 植物卡片、搜索栏、添加入口和无图/坏图占位态，保持整卡进入详情和归档区能力。",
+      "priority": "1-High",
+      "status": "pending",
+      "depends_on": [
+        "UI-SYS-001",
+        "plant-list-v2",
+        "long-text-hardening-v0.5"
+      ],
+      "plan_path": "docs/design-docs/2026-06-16-system-ui-implementation-plan.md",
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "notes": "不涉及。"
+          },
+          "queries": {
+            "read": "plants list query with next due task",
+            "write": "N/A"
+          },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": {
+          "type": "convex-query-consumer",
+          "endpoints": [
+            "plants list queries"
+          ],
+          "notes": "不改接口。"
+        },
+        "component_tree": {
+          "entry_component": "PlantListPage",
+          "children": [
+            "PlantCard",
+            "StorageImage",
+            "PlantAvatar",
+            "BottomNav"
+          ],
+          "notes": "卡片从紧凑横向信息卡调整为照片识别优先，保留长文本截断。"
+        },
+        "state_management": {
+          "local_state": "search query"
+        },
+        "routing": {
+          "path": "/plants",
+          "guard": "authenticated family member"
+        },
+        "auth": {
+          "notes": "不改。"
+        },
+        "design_contract": {
+          "ui_spec_ref": "04-plant-board.png + implementation-plan.md §5.4",
+          "visual_spec": {
+            "photo": "植物图片是卡片视觉锚点；无图/坏图有设计占位。",
+            "header": "植物看板 + +添加。",
+            "card": "名称、位置、下次养护 pill，整卡可点。"
+          }
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test -- AppRouter.smoke.test.tsx -t \"plant board|plant cards|empty plant\"",
+        "visual": "375px 截 /plants：有图、无图、坏图、空状态。",
+        "manual": "搜索、整卡进入详情、添加植物、归档区折叠不回归。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/plants/PlantListPage.tsx",
+          "app/src/features/plants/PlantCard.tsx",
+          "app/src/features/plants/PlantAvatar.tsx",
+          "app/src/features/plants/StorageImage.tsx"
+        ],
+        "modules": [
+          "system-ui-refresh-v0.6"
+        ],
+        "layer": "frontend"
+      },
+      "acceptance_criteria": [
+        "植物图片区域明显成为识别锚点。",
+        "无图/坏图状态有占位，不显示空白块。",
+        "整卡进入详情能力保留。",
+        "搜索与归档区不回归。"
+      ]
+    },
+    {
+      "task_id": "UI-SYS-006",
+      "description": "改造植物详情页：以 05-plant-detail.png 为目标，替换顶部为 ScreenNav + ObjectSummaryBand，解决白条贴片感；将需要处理和养护计划上移，低频档案/归档/删除动作下沉。",
+      "priority": "0-Critical",
+      "status": "pending",
+      "depends_on": [
+        "UI-SYS-001",
+        "plant-detail-v2",
+        "UI-SYS-005"
+      ],
+      "plan_path": "docs/design-docs/2026-06-16-system-ui-implementation-plan.md",
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "notes": "不涉及。"
+          },
+          "queries": {
+            "read": "plant detail query with tasks",
+            "write": "existing complete/archive/delete mutations"
+          },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": {
+          "type": "convex-query-consumer",
+          "endpoints": [
+            "plants detail query",
+            "task completion mutations",
+            "plant archive/delete mutations"
+          ],
+          "notes": "不改数据语义。"
+        },
+        "component_tree": {
+          "entry_component": "PlantDetailPage",
+          "children": [
+            "ScreenNav",
+            "ObjectSummaryBand",
+            "GroupedSurface",
+            "TaskActionRow",
+            "PlanSection",
+            "PlantArchiveSection",
+            "ImagePreviewOverlay"
+          ],
+          "notes": "DetailNavBar 视觉迁移到 ScreenNav；PlanSection 和 ActionableTaskSection 改用 grouped surface。"
+        },
+        "state_management": {
+          "local_state": "image preview/open menus/existing completion state"
+        },
+        "routing": {
+          "path": "/plants/:plantId",
+          "guard": "authenticated family member"
+        },
+        "auth": {
+          "notes": "保留家庭数据边界。"
+        },
+        "design_contract": {
+          "ui_spec_ref": "05-plant-detail.png + implementation-plan.md §5.5",
+          "visual_spec": {
+            "nav": "无全宽白条，icon-only 返回，标题居中，编辑入口右侧。",
+            "summary": "照片/名称/位置/状态紧凑承接顶部。",
+            "tasks": "需要处理首屏可见；完成按钮右侧。",
+            "plan": "养护计划为 grouped list + row divider。"
+          },
+          "acceptance": "解决用户反馈的顶部胶带感。"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test -- AppRouter.smoke.test.tsx -t \"plant detail|task section|archive|restore\"",
+        "visual": "375px 截 /plants/:id，覆盖有任务、无任务、有图、无图、归档态。",
+        "manual": "返回、编辑植物、添加任务、编辑任务、完成任务、图片预览、归档/恢复/删除不回归。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/plants/PlantDetailPage.tsx",
+          "app/src/features/plants/DetailNavBar.tsx",
+          "app/src/features/plants/PlantHeroCard.tsx",
+          "app/src/features/tasks/ActionableTaskSection.tsx",
+          "app/src/features/tasks/PlanSection.tsx"
+        ],
+        "modules": [
+          "system-ui-refresh-v0.6"
+        ],
+        "layer": "frontend"
+      },
+      "acceptance_criteria": [
+        "植物详情顶部无白条贴片感。",
+        "需要处理区在首屏可见。",
+        "编辑入口存在但不抢完成任务层级。",
+        "详情页现有任务/归档/图片预览交互不回归。"
+      ]
+    },
+    {
+      "task_id": "UI-SYS-007",
+      "description": "改造安静表单模板：以 06-quiet-form.png 为目标，统一添加/编辑植物与添加/编辑养护任务的顶部导航、上下文摘要、字段分组、预览/状态和危险操作分离。",
+      "priority": "1-High",
+      "status": "pending",
+      "depends_on": [
+        "UI-SYS-001",
+        "UI-SYS-006",
+        "long-text-hardening-v0.5"
+      ],
+      "plan_path": "docs/design-docs/2026-06-16-system-ui-implementation-plan.md",
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "notes": "不涉及。"
+          },
+          "queries": {
+            "read": "existing edit queries",
+            "write": "existing create/update/delete mutations"
+          },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": {
+          "type": "convex-mutation-consumer",
+          "endpoints": [
+            "plants.createPlant",
+            "plants.updatePlant",
+            "tasks.createPlantTask",
+            "tasks.updatePlantTask",
+            "tasks.deletePlantTask"
+          ],
+          "notes": "不改变表单提交 payload。"
+        },
+        "component_tree": {
+          "entry_component": "PlantForm / TaskForm wrappers",
+          "children": [
+            "ScreenNav",
+            "ObjectSummaryBand",
+            "GroupedSurface",
+            "InputField",
+            "DeleteTaskAction",
+            "PlantImageField"
+          ],
+          "notes": "保留字段校验和 maxLength，降低大标题说明层级。"
+        },
+        "state_management": {
+          "local_state": "existing form states"
+        },
+        "routing": {
+          "path": "/plants/new /plants/:id/edit /plants/:id/tasks/new /plants/:id/tasks/:taskId/edit",
+          "guard": "authenticated family member"
+        },
+        "auth": {
+          "notes": "不改。"
+        },
+        "design_contract": {
+          "ui_spec_ref": "06-quiet-form.png + implementation-plan.md §5.6",
+          "visual_spec": {
+            "nav": "ScreenNav + 保存动作。",
+            "context": "植物/任务摘要替代巨大 PageHeader。",
+            "fields": "字段 grouped surface，输入高 48px 左右。",
+            "danger": "删除动作与普通字段分离。"
+          }
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test -- AppRouter.smoke.test.tsx -t \"create-plant|edit-plant|create-task|task edit|delete care task\"",
+        "visual": "375px 截四个表单主态，重点检查首屏字段可见、顶部无白条。",
+        "manual": "保存、取消/返回、校验错误、图片上传、任务停用/启用、删除确认不回归。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/plants/CreatePlantPage.tsx",
+          "app/src/features/plants/EditPlantPage.tsx",
+          "app/src/features/plants/PlantForm.tsx",
+          "app/src/features/tasks/CreateTaskPage.tsx",
+          "app/src/features/tasks/EditTaskPage.tsx",
+          "app/src/features/tasks/TaskForm.tsx"
+        ],
+        "modules": [
+          "system-ui-refresh-v0.6"
+        ],
+        "layer": "frontend"
+      },
+      "acceptance_criteria": [
+        "四个表单页使用统一 quiet form 模板。",
+        "首屏优先展示字段，不被巨大标题占据。",
+        "保存动作可见且返回路径明确。",
+        "危险操作独立分离，现有校验和提交不回归。"
+      ]
+    },
+    {
+      "task_id": "UI-SYS-008",
+      "description": "改造设置页 v2：以 07-settings-v2.png 为目标，重建家庭协作优先的设置页，InviteCard 同时支持复制邀请链接和快捷复制邀请码，并保留手动查看兜底。",
+      "priority": "1-High",
+      "status": "pending",
+      "depends_on": [
+        "UI-SYS-001",
+        "settings-page-v0.3"
+      ],
+      "plan_path": "docs/design-docs/2026-06-16-system-ui-implementation-plan.md",
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "notes": "不涉及。"
+          },
+          "queries": {
+            "read": "families.getFamilySettingsSummary",
+            "write": "existing profile/family/leave mutations"
+          },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": {
+          "type": "convex-query-and-mutation-consumer",
+          "endpoints": [
+            "families.getFamilySettingsSummary",
+            "families.renameFamily",
+            "families.leaveFamily",
+            "users.updateMyProfile"
+          ],
+          "notes": "复制邀请码为前端 clipboard 操作，不新增后端接口。"
+        },
+        "component_tree": {
+          "entry_component": "FamilySettingsPage",
+          "children": [
+            "GroupedSurface",
+            "InviteCard",
+            "MembersList",
+            "NotificationSettings",
+            "FamilyNameEditSheet",
+            "NicknameEditSheet"
+          ],
+          "notes": "InviteCard 主按钮复制邀请链接，次级按钮复制邀请码；失败时展示手动面板。"
+        },
+        "state_management": {
+          "local_state": "copy invite link status, copy invite code status, fallback panel state"
+        },
+        "routing": {
+          "path": "/settings",
+          "guard": "authenticated family member"
+        },
+        "auth": {
+          "notes": "保留 admin/member 权限差异。"
+        },
+        "design_contract": {
+          "ui_spec_ref": "07-settings-v2.png + implementation-plan.md §5.7",
+          "visual_spec": {
+            "invite": "邀请码大号 monospace；复制邀请码为次级快捷按钮；复制邀请链接为主按钮。",
+            "sections": "家庭摘要、邀请、通知、成员、退出动作。",
+            "danger": "退出家庭/退出登录与普通设置项分离。"
+          },
+          "acceptance": "两个复制动作都可见且层级清晰。"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test -- AppRouter.smoke.test.tsx -t \"settings|invite|copy|leave family\"",
+        "visual": "375px 截 /settings，覆盖 admin/member、复制成功、复制失败手动面板。",
+        "manual": "复制邀请链接、复制邀请码、家庭改名、昵称编辑、退出家庭、退出登录不回归。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/family/FamilySettingsPage.tsx",
+          "app/src/features/family/InviteCodeCard.tsx",
+          "app/src/features/family/MembersList.tsx",
+          "app/src/features/family/FamilyHeroCard.tsx"
+        ],
+        "modules": [
+          "system-ui-refresh-v0.6"
+        ],
+        "layer": "frontend"
+      },
+      "acceptance_criteria": [
+        "设置页邀请区同时提供复制邀请链接和复制邀请码。",
+        "复制邀请链接视觉层级高于复制邀请码。",
+        "复制失败时展示手动查看/复制兜底。",
+        "管理员和普通成员视角权限不回归。"
+      ]
+    },
+    {
+      "task_id": "UI-SYS-009",
+      "description": "跨页面视觉 QA 与 95% 还原修正：对七张主设计稿对应页面进行 375/390/430px 截图验收，修正间距、层级、按钮、长文本和移动端遮挡问题，输出一份验收小结。",
+      "priority": "1-High",
+      "status": "pending",
+      "depends_on": [
+        "UI-SYS-002",
+        "UI-SYS-003",
+        "UI-SYS-004",
+        "UI-SYS-005",
+        "UI-SYS-006",
+        "UI-SYS-007",
+        "UI-SYS-008"
+      ],
+      "plan_path": "docs/design-docs/2026-06-16-system-ui-implementation-plan.md",
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "notes": "不涉及。"
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "N/A"
+          },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": {
+          "type": "verification",
+          "endpoints": [],
+          "notes": "不涉及。"
+        },
+        "component_tree": {
+          "entry_component": "all main routes",
+          "children": [
+            "/login",
+            "/onboarding",
+            "/todo",
+            "/plants",
+            "/plants/:plantId",
+            "/plants/:plantId/tasks/:taskId/edit",
+            "/settings"
+          ],
+          "notes": "按设计稿逐页对照，修正偏差。"
+        },
+        "state_management": {
+          "notes": "覆盖空/错/加载主状态，不新增状态。"
+        },
+        "routing": {
+          "notes": "主路径全部截图验收。"
+        },
+        "auth": {
+          "notes": "覆盖匿名、无家庭、有家庭三类路由状态。"
+        },
+        "design_contract": {
+          "ui_spec_ref": "implementation-plan.md §3 + §7 + §9",
+          "visual_spec": {
+            "screenshots": "375px 必测，390px/430px 抽检。",
+            "must_match": "区块顺序、主操作位置、顶部导航、任务按钮、邀请复制动作。",
+            "must_not": "白条贴片、卡片套卡片、首屏大段说明、缺少复制邀请码。"
+          }
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test && npm run build",
+        "visual": "保存七条主路径 375px 截图并和设计稿并排核对；修正后追加验收小结。",
+        "manual": "iPhone 宽度手动走查主路径和返回/保存/复制/完成/删除等关键操作。"
+      },
+      "metadata": {
+        "files_affected": [
+          "docs/design-docs/2026-06-16-system-ui-implementation-plan.md",
+          "app/src/**/*"
+        ],
+        "modules": [
+          "system-ui-refresh-v0.6"
+        ],
+        "layer": "qa"
+      },
+      "acceptance_criteria": [
+        "七张主设计稿对应页面均有 375px 验收截图。",
+        "关键页面结构达到 95% 还原标准。",
+        "记录无法像素级还原的合理差异。",
+        "typecheck、test、build 执行并记录结果。",
+        "验收小结追加到 implementation plan。"
+      ]
+    }
+  ],
+  "dependency_edges": [
+    {
+      "from": "UI-SYS-002",
+      "to": "UI-SYS-001",
+      "reason": "登录页消费共享视觉 token 与 auth 表单模式规范。"
+    },
+    {
+      "from": "UI-SYS-003",
+      "to": "UI-SYS-001",
+      "reason": "家庭接入页消费 GroupedSurface 选项 surface。"
+    },
+    {
+      "from": "UI-SYS-004",
+      "to": "UI-SYS-001",
+      "reason": "待办页消费 GroupedSurface 与 TaskActionRow。"
+    },
+    {
+      "from": "UI-SYS-005",
+      "to": "UI-SYS-001",
+      "reason": "植物看板消费 photo-led 卡片与共享 surface 规则。"
+    },
+    {
+      "from": "UI-SYS-006",
+      "to": "UI-SYS-001",
+      "reason": "植物详情依赖 ScreenNav、ObjectSummaryBand、GroupedSurface。"
+    },
+    {
+      "from": "UI-SYS-007",
+      "to": "UI-SYS-006",
+      "reason": "表单模板复用详情页验证后的轻量导航和对象摘要模式。"
+    },
+    {
+      "from": "UI-SYS-008",
+      "to": "UI-SYS-001",
+      "reason": "设置页消费 InviteCard 和 GroupedSurface。"
+    },
+    {
+      "from": "UI-SYS-009",
+      "to": "UI-SYS-002",
+      "reason": "视觉 QA 依赖登录页落地。"
+    },
+    {
+      "from": "UI-SYS-009",
+      "to": "UI-SYS-003",
+      "reason": "视觉 QA 依赖家庭接入页落地。"
+    },
+    {
+      "from": "UI-SYS-009",
+      "to": "UI-SYS-004",
+      "reason": "视觉 QA 依赖待办页落地。"
+    },
+    {
+      "from": "UI-SYS-009",
+      "to": "UI-SYS-005",
+      "reason": "视觉 QA 依赖植物看板落地。"
+    },
+    {
+      "from": "UI-SYS-009",
+      "to": "UI-SYS-006",
+      "reason": "视觉 QA 依赖植物详情落地。"
+    },
+    {
+      "from": "UI-SYS-009",
+      "to": "UI-SYS-007",
+      "reason": "视觉 QA 依赖表单模板落地。"
+    },
+    {
+      "from": "UI-SYS-009",
+      "to": "UI-SYS-008",
+      "reason": "视觉 QA 依赖设置页落地。"
+    }
+  ]
+}

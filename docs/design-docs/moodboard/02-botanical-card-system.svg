@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200">
+  <rect width="900" height="1200" fill="#f9faf2"/>
+  <g transform="translate(80 88)">
+    <text x="0" y="0" font-family="Georgia, serif" font-size="56" font-weight="700" fill="#173f35">Plant shelf</text>
+    <text x="0" y="42" font-family="Arial, sans-serif" font-size="22" fill="#6e8379">A catalog feeling without becoming decorative.</text>
+  </g>
+  <g transform="translate(80 190)">
+    <rect width="330" height="420" rx="8" fill="#fffefa" stroke="#d9e4d7"/>
+    <rect x="22" y="22" width="286" height="240" rx="6" fill="#dbece3"/>
+    <path d="M164 224c-56-70-32-153 29-185 72 43 73 142-29 185Z" fill="#3c8c66"/>
+    <path d="M166 220c46-96 110-128 174-97-19 95-78 130-174 97Z" fill="#7fbf8b"/>
+    <text x="22" y="312" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#173f35">龟背竹</text>
+    <text x="22" y="348" font-family="Arial, sans-serif" font-size="18" fill="#65786f">客厅西窗 · 5 天浇水</text>
+    <rect x="22" y="372" width="110" height="28" rx="14" fill="#e8f2ec"/>
+    <text x="42" y="392" font-family="Arial, sans-serif" font-size="14" fill="#35634f">今天到期</text>
+  </g>
+  <g transform="translate(490 190)">
+    <rect width="330" height="420" rx="8" fill="#fffefa" stroke="#d9e4d7"/>
+    <rect x="22" y="22" width="286" height="240" rx="6" fill="#edf1dc"/>
+    <path d="M114 225c27-97 83-146 166-145 34 83-10 159-166 145Z" fill="#99b86e"/>
+    <path d="M154 230c-43-88-24-152 53-192 57 80 41 146-53 192Z" fill="#638d58"/>
+    <text x="22" y="312" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#173f35">琴叶榕</text>
+    <text x="22" y="348" font-family="Arial, sans-serif" font-size="18" fill="#65786f">阳台 · 12 天施肥</text>
+    <rect x="22" y="372" width="126" height="28" rx="14" fill="#f6e7c5"/>
+    <text x="42" y="392" font-family="Arial, sans-serif" font-size="14" fill="#7a5d20">3 天后</text>
+  </g>
+  <g transform="translate(80 676)">
+    <rect width="740" height="230" rx="8" fill="#173f35"/>
+    <text x="42" y="64" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#fffdf4">Care rhythm</text>
+    <line x1="42" y1="122" x2="680" y2="122" stroke="#8eb39d" stroke-width="2"/>
+    <circle cx="94" cy="122" r="17" fill="#f3c15f"/>
+    <circle cx="254" cy="122" r="17" fill="#e9f0df"/>
+    <circle cx="416" cy="122" r="17" fill="#e9f0df"/>
+    <circle cx="578" cy="122" r="17" fill="#e9f0df"/>
+    <text x="74" y="168" font-family="Arial, sans-serif" font-size="16" fill="#d6e5da">Today</text>
+    <text x="228" y="168" font-family="Arial, sans-serif" font-size="16" fill="#d6e5da">+5d</text>
+    <text x="390" y="168" font-family="Arial, sans-serif" font-size="16" fill="#d6e5da">+10d</text>
+    <text x="552" y="168" font-family="Arial, sans-serif" font-size="16" fill="#d6e5da">+15d</text>
+  </g>
+</svg>

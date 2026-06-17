@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#f5fbf4"/>
+      <stop offset="0.62" stop-color="#e8f4ef"/>
+      <stop offset="1" stop-color="#d8ebe8"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="18" stdDeviation="20" flood-color="#31584c" flood-opacity=".18"/>
+    </filter>
+  </defs>
+  <rect width="900" height="1200" fill="url(#bg)"/>
+  <path d="M710 66c78 48 121 139 101 230-21 96-106 168-207 174-93 6-169-44-215-111-45-66-63-150-24-215C405 78 505 44 600 42c40-1 77 6 110 24Z" fill="#b7d8c4" opacity=".45"/>
+  <path d="M47 741c42-126 165-198 286-175 119 22 210 133 203 259-8 140-132 235-263 223C152 1036 39 946 29 825c-2-29 4-58 18-84Z" fill="#cde4ec" opacity=".55"/>
+  <g transform="translate(214 72)" filter="url(#shadow)">
+    <rect x="0" y="0" width="472" height="1058" rx="54" fill="#16352f"/>
+    <rect x="18" y="22" width="436" height="1014" rx="42" fill="#fbfcf7"/>
+    <rect x="54" y="76" width="110" height="16" rx="8" fill="#98b9a7"/>
+    <text x="54" y="145" font-family="Arial, sans-serif" font-size="40" font-weight="700" fill="#183c34">Today</text>
+    <text x="54" y="182" font-family="Arial, sans-serif" font-size="20" fill="#668276">4 care tasks</text>
+    <circle cx="378" cy="132" r="36" fill="#e2f1e7"/>
+    <path d="M378 110c25 24 25 49 0 72-25-23-25-48 0-72Z" fill="#3f8b68"/>
+    <g transform="translate(54 230)">
+      <rect width="364" height="144" rx="22" fill="#20483d"/>
+      <circle cx="58" cy="72" r="38" fill="#91c7a6"/>
+      <path d="M46 78c9-37 28-49 55-36-4 38-25 52-55 36Z" fill="#e8f4e7"/>
+      <text x="116" y="54" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#fffaf0">Monstera</text>
+      <text x="116" y="88" font-family="Arial, sans-serif" font-size="18" fill="#cfe5d6">Water now</text>
+      <rect x="260" y="47" width="74" height="42" rx="21" fill="#f1c567"/>
+      <text x="282" y="74" font-family="Arial, sans-serif" font-size="17" font-weight="700" fill="#1d342d">Done</text>
+    </g>
+    <g transform="translate(54 402)">
+      <rect width="364" height="112" rx="20" fill="#eef5ef"/>
+      <circle cx="48" cy="56" r="28" fill="#d3e7dc"/>
+      <text x="92" y="48" font-family="Arial, sans-serif" font-size="21" font-weight="700" fill="#233f37">Peace lily</text>
+      <text x="92" y="78" font-family="Arial, sans-serif" font-size="16" fill="#73887f">Mist leaves · overdue</text>
+      <circle cx="322" cy="56" r="20" fill="#e9b46b"/>
+    </g>
+    <g transform="translate(54 534)">
+      <rect width="364" height="112" rx="20" fill="#f4f2e8"/>
+      <circle cx="48" cy="56" r="28" fill="#dce6bd"/>
+      <text x="92" y="48" font-family="Arial, sans-serif" font-size="21" font-weight="700" fill="#233f37">Rosemary</text>
+      <text x="92" y="78" font-family="Arial, sans-serif" font-size="16" fill="#73887f">Feed tomorrow</text>
+      <circle cx="322" cy="56" r="20" fill="#9fbe71"/>
+    </g>
+    <g transform="translate(54 716)">
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#183c34">Plants</text>
+      <rect y="28" width="104" height="122" rx="18" fill="#dbece3"/>
+      <rect x="130" y="28" width="104" height="122" rx="18" fill="#e4efe7"/>
+      <rect x="260" y="28" width="104" height="122" rx="18" fill="#e8f0db"/>
+    </g>
+  </g>
+</svg>

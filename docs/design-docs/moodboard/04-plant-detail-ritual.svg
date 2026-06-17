@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200">
+  <rect width="900" height="1200" fill="#eef5ef"/>
+  <g transform="translate(188 72)">
+    <rect width="524" height="1058" rx="50" fill="#17342f"/>
+    <rect x="20" y="22" width="484" height="1014" rx="38" fill="#fffdf6"/>
+    <rect x="52" y="70" width="420" height="330" rx="30" fill="#cfe5db"/>
+    <path d="M257 360c-85-106-55-236 43-289 112 67 112 220-43 289Z" fill="#316e56"/>
+    <path d="M261 354c83-137 183-176 293-116-41 130-136 169-293 116Z" fill="#72a874"/>
+    <text x="52" y="474" font-family="Arial, sans-serif" font-size="40" font-weight="700" fill="#183c34">龟背竹</text>
+    <text x="52" y="512" font-family="Arial, sans-serif" font-size="20" fill="#6e8379">客厅西窗 · 明亮散射光</text>
+    <g transform="translate(52 562)">
+      <rect width="420" height="132" rx="22" fill="#1e473d"/>
+      <text x="28" y="46" font-family="Arial, sans-serif" font-size="21" font-weight="700" fill="#fffaf2">浇水</text>
+      <text x="28" y="78" font-family="Arial, sans-serif" font-size="16" fill="#cfe5d8">每 5 天 · 今天到期</text>
+      <rect x="300" y="42" width="82" height="48" rx="24" fill="#f1c567"/>
+      <text x="322" y="73" font-family="Arial, sans-serif" font-size="17" font-weight="700" fill="#17342f">完成</text>
+    </g>
+    <g transform="translate(52 718)">
+      <rect width="420" height="112" rx="22" fill="#edf4ee"/>
+      <text x="28" y="44" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#183c34">施肥</text>
+      <text x="28" y="75" font-family="Arial, sans-serif" font-size="16" fill="#6e8379">每 20 天 · 6 月 16 日</text>
+      <circle cx="360" cy="56" r="24" fill="#dbe9d4"/>
+    </g>
+    <g transform="translate(52 858)">
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#183c34">备注</text>
+      <text x="0" y="36" font-family="Arial, sans-serif" font-size="17" fill="#6e8379">盆土表层 2cm 干了再浇透，冬天延长间隔。</text>
+    </g>
+  </g>
+</svg>

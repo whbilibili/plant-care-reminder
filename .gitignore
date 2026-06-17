@@ -1,0 +1,15 @@
+# 依赖与构建产物
+node_modules/
+dist/
+build/
+.vite/
+
+# 工具缓存（AI 技能包、运行时临时文件）
+.agents/
+.superpowers/
+*.pid
+*.log
+
+# 环境与本地配置
+.env.local
+.DS_Store

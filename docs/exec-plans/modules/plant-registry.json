@@ -1,0 +1,686 @@
+{
+  "project": "plant-care-reminder",
+  "prd": "docs/product-specs/2026-06-05-mvp-requirements.md",
+  "created_at": "2026-06-05",
+  "tasks": [
+    {
+      "task_id": "PLANT-001",
+      "description": "Create image upload helpers and storage contracts for plant cover photos in Convex storage.",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "plants"
+            ],
+            "key_fields": {
+              "plants": [
+                "imageStorageId"
+              ]
+            },
+            "indexes": [],
+            "relations": "Each plant stores a storage id reference instead of raw file data.",
+            "notes": "The upload contract is reused by create and edit flows."
+          },
+          "queries": {
+            "read": "Load image URLs from storage ids when rendering plants.",
+            "write": "Upload image files and return storage ids."
+          },
+          "migration_strategy": "Uses INFRA-002 schema."
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [
+            {
+              "method": "mutation",
+              "path": "convex/generatePlantImageUploadUrl",
+              "request": {},
+              "response": {
+                "uploadUrl": "string"
+              },
+              "auth_required": true
+            }
+          ],
+          "notes": "The client uploads first, then stores the returned storage id on plant records."
+        },
+        "component_tree": {
+          "entry_component": "PlantImageField",
+          "children": [
+            "ImagePreview",
+            "ImageUploadButton"
+          ],
+          "notes": "This component is reused by create and edit screens."
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "useMutation generate upload URL",
+          "local_state": "Selected file and upload progress"
+        },
+        "routing": {
+          "path": "/plants/new and /plants/:plantId/edit",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "session",
+          "rls_or_rbac": "Image upload URLs require a signed-in user."
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "cd app && npx convex dev --once --typecheck",
+        "visual": "Check preview, upload and error states on mobile width.",
+        "manual": "A selected file uploads successfully and yields a storage id that can be previewed."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/plants/PlantImageField.tsx",
+          "app/src/features/plants/uploadPlantImage.ts",
+          "app/convex/plants.ts"
+        ],
+        "modules": [
+          "plant-registry"
+        ],
+        "layer": "fullstack",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Plant images upload through Convex storage.",
+        "The upload helper returns a storage id and previewable image URL path.",
+        "Upload failures do not clear the surrounding form."
+      ]
+    },
+    {
+      "task_id": "PLANT-002",
+      "description": "Define plant form validation, DTO mapping and reusable editor state for name, description, note, location and image reference.",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "plants"
+            ],
+            "key_fields": {
+              "plants": [
+                "name",
+                "description",
+                "note",
+                "location",
+                "imageStorageId"
+              ]
+            },
+            "indexes": [
+              "plants.by_familyId"
+            ],
+            "relations": "Validation and mapping contracts are shared by create and edit mutations.",
+            "notes": "Name is required; location remains optional."
+          },
+          "queries": {
+            "read": "Load a plant record into editor-friendly state for edit mode.",
+            "write": "Map form data to mutation payloads."
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "shared-contract",
+          "endpoints": [],
+          "notes": "This task creates the frontend contract used by later plant CRUD tasks."
+        },
+        "component_tree": {
+          "entry_component": "PlantForm",
+          "children": [
+            "NameField",
+            "DescriptionField",
+            "NoteField",
+            "LocationField",
+            "PlantImageField"
+          ],
+          "notes": "Shared create/edit form state lives here."
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "Form draft and validation state"
+        },
+        "routing": {
+          "path": "shared form layer",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "N/A",
+        "visual": "Check field hierarchy and validation messaging on iPhone width.",
+        "manual": "The same form state can populate both create and edit screens without shape conversion bugs."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/plants/plantSchema.ts",
+          "app/src/features/plants/usePlantForm.ts",
+          "app/src/features/plants/PlantForm.tsx"
+        ],
+        "modules": [
+          "plant-registry"
+        ],
+        "layer": "frontend",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Plant validation rules match the product spec.",
+        "Create and edit screens reuse a single editor contract.",
+        "Optional fields remain optional without breaking payload generation."
+      ]
+    },
+    {
+      "task_id": "PLANT-003",
+      "description": "Implement the create-plant flow with optional cover photo upload and family-scoped ownership checks.",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "plants"
+            ],
+            "key_fields": {
+              "plants": [
+                "familyId",
+                "name",
+                "imageStorageId",
+                "createdBy",
+                "createdAt"
+              ]
+            },
+            "indexes": [
+              "plants.by_familyId"
+            ],
+            "relations": "New plants belong to the creator's current family.",
+            "notes": "Use the shared form and upload helper from PLANT-001 and PLANT-002."
+          },
+          "queries": {
+            "read": "Read current family context only.",
+            "write": "Insert a new plant record."
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [
+            {
+              "method": "mutation",
+              "path": "convex/createPlant",
+              "request": {
+                "name": "string",
+                "description": "string",
+                "note": "string",
+                "location": "string|null",
+                "imageStorageId": "string|null"
+              },
+              "response": {
+                "plantId": "string"
+              },
+              "auth_required": true
+            }
+          ],
+          "notes": "The mutation derives familyId and createdBy from the current user context."
+        },
+        "component_tree": {
+          "entry_component": "CreatePlantPage",
+          "children": [
+            "PlantForm"
+          ],
+          "notes": "On success, route back into the plant list or plant detail."
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "useMutation createPlant",
+          "local_state": "Form draft, upload and submit state"
+        },
+        "routing": {
+          "path": "/plants/new",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "session",
+          "rls_or_rbac": "Create is scoped to the current family only."
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "cd app && npx convex dev --once --typecheck",
+        "visual": "Check create flow, success state and tap targets on mobile width.",
+        "manual": "A family member can create a plant with or without an image and see it appear in the shared plant list."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/plants/CreatePlantPage.tsx",
+          "app/convex/plants.ts"
+        ],
+        "modules": [
+          "plant-registry"
+        ],
+        "layer": "fullstack",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Plant creation validates required fields.",
+        "The new plant is scoped to the current family.",
+        "Successful create updates the shared plant list."
+      ]
+    },
+    {
+      "task_id": "PLANT-004",
+      "description": "Implement the edit-plant flow with image replacement, field updates and family-scoped ownership checks.",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "plants"
+            ],
+            "key_fields": {
+              "plants": [
+                "id",
+                "familyId",
+                "updatedAt"
+              ]
+            },
+            "indexes": [
+              "plants.by_familyId"
+            ],
+            "relations": "A plant can be updated only within its family scope.",
+            "notes": "Reuses the same form contract as create."
+          },
+          "queries": {
+            "read": "Load an existing plant by plantId and familyId.",
+            "write": "Patch editable plant fields."
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [
+            {
+              "method": "mutation",
+              "path": "convex/updatePlant",
+              "request": {
+                "plantId": "string",
+                "name": "string",
+                "description": "string",
+                "note": "string",
+                "location": "string|null",
+                "imageStorageId": "string|null"
+              },
+              "response": {
+                "ok": true
+              },
+              "auth_required": true
+            }
+          ],
+          "notes": "The mutation rejects updates outside the current family."
+        },
+        "component_tree": {
+          "entry_component": "EditPlantPage",
+          "children": [
+            "PlantForm"
+          ],
+          "notes": "Prefill the form with existing plant data."
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "useQuery plant detail + useMutation updatePlant",
+          "local_state": "Prefilled form draft and submit state"
+        },
+        "routing": {
+          "path": "/plants/:plantId/edit",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "session",
+          "rls_or_rbac": "Edit is scoped to the current family only."
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "cd app && npx convex dev --once --typecheck",
+        "visual": "Check prefilled edit form and image replacement flow on iPhone width.",
+        "manual": "Editing a plant updates the shared plant detail and list without losing existing image or notes unintentionally."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/plants/EditPlantPage.tsx",
+          "app/convex/plants.ts"
+        ],
+        "modules": [
+          "plant-registry"
+        ],
+        "layer": "fullstack",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Existing plant data is loaded into the form correctly.",
+        "Members can replace or keep the current image.",
+        "Updates are visible across the shared family space."
+      ]
+    },
+    {
+      "task_id": "PLANT-005",
+      "description": "Build the plant list page with photo-led cards and a next-due summary for each active plant.",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "plants",
+              "plantTasks"
+            ],
+            "key_fields": {
+              "plants": [
+                "familyId",
+                "name",
+                "isArchived"
+              ],
+              "plantTasks": [
+                "plantId",
+                "nextDueAt",
+                "enabled"
+              ]
+            },
+            "indexes": [
+              "plants.by_familyId",
+              "plantTasks.by_plantId"
+            ],
+            "relations": "Each plant card derives its nearest enabled care task from plantTasks.",
+            "notes": "Archived plants stay hidden from the active list."
+          },
+          "queries": {
+            "read": "Query active plants by familyId and decorate each plant with its nearest due task.",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [
+            {
+              "method": "query",
+              "path": "convex/listPlantsWithNextDue",
+              "request": {},
+              "response": {
+                "plants": []
+              },
+              "auth_required": true
+            }
+          ],
+          "notes": "Return list-ready card data to keep the page simple."
+        },
+        "component_tree": {
+          "entry_component": "PlantListPage",
+          "children": [
+            "PlantListHeader",
+            "PlantCardList",
+            "PlantCard",
+            "AddPlantFab"
+          ],
+          "notes": "Image recognition and next action should be immediate."
+        },
+        "state_management": {
+          "global_store": "Optional UI filter state only",
+          "server_state": "useQuery listPlantsWithNextDue",
+          "local_state": "Search/filter text"
+        },
+        "routing": {
+          "path": "/plants",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "session",
+          "rls_or_rbac": "Query only the current family."
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "cd app && npx convex dev --once --typecheck",
+        "visual": "Check card density, image cropping and next-due summary hierarchy on mobile width.",
+        "manual": "The plant list shows active plants only, with the nearest due task summary when present."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/plants/PlantListPage.tsx",
+          "app/src/features/plants/PlantCard.tsx",
+          "app/convex/plants.ts"
+        ],
+        "modules": [
+          "plant-registry"
+        ],
+        "layer": "fullstack",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "The Plants page lists active plants in the current family.",
+        "Each card shows a name, image and next-due summary.",
+        "The page remains usable on a 375px viewport."
+      ]
+    },
+    {
+      "task_id": "PLANT-006",
+      "description": "Build the plant detail page with profile metadata, cover photo and the enabled care-task section entry points.",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "plants",
+              "plantTasks"
+            ],
+            "key_fields": {
+              "plants": [
+                "id",
+                "familyId"
+              ],
+              "plantTasks": [
+                "plantId",
+                "enabled",
+                "nextDueAt"
+              ]
+            },
+            "indexes": [
+              "plantTasks.by_plantId"
+            ],
+            "relations": "The detail response combines one plant record with all enabled tasks ordered by nextDueAt.",
+            "notes": "Task logs are not a first-class detail surface in MVP."
+          },
+          "queries": {
+            "read": "Fetch a single plant plus enabled tasks by plantId and familyId.",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [
+            {
+              "method": "query",
+              "path": "convex/getPlantDetail",
+              "request": {
+                "plantId": "string"
+              },
+              "response": {
+                "plant": {},
+                "tasks": []
+              },
+              "auth_required": true
+            }
+          ],
+          "notes": "Return detail-ready data for profile and task rendering."
+        },
+        "component_tree": {
+          "entry_component": "PlantDetailPage",
+          "children": [
+            "PlantHeroCard",
+            "TaskSection"
+          ],
+          "notes": "TaskSection is implemented by the care-reminders module."
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "useQuery getPlantDetail",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "/plants/:plantId",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "session",
+          "rls_or_rbac": "Read access is limited to the current family."
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "cd app && npx convex dev --once --typecheck",
+        "visual": "Check profile hierarchy and task section spacing on iPhone width.",
+        "manual": "The detail page shows the plant profile and enabled tasks for the current family only."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/plants/PlantDetailPage.tsx",
+          "app/src/features/plants/PlantHeroCard.tsx",
+          "app/convex/plants.ts"
+        ],
+        "modules": [
+          "plant-registry"
+        ],
+        "layer": "fullstack",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Plant detail renders core metadata and cover photo.",
+        "Enabled task data is available to the task section.",
+        "Users cannot open a plant from another family."
+      ]
+    },
+    {
+      "task_id": "PLANT-007",
+      "description": "Implement archive and restore behavior so inactive plants disappear from active views without losing tasks or completion logs.",
+      "priority": "2-Medium",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "plants",
+              "plantTasks",
+              "taskCompletionLogs"
+            ],
+            "key_fields": {
+              "plants": [
+                "id",
+                "isArchived"
+              ]
+            },
+            "indexes": [
+              "plants.by_familyId"
+            ],
+            "relations": "Archive is a soft-state toggle that leaves tasks and completion history intact.",
+            "notes": "Do not hard-delete plants in MVP."
+          },
+          "queries": {
+            "read": "Active list and due queries filter out archived plants.",
+            "write": "Patch plants.isArchived true or false."
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [
+            {
+              "method": "mutation",
+              "path": "convex/setPlantArchivedState",
+              "request": {
+                "plantId": "string",
+                "isArchived": true
+              },
+              "response": {
+                "ok": true
+              },
+              "auth_required": true
+            }
+          ],
+          "notes": "Use the same mutation for archive and restore."
+        },
+        "component_tree": {
+          "entry_component": "ArchivePlantAction",
+          "children": [
+            "ConfirmArchiveDialog"
+          ],
+          "notes": "Keep the action secondary to care-task completion."
+        },
+        "state_management": {
+          "global_store": "Dialog state only",
+          "server_state": "useMutation setPlantArchivedState",
+          "local_state": "Confirm dialog state"
+        },
+        "routing": {
+          "path": "/plants/:plantId",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "session",
+          "rls_or_rbac": "Only family members can archive plants in their family."
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "cd app && npx convex dev --once --typecheck",
+        "visual": "Check the archive/restore confirmation flow on mobile width.",
+        "manual": "Archived plants leave active views but keep their tasks and completion logs in data."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/plants/ArchivePlantAction.tsx",
+          "app/convex/plants.ts"
+        ],
+        "modules": [
+          "plant-registry"
+        ],
+        "layer": "fullstack",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Archived plants disappear from active plant and due views.",
+        "No task or completion history is deleted.",
+        "The action requires explicit confirmation."
+      ]
+    }
+  ]
+}

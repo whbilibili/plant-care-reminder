@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1170" height="2532" viewBox="0 0 1170 2532">
+  <defs>
+    
+    <filter id="paperNoise" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="4" seed="7"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncA type="table" tableValues="0 0.22"/>
+      </feComponentTransfer>
+    </filter>
+    <pattern id="fiberLines" width="180" height="180" patternUnits="userSpaceOnUse" patternTransform="rotate(32)">
+      <line x1="0" y1="18" x2="180" y2="18" stroke="#c8d8c3" stroke-width="2" opacity="0.18"/>
+      <line x1="0" y1="96" x2="180" y2="96" stroke="#e1c979" stroke-width="1" opacity="0.1"/>
+    </pattern>
+    <radialGradient id="bg-app-paper-top" cx="80%" cy="0%" r="70%">
+      <stop offset="0%" stop-color="#dbe8d1" stop-opacity="0.88"/>
+      <stop offset="52%" stop-color="#f4f8f0" stop-opacity="0.62"/>
+      <stop offset="100%" stop-color="#fbfcf7" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="bg-app-paper-warm" cx="14%" cy="92%" r="58%">
+      <stop offset="0%" stop-color="#eadb9a" stop-opacity="0.18"/>
+      <stop offset="55%" stop-color="#f7f5ea" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#fbfcf7" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bg-app-paper-paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fbfcf7"/>
+      <stop offset="100%" stop-color="#f0f7ee"/>
+    </linearGradient>
+    <filter id="bg-app-paper-softBlur">
+      <feGaussianBlur stdDeviation="9"/>
+    </filter>
+  </defs>
+  <rect width="1170" height="2532" fill="url(#bg-app-paper-paper)"/>
+  <rect width="1170" height="2532" fill="url(#bg-app-paper-top)"/>
+  <rect width="1170" height="2532" fill="url(#bg-app-paper-warm)"/>
+  <rect width="1170" height="2532" fill="url(#fiberLines)" opacity="0.42"/>
+  <rect width="1170" height="2532" filter="url(#paperNoise)" opacity="0.34"/>
+  
+      <circle cx="1050" cy="120" r="220" fill="#cfdcc7" opacity="0.22" filter="url(#bg-app-paper-softBlur)"/>
+      
+    <g transform="translate(830 52) rotate(-14) scale(1.05)" opacity="0.14">
+      <path d="M0 0 C38 -70 118 -98 180 -64 C116 -34 62 8 0 0Z" fill="#8fa67f"/>
+      <path d="M0 0 C62 -16 118 -38 180 -64" fill="none" stroke="#6f8a70" stroke-width="5" stroke-linecap="round"/>
+    </g>
+      
+    <g transform="translate(1030 198) rotate(36) scale(0.8)" opacity="0.12">
+      <path d="M0 0 C38 -70 118 -98 180 -64 C116 -34 62 8 0 0Z" fill="#8fa67f"/>
+      <path d="M0 0 C62 -16 118 -38 180 -64" fill="none" stroke="#6f8a70" stroke-width="5" stroke-linecap="round"/>
+    </g>
+      <path d="M760 170 C898 96 1044 90 1140 132" fill="none" stroke="#a9b99e" stroke-width="5" opacity="0.1"/>
+      <path d="M60 2370 C190 2288 330 2296 430 2380" fill="none" stroke="#c7d8be" stroke-width="4" opacity="0.12"/>
+    
+</svg>

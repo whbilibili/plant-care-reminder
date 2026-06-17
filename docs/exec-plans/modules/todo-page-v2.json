@@ -1,0 +1,974 @@
+{
+  "project": "plant-care-reminder",
+  "prd": "docs/product-specs/2026-06-10-todo-page-iteration-spec.md",
+  "ui_spec": "docs/product-specs/2026-06-10-todo-page-ui-spec.md",
+  "created_at": "2026-06-10",
+  "module_intent": "待办页 v0.2 迭代：在已有 due inbox 基础上落地方案 A（今日完成移出主区）、状态化情感反馈区、推迟（含连续推迟提示）、完成撤销、分区级一键完成，以及配套的 botanical UI 美化。每个 Task 同时承载功能开发契约（data/api）与 UI 美化契约（design_contract），二者结合交付。",
+  "design_baseline": {
+    "token_source": "app/src/styles/tokens.css",
+    "hard_rule": "禁止硬编码 #hex；所有色值/间距/圆角/阴影一律引用 token 变量；新增任务类型色 --color-task-* 必须先在 tokens.css 补齐再使用。",
+    "reduced_motion": "所有动效在 prefers-reduced-motion: reduce 下退化为即时状态切换（tokens.css 已有全局兜底）。"
+  },
+  "tasks": [
+    {
+      "task_id": "TODO2-001",
+      "description": "任务类型色条/图标基建：在 tokens.css 补 --color-task-* 色系，并在 DueTaskCard 左侧引入任务类型识别（色条/图标），降低决策成本。纯 UI 美化任务。",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "无数据变更；taskType 字段已存在于 plantTasks 并由 listDueTasks 返回。",
+            "notes": "纯前端展示增强，不触碰后端。"
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "none",
+          "endpoints": [],
+          "notes": "复用 listDueTasks 已返回的 taskType / customLabel 字段。"
+        },
+        "component_tree": {
+          "entry_component": "DueTaskCard",
+          "children": [
+            "TaskTypeBadge"
+          ],
+          "notes": "新增 TaskTypeBadge（色条/图标），插入缩略图与内容之间或作缩略图角标。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A（消费现有 listDueTasks 数据）",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "/todo",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        },
+        "design_contract": {
+          "ui_spec_ref": "todo-page-ui-spec §3.1 / §8",
+          "intent": "扫一眼知道要干嘛，而非读文字；任务类型用颜色 + emoji 双编码。",
+          "tokens_new": [
+            "--color-task-watering（水蓝，冷色区别于主绿）",
+            "--color-task-fertilizing（暖棕/土色）",
+            "--color-task-misting（青绿）",
+            "--color-task-repotting（陶土橙）",
+            "--color-task-pruning（叶绿）",
+            "--color-task-custom（中性灰）"
+          ],
+          "tokens_reuse": [],
+          "type_to_visual": {
+            "watering": "💧 + --color-task-watering",
+            "fertilizing": "🌱 + --color-task-fertilizing",
+            "misting": "💨 + --color-task-misting",
+            "repotting": "🪴 + --color-task-repotting",
+            "pruning": "✂️ + --color-task-pruning",
+            "custom": "🏷️ + --color-task-custom"
+          },
+          "layout": "卡片左侧 4px 宽类型色条 或 缩略图角标小圆点图标。",
+          "motion": "无（静态识别元素）。",
+          "reduced_motion": "N/A",
+          "constraints": "色值必须落在 tokens.css 的 --color-task-* 变量，禁止行内 #hex。"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "N/A",
+        "visual": "六种任务类型（含 custom）在卡片上色条/图标正确区分，移动端窄屏不挤压内容区；切换 prefers-reduced-motion 无影响。",
+        "manual": "随手新建不同类型任务，待办卡片左侧能一眼区分类型。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/styles/tokens.css",
+          "app/src/features/tasks/TaskTypeBadge.tsx",
+          "app/src/features/tasks/DueTaskCard.tsx"
+        ],
+        "modules": [
+          "todo-page-v2"
+        ],
+        "layer": "ui",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "tokens.css 新增 --color-task-* 六色系，无硬编码 #hex 散落在组件中。",
+        "六种任务类型在卡片上有可区分的色条/图标。",
+        "色条/图标不破坏现有卡片布局与可读性。"
+      ]
+    },
+    {
+      "task_id": "TODO2-002",
+      "description": "落地 PRD §1.3 方案 A：listDueTasks 分桶强化——主区仅「逾期 + 今日未完成」，今日完成即移出主区；下次落在 1–3 天的任务在「即将到期」区以灰态返回，带「已完成·下次 X 月 X 日」标记。前端即将到期区按灰态渲染。",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "plantTasks",
+              "taskCompletionLogs"
+            ],
+            "key_fields": {
+              "plantTasks": [
+                "familyId",
+                "nextDueAt",
+                "enabled",
+                "lastCompletedAt"
+              ],
+              "taskCompletionLogs": [
+                "taskId",
+                "completedAt"
+              ]
+            },
+            "indexes": [
+              "plantTasks.by_familyId_and_nextDueAt"
+            ],
+            "relations": "判定「今日是否已完成」需读取 lastCompletedAt 是否落在今天，或最近一条 completion log。",
+            "notes": "现有 listDueTasks 已做 overdue/today/upcoming 三分桶且 UPCOMING_WINDOW_DAYS=3。本任务增量：为 upcoming 桶里「今日已完成且下次落在窗口内」的项补 completedToday + nextDueAt 元信息，供前端灰态显示。"
+          },
+          "queries": {
+            "read": "在现有 listDueTasks 内：今日已完成的任务不再进 today/overdue 桶；upcoming 桶项附带 completedToday 标记与格式化下次日期。",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change（仅查询返回结构增量字段）。"
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [
+            {
+              "method": "query",
+              "path": "convex/listDueTasks",
+              "request": {},
+              "response": {
+                "overdue": [],
+                "today": [],
+                "upcoming": [
+                  {
+                    "taskId": "string",
+                    "nextDueAt": "number",
+                    "completedToday": "boolean"
+                  }
+                ]
+              },
+              "auth_required": true
+            }
+          ],
+          "notes": "扩展现有 listDueTasks 返回项，避免前端再次推导紧急度；completedToday 由后端按 family 时区/UTC 日界判定（与现有 getUtcDayStart 一致）。"
+        },
+        "component_tree": {
+          "entry_component": "TodoPage",
+          "children": [
+            "DueTaskGroup",
+            "DueTaskCard",
+            "UpcomingDueCard"
+          ],
+          "notes": "即将到期区用灰态卡片渲染 completedToday 项。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "useQuery listDueTasks（reactive，多人会话自动一致）",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "/todo",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "session",
+          "rls_or_rbac": "查询按 current family 隔离。"
+        },
+        "design_contract": {
+          "ui_spec_ref": "todo-page-ui-spec §1.3 / §5",
+          "intent": "完成即移出主区给即时正反馈；未来可见性放到弱化的即将到期区，传达「这个不用管了，心里有数即可」。",
+          "tokens_new": [],
+          "tokens_reuse": [
+            "--color-muted（即将到期区文字降级）",
+            "--color-success（灰态对勾）",
+            "--color-surface（卡片底，但整区降对比）"
+          ],
+          "layout": "完成且下次落窗口内的任务以灰态卡片显示，文案「✅ 已完成 · 下次 X 月 X 日」，左侧淡绿对勾。",
+          "motion": "完成移出主区的淡出动效由 TODO2-008 负责；本任务只保证灰态静态呈现。",
+          "reduced_motion": "灰态为静态呈现，不受影响。",
+          "constraints": "灰态文字统一 --color-muted，禁止硬编码灰值。"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "cd app && npx convex dev --once --typecheck",
+        "visual": "今日完成的任务从主区消失、在即将到期区以灰态出现并标注下次日期；间隔=1 天的任务次日正常重现（不被误抑制）。",
+        "manual": "完成一个间隔 3 天的浇水任务，主区立即移除，即将到期区出现灰态「已完成·下次…」。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/convex/tasks.ts",
+          "app/src/features/tasks/TodoPage.tsx",
+          "app/src/features/tasks/UpcomingDueCard.tsx",
+          "app/tests/unit/tasks/listDueTasks.test.ts"
+        ],
+        "modules": [
+          "todo-page-v2"
+        ],
+        "layer": "fullstack",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "主区只含逾期 + 今日未完成任务。",
+        "今日完成的任务立即移出主区。",
+        "下次落 1–3 天且今日已完成的任务在即将到期区以灰态 + 下次日期显示。",
+        "间隔=1 天的任务次日正常重现，不被误去重。"
+      ]
+    },
+    {
+      "task_id": "TODO2-003",
+      "description": "状态化情感反馈区（替代 Banner）：聚合待办状态为「全部完成 / 有今日任务 / 有逾期」三态，前端渲染随状态变化的问候卡（仅完成态允许渐变+暖金+光晕的奖赏视觉）。",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "plantTasks"
+            ],
+            "key_fields": {
+              "plantTasks": [
+                "familyId",
+                "nextDueAt",
+                "enabled"
+              ]
+            },
+            "indexes": [
+              "plantTasks.by_familyId_and_nextDueAt"
+            ],
+            "relations": "反馈区状态可直接由 listDueTasks 的 overdue/today 桶长度派生，无需新查询。",
+            "notes": "优先复用 listDueTasks 结果在前端派生状态与株数；如需独立汇总可加 query，但本迭代倾向前端派生以减少往返。"
+          },
+          "queries": {
+            "read": "复用 listDueTasks（overdue.length / today.length 派生三态与 N 株）。",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "baas-sdk",
+          "endpoints": [],
+          "notes": "无新接口，前端从 listDueTasks 结果派生状态。"
+        },
+        "component_tree": {
+          "entry_component": "TodoPage",
+          "children": [
+            "TodoGreetingCard"
+          ],
+          "notes": "TodoGreetingCard 接收 {overdueCount, todayCount} 派生三态。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "useQuery listDueTasks 派生",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "/todo",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "session",
+          "rls_or_rbac": "随 listDueTasks family 隔离。"
+        },
+        "design_contract": {
+          "ui_spec_ref": "todo-page-ui-spec §2",
+          "intent": "正反馈闭环载体；完成态是唯一允许「华丽」的时刻，有任务态保持克制把视觉预算让给任务卡。",
+          "tokens_new": [],
+          "tokens_reuse": [
+            "--gradient-botanical（全部完成态背景）",
+            "--gradient-accent（完成态右上角光晕）",
+            "--color-gold（完成态点缀）",
+            "--color-mist（有任务/有逾期态平涂底）",
+            "--color-warning（有逾期态左侧细色条）",
+            "--font-heading（Lora，反馈区主文案增温度）"
+          ],
+          "states": {
+            "all_done": "渐变 + 暖金小装饰 + 可选光晕，文案「🌿 今天的植物都照顾好啦」",
+            "has_today": "--color-mist 平涂，文案「今天要照顾 N 株植物」，无强点缀",
+            "has_overdue": "--color-mist 打底 + 左侧 --color-warning 细色条（非整块橙），文案「有 N 株植物在等你」"
+          },
+          "layout": "页面最顶层，卡片不可点击（纯信息），避免与任务卡可操作性混淆。",
+          "motion": "数字变化轻微淡入/滚动（可选）；完成态光晕呼吸（可选，由 TODO2-008 统筹）。",
+          "reduced_motion": "退化为静态文案与底色。",
+          "constraints": "反馈区禁止做成可点击的营销 Banner；不用警报红。"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "N/A",
+        "visual": "三态切换：全部完成（渐变+暖金）、有今日任务（mist 平涂）、有逾期（mist+暖橙色条）；株数随完成/推迟实时更新。",
+        "manual": "完成所有任务后反馈区切到「都照顾好啦」奖赏态。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/tasks/TodoGreetingCard.tsx",
+          "app/src/features/tasks/TodoPage.tsx"
+        ],
+        "modules": [
+          "todo-page-v2"
+        ],
+        "layer": "fullstack",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "三态文案与视觉与 UI spec §2.1 一致。",
+        "完成态使用渐变+暖金，有任务态克制。",
+        "反馈区不可点击，株数实时更新。",
+        "有逾期态不使用警报红。"
+      ]
+    },
+    {
+"task_id": "TODO2-004",
+"description": "推迟功能（PRD §8）：plantTasks 新增 consecutivePostponeCount 字段；新增 postponePlantTask mutation（nextDueAt = 今天 + 1，不改 lastCompletedAt、不写 completionLog、推迟次数 +1）；前端推迟入口 + §8.2 告知文案轻确认。",
+"priority": "1-High",
+"status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "plantTasks"
+            ],
+            "key_fields": {
+              "plantTasks": [
+                "id",
+                "familyId",
+                "nextDueAt",
+                "lastCompletedAt",
+                "consecutivePostponeCount"
+              ]
+            },
+            "indexes": [
+              "plantTasks.by_familyId_and_nextDueAt"
+            ],
+            "relations": "推迟只移动 nextDueAt，不触碰 lastCompletedAt / taskCompletionLogs。完成时 consecutivePostponeCount 清零（在 completePlantTask 内处理）。",
+            "notes": "consecutivePostponeCount 为新增可选字段，老数据默认视为 0；需在 convex/schema.ts 增列。推迟基准为「今天 + 1 天」（PRD §8.1，非 nextDueAt + N）。"
+          },
+          "queries": {
+            "read": "按 taskId + family 校验所有权。",
+            "write": "patch nextDueAt = 今日 0 点 + 1 天（或今日 + N，N 当前固定 1）；consecutivePostponeCount += 1。"
+          },
+          "migration_strategy": "convex schema push：plantTasks 增 consecutivePostponeCount: v.optional(v.number())。"
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [
+            {
+              "method": "mutation",
+              "path": "convex/postponePlantTask",
+              "request": {
+                "taskId": "string"
+              },
+              "response": {
+                "taskId": "string",
+                "nextDueAt": "number",
+                "consecutivePostponeCount": "number"
+              },
+              "auth_required": true
+            },
+            {
+              "method": "query",
+              "path": "convex/getPostponePreview",
+              "request": {
+                "taskId": "string"
+              },
+              "response": {
+                "isOverdue": "boolean",
+                "overdueDays": "number",
+                "nextDueAtPreview": "number"
+              },
+              "auth_required": true,
+              "optional": "可由前端用现有 nextDueAt 本地计算预览，避免额外往返；若计算逻辑要后端权威可保留。"
+            }
+          ],
+          "notes": "推迟天数 N 本迭代固定为 1，作为后端常量 POSTPONE_DAYS=1 预留可调。"
+        },
+        "component_tree": {
+          "entry_component": "DueTaskCard",
+          "children": [
+            "PostponeButton",
+            "PostponeConfirmSheet"
+          ],
+          "notes": "推迟入口视觉权重低于完成按钮（卡片内「推迟 1 天」文字按钮或右滑露出）。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "useMutation postponePlantTask（reactive 刷新分桶）",
+          "local_state": "确认 sheet 开合 + 预览文案"
+        },
+        "routing": {
+          "path": "/todo",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "session",
+          "rls_or_rbac": "推迟限本家庭任务；不记录 lastPostponedBy（PRD §8.7 推迟不归因到人）。"
+        },
+        "design_contract": {
+          "ui_spec_ref": "todo-page-ui-spec §6.1",
+          "intent": "让任务现在别烦我；确认前透明告知「这次推迟意味着什么」，语气温和不说教。",
+          "tokens_new": [],
+          "tokens_reuse": [
+            "--color-muted（告知文案）",
+            "--color-leaf-light / 弱描边（推迟按钮，低于完成按钮）"
+          ],
+          "copy": {
+            "overdue": "「该任务已逾期 N 天，推迟后将从今天起顺延，下次提醒 X 月 X 日」",
+            "due_today": "「推迟后下次提醒将变为 X 月 X 日」"
+          },
+          "layout": "推迟入口为卡片内次级文字按钮或右滑；确认走底部 sheet / 行内提示。",
+          "motion": "sheet 滑入轻动效，遵守 reduced-motion。",
+          "reduced_motion": "退化为直接显示确认。",
+          "constraints": "不用施压表达（如「你又拖延了」）；逾期天数与下次日期动态计算。"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "cd app && npx convex dev --once --typecheck",
+        "visual": "推迟按钮视觉弱于完成；点推迟弹出温和告知文案，逾期/今日两种文案正确。",
+        "manual": "推迟一个逾期 3 天的任务，nextDueAt 变为明天，lastCompletedAt 不变，无 completionLog 写入，consecutivePostponeCount +1。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/convex/schema.ts",
+          "app/convex/tasks.ts",
+          "app/src/features/tasks/PostponeButton.tsx",
+          "app/src/features/tasks/PostponeConfirmSheet.tsx",
+          "app/src/features/tasks/DueTaskCard.tsx",
+          "app/tests/unit/tasks/postpone.test.ts"
+        ],
+        "modules": [
+          "todo-page-v2"
+        ],
+        "layer": "fullstack",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "plantTasks 新增 consecutivePostponeCount 字段，老数据兼容默认 0。",
+        "推迟使 nextDueAt = 今天 + 1，不改 lastCompletedAt、不写 completionLog。",
+        "推迟时 consecutivePostponeCount +1，完成时清零。",
+        "确认前展示与 §8.2 一致的告知文案（逾期/今日两种）。",
+        "不记录推迟人。"
+      ]
+    },
+    {
+"task_id": "TODO2-005",
+"description": "连续推迟达阈值温和提示（PRD §8.4 / §8.5）：consecutivePostponeCount 达阈值（默认 3，可调）时，在任务卡上出现一条温和建议条，引导用户去调整养护周期。单次推迟不标记。",
+"priority": "2-Medium",
+"status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "plantTasks"
+            ],
+            "key_fields": {
+              "plantTasks": [
+                "id",
+                "consecutivePostponeCount",
+                "plantId",
+                "intervalDays"
+              ]
+            },
+            "indexes": [],
+            "relations": "建议条仅消费 TODO2-004 写入的 consecutivePostponeCount；跳转养护设置复用现有 EditTaskPage 路由。",
+            "notes": "阈值常量 POSTPONE_HINT_THRESHOLD=3 放代码里可调，不开放配置；listDueTasks 需把 consecutivePostponeCount 透出给前端。"
+          },
+          "queries": {
+            "read": "listDueTasks 返回项补 consecutivePostponeCount，前端按阈值判定是否显示建议条。",
+            "write": "N/A（清零在 completePlantTask）"
+          },
+          "migration_strategy": "No schema change（字段已在 TODO2-004 建立）。"
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [
+            {
+              "method": "query",
+              "path": "convex/listDueTasks",
+              "request": {},
+              "response": {
+                "note": "各任务项增量返回 consecutivePostponeCount"
+              },
+              "auth_required": true
+            }
+          ],
+          "notes": "复用 listDueTasks 透出推迟次数，避免新接口。"
+        },
+        "component_tree": {
+          "entry_component": "DueTaskCard",
+          "children": [
+            "PostponeHintBanner"
+          ],
+          "notes": "PostponeHintBanner 仅在 count >= 阈值时渲染，含跳转养护设置链接。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "useQuery listDueTasks（consecutivePostponeCount）",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "/todo（建议条），跳转 /plants/:plantId/tasks/:taskId/edit",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "session",
+          "rls_or_rbac": "随 listDueTasks family 隔离。"
+        },
+        "design_contract": {
+          "ui_spec_ref": "todo-page-ui-spec §6.1（连续推迟建议条）",
+          "intent": "把「管教」转为「贴心建议」；偶尔推一次悄无声息，总在推才值得提醒。",
+          "tokens_new": [],
+          "tokens_reuse": [
+            "--color-mist（建议条淡雾绿底）",
+            "--color-muted / --color-leaf（建议文案与链接）"
+          ],
+          "copy": {
+            "hint": "「这株植物最近总被推迟，要不要调整一下养护周期？」"
+          },
+          "layout": "建议条嵌在对应任务卡内或卡下，弱底色不抢主操作。",
+          "motion": "无强动效，淡入即可。",
+          "reduced_motion": "静态显示。",
+          "constraints": "语气贴心不说教；单次推迟绝不标记「已推迟」。"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "cd app && npx convex dev --once --typecheck",
+        "visual": "推迟未达阈值无任何标记；达阈值出现温和建议条，链接可跳到养护设置。",
+        "manual": "连续推迟同一任务 3 次后建议条出现；完成一次后 count 清零、建议条消失。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/convex/tasks.ts",
+          "app/src/features/tasks/PostponeHintBanner.tsx",
+          "app/src/features/tasks/DueTaskCard.tsx"
+        ],
+        "modules": [
+          "todo-page-v2"
+        ],
+        "layer": "fullstack",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "单次推迟不显示任何标记。",
+        "consecutivePostponeCount 达阈值（默认 3）时显示温和建议条。",
+        "建议条提供跳转养护设置的入口。",
+        "完成一次后计数清零、建议条消失。"
+      ]
+    },
+    {
+      "task_id": "TODO2-006",
+      "description": "完成撤销（PRD §9.1 / §4.3）：完成时把动作前的 lastCompletedAt / nextDueAt 临时缓存（会话内）；撤销 = 还原这两个字段 + 删除刚写入的 taskCompletionLog；前端 3–5 秒撤销浮条。不做长期可撤销。",
+      "priority": "2-Medium",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "plantTasks",
+              "taskCompletionLogs"
+            ],
+            "key_fields": {
+              "plantTasks": [
+                "id",
+                "lastCompletedAt",
+                "nextDueAt",
+                "consecutivePostponeCount"
+              ],
+              "taskCompletionLogs": [
+                "id",
+                "taskId",
+                "completedAt"
+              ]
+            },
+            "indexes": [
+              "taskCompletionLogs.by_taskId"
+            ],
+            "relations": "撤销需精确删除「刚写入的那条」log（按 logId 直接定位，由 completePlantTask 返回），避免误删历史。",
+            "notes": "completePlantTask 需在返回值中带回 logId 与撤销所需的 previousLastCompletedAt / previousNextDueAt / previousPostponeCount，供前端缓存并传回 undo。"
+          },
+          "queries": {
+            "read": "校验 taskId + logId 归属本家庭。",
+            "write": "patch 还原 plantTask 三字段 + delete 指定 taskCompletionLog。"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [
+            {
+              "method": "mutation",
+              "path": "convex/completePlantTask",
+              "request": {
+                "taskId": "string"
+              },
+              "response": {
+                "taskId": "string",
+                "logId": "string",
+                "previous": {
+                  "lastCompletedAt": "number|null",
+                  "nextDueAt": "number",
+                  "consecutivePostponeCount": "number"
+                },
+                "nextDueAt": "number"
+              },
+              "auth_required": true,
+              "note": "扩展现有 completePlantTask 返回 logId 与 previous 快照。"
+            },
+            {
+              "method": "mutation",
+              "path": "convex/undoCompletePlantTask",
+              "request": {
+                "taskId": "string",
+                "logId": "string",
+                "previous": {
+                  "lastCompletedAt": "number|null",
+                  "nextDueAt": "number",
+                  "consecutivePostponeCount": "number"
+                }
+              },
+              "response": {
+                "ok": true
+              },
+              "auth_required": true
+            }
+          ],
+          "notes": "撤销定位为手误补救，只覆盖刚打完勾的几秒；浮条消失后不再提供撤销。"
+        },
+        "component_tree": {
+          "entry_component": "TodoPage",
+          "children": [
+            "UndoToast",
+            "CompleteTaskButton"
+          ],
+          "notes": "UndoToast 为全页级浮条，缓存上一次完成的 undo 载荷。"
+        },
+        "state_management": {
+          "global_store": "会话内 undo 缓存（最近一次完成的 previous 快照 + logId + 计时器）",
+          "server_state": "useMutation completePlantTask / undoCompletePlantTask",
+          "local_state": "浮条可见性与倒计时"
+        },
+        "routing": {
+          "path": "/todo（撤销浮条同样适用 /plants/:plantId 完成）",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "session",
+          "rls_or_rbac": "撤销限本家庭，且 logId 必须属于该 task。"
+        },
+        "design_contract": {
+          "ui_spec_ref": "todo-page-ui-spec §6.2 / §9",
+          "intent": "移动端手误打勾补救；优于让用户翻历史改时间。",
+          "tokens_new": [],
+          "tokens_reuse": [
+            "--color-leaf（浮条底）",
+            "--color-paper / 米白文字",
+            "--color-gold（撤销按钮强调）",
+            "--radius-pill / --radius-sheet",
+            "--shadow-sheet（投影）"
+          ],
+          "copy": {
+            "single": "「已完成，可撤销」",
+            "batch": "「已完成 5 个浇水任务」"
+          },
+          "layout": "屏幕底部（导航栏上方）浮出，3–5 秒后超时滑出。",
+          "motion": "从底部滑入 ~250ms，超时滑出。",
+          "reduced_motion": "退化为直接显示/隐藏。",
+          "constraints": "刷新/切人/超时后不再提供撤销；不做翻历史撤销。"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "cd app && npx convex dev --once --typecheck",
+        "visual": "完成后底部浮出撤销条，3–5 秒消失；点撤销任务回到主区。",
+        "manual": "完成→撤销，plantTask 三字段还原、刚写的 completionLog 被删除且不误删历史。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/convex/tasks.ts",
+          "app/src/features/tasks/UndoToast.tsx",
+          "app/src/features/tasks/TodoPage.tsx",
+          "app/src/features/tasks/CompleteTaskButton.tsx",
+          "app/tests/unit/tasks/undoComplete.test.ts"
+        ],
+        "modules": [
+          "todo-page-v2"
+        ],
+        "layer": "fullstack",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "completePlantTask 返回 logId 与 previous 快照。",
+        "撤销精确还原 lastCompletedAt/nextDueAt/consecutivePostponeCount 并删除刚写入的那条 log。",
+        "撤销不误删历史 completionLog。",
+        "浮条消失后不再提供撤销。"
+      ]
+    },
+    {
+      "task_id": "TODO2-007",
+      "description": "分区级一键完成（PRD §9.3 / §2.2）：同类型任务 ≥2 个时，类型聚合分组标题栏提供「✅ 全部完成」轻按钮；新增批量完成 mutation（逐个写 log + 顺延），复用撤销浮条（批量文案）。不做多选批量。",
+      "priority": "2-Medium",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "plantTasks",
+              "taskCompletionLogs"
+            ],
+            "key_fields": {
+              "plantTasks": [
+                "id",
+                "intervalDays",
+                "lastCompletedAt",
+                "nextDueAt"
+              ],
+              "taskCompletionLogs": [
+                "taskId",
+                "completedBy",
+                "completedAt"
+              ]
+            },
+            "indexes": [
+              "taskCompletionLogs.by_taskId"
+            ],
+            "relations": "批量完成 = 对一组 taskId 逐个执行单个完成的等价逻辑（写 log + 顺延 + 清零推迟次数），返回每条的 undo 载荷供批量撤销。",
+            "notes": "复用 TODO2-006 的 completePlantTask 内核逻辑，避免重复实现顺延规则。"
+          },
+          "queries": {
+            "read": "校验每个 taskId 属本家庭、植物未归档。",
+            "write": "对 taskIds 批量：逐个 insert log + patch task。"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [
+            {
+              "method": "mutation",
+              "path": "convex/completePlantTasksBatch",
+              "request": {
+                "taskIds": ["string"]
+              },
+              "response": {
+                "results": [
+                  {
+                    "taskId": "string",
+                    "logId": "string",
+                    "previous": {
+                      "lastCompletedAt": "number|null",
+                      "nextDueAt": "number",
+                      "consecutivePostponeCount": "number"
+                    }
+                  }
+                ]
+              },
+              "auth_required": true
+            }
+          ],
+          "notes": "返回每条 undo 载荷，撤销时批量回滚（复用 undo 逻辑）。"
+        },
+        "component_tree": {
+          "entry_component": "DueTaskGroup",
+          "children": [
+            "TaskTypeGroupHeader",
+            "CompleteAllButton",
+            "UndoToast"
+          ],
+          "notes": "CompleteAllButton 放类型聚合分组标题栏右侧；批量完成后复用 UndoToast。"
+        },
+        "state_management": {
+          "global_store": "会话内 undo 缓存（支持批量载荷）",
+          "server_state": "useMutation completePlantTasksBatch",
+          "local_state": "分组聚合 + 批量按钮可见性（同类型 ≥2 才显示）"
+        },
+        "routing": {
+          "path": "/todo",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "session",
+          "rls_or_rbac": "批量完成限本家庭任务。"
+        },
+        "design_contract": {
+          "ui_spec_ref": "todo-page-ui-spec §4 / §9",
+          "intent": "命中「拿起喷壶一次浇完一类」的真实家务动线；交互越轻越易落地。",
+          "tokens_new": [],
+          "tokens_reuse": [
+            "--color-leaf-light（全部完成按钮描边/文字，低于单卡完成按钮）"
+          ],
+          "copy": {
+            "button": "「✅ 全部完成」",
+            "toast": "「已完成 5 个浇水任务」"
+          },
+          "layout": "类型聚合分组标题栏右侧的弱描边/文字按钮，仅同类型 ≥2 个时出现。",
+          "motion": "多卡依次淡出（轻 stagger，各 ~200ms 错峰）。",
+          "reduced_motion": "退化为一次性移除，无 stagger。",
+          "constraints": "不做多选态（进入选择→逐个勾→确认）；按钮视觉权重低于单卡完成。"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "cd app && npx convex dev --once --typecheck",
+        "visual": "同类型 ≥2 任务时分组标题出现「全部完成」；点击后该组卡片批量淡出 + 批量撤销浮条。",
+        "manual": "对一组浇水任务一键完成，每条都写 log 并顺延；撤销浮条批量回滚全部。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/convex/tasks.ts",
+          "app/src/features/tasks/DueTaskGroup.tsx",
+          "app/src/features/tasks/CompleteAllButton.tsx",
+          "app/tests/unit/tasks/completeBatch.test.ts"
+        ],
+        "modules": [
+          "todo-page-v2"
+        ],
+        "layer": "fullstack",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "同类型任务 ≥2 个时分组标题栏出现「全部完成」轻按钮。",
+        "批量完成对每条写 log 并按各自间隔顺延、清零推迟次数。",
+        "批量完成复用撤销浮条且可整批撤销。",
+        "不引入多选批量交互。"
+      ]
+    },
+    {
+      "task_id": "TODO2-008",
+      "description": "体验收尾与加分项：完成微交互（水滴/叶子动画 + iOS Haptic）、即将到期区可折叠、空状态两语境（新家庭无植物 / 今日全完成）、反馈区数字动效，全部遵守 prefers-reduced-motion。纯前端 UI 美化收尾。",
+      "priority": "3-Low",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "无数据变更；判定「新家庭无植物 vs 有植物全完成」可由现有 plants/listDueTasks 数据派生。",
+            "notes": "纯前端，依赖前序 Task 已就绪的数据与组件。"
+          },
+          "queries": {
+            "read": "复用现有 plants 列表查询 + listDueTasks 派生空状态语境。",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "none",
+          "endpoints": [],
+          "notes": "无新接口。"
+        },
+        "component_tree": {
+          "entry_component": "TodoPage",
+          "children": [
+            "CompleteTaskButton",
+            "CompletionFxOverlay",
+            "UpcomingSection",
+            "EmptyState"
+          ],
+          "notes": "CompletionFxOverlay 负责打勾微动效与 Haptic；UpcomingSection 加折叠；EmptyState 区分两语境。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "即将到期区折叠状态（UI-only，可持久化到 localStorage）"
+        },
+        "routing": {
+          "path": "/todo",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        },
+        "design_contract": {
+          "ui_spec_ref": "todo-page-ui-spec §3.3 / §5 / §7 / §9",
+          "intent": "把「打勾」变成小确幸（高频留存隐藏武器）；空状态不白屏，决定新用户留存。",
+          "tokens_new": [],
+          "tokens_reuse": [
+            "--color-mist / --color-leaf-light（空状态插画配色）",
+            "--gradient-accent（完成态光晕呼吸，可选）",
+            "--color-muted（折叠后摘要）"
+          ],
+          "motion": {
+            "complete_single": "水滴/叶子微动 + 卡片淡出 ~300ms ease-out",
+            "complete_batch": "多卡 stagger 各 ~200ms",
+            "undo_toast": "底部滑入/滑出 ~250ms",
+            "greeting_number": "数字淡入/滚动 ~200ms",
+            "all_done_glow": "反馈区光晕缓慢呼吸（可选）"
+          },
+          "haptic": "移动端完成时 iOS Haptic 轻震。",
+          "empty_states": {
+            "no_plants": "温暖插画 + 「去添加第一株植物」（onboarding）",
+            "all_done": "复用全部完成反馈区 + 「今天无需养护，去看看你的植物」"
+          },
+          "layout": "即将到期区标题可点收起（默认展开）。",
+          "reduced_motion": "全部动效在 reduce 下退化为即时状态切换（tokens.css 全局兜底）。",
+          "constraints": "优先 CSS 动画；stagger 等复杂编排保持轻量；空状态插画走 botanical 线条手绘感，不喧宾夺主。"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "N/A",
+        "visual": "完成有水滴/叶子微动与淡出；即将到期区可折叠；两种空状态语境正确；开启 reduced-motion 后动效退化为即时切换。",
+        "manual": "真机点完成感到 Haptic；新家庭看到「添加第一株植物」，全完成看到奖赏空态。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/tasks/CompleteTaskButton.tsx",
+          "app/src/features/tasks/CompletionFxOverlay.tsx",
+          "app/src/features/tasks/UpcomingSection.tsx",
+          "app/src/features/tasks/TodoPage.tsx",
+          "app/src/shared/EmptyState.tsx"
+        ],
+        "modules": [
+          "todo-page-v2"
+        ],
+        "layer": "ui",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "完成有奖赏微动效 + 移动端 Haptic，且尊重 prefers-reduced-motion。",
+        "即将到期区可折叠（默认展开）。",
+        "空状态区分新家庭无植物与今日全完成两种语境。",
+        "所有新增动效在 reduce 模式下退化为即时切换。"
+      ]
+    }
+  ]
+}

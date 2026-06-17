@@ -1,0 +1,344 @@
+{
+  "project": "plant-care-reminder",
+  "prd": "docs/product-specs/2026-06-15-settings-page-v0.3-iteration-spec.md",
+  "task_breakdown": "docs/product-specs/2026-06-15-settings-page-v0.3-task-breakdown.md",
+  "created_at": "2026-06-15",
+  "module_intent": "设置页 v0.3 迭代：在 v0.2 三分组信息架构之上补齐四项能力——①个人头像上传（复用植物 storage 链路 + HEIC 转码，圆形预览，schema 增 imageStorageId，新建用户级头像接口不带家庭门槛）、②家庭改名（admin-only，照搬 resetInviteCode 权限模式，复用 NicknameEditSheet 范本，无二次确认）、③邀请链接（前端工程为主，后端复用既有 joinFamilyByInviteCode；扩展自建路由 /join/:code、跨 onboarding 多跳 sessionStorage 暂存自动加入、复制邀请链接 + 邀请落地页 + 已有家庭兜底）、④退出家庭（新建 leaveFamily，按 D5 最简兜底策略：唯一管理员/创建者在有他人时禁退、最后一人退出删整个家庭全部数据、普通成员退出级联删 pushSubscriptions 保留 taskCompletionLogs）。顺带做 .unique()→.first() 防御加固关闭 §6.1 红线。落地节奏：P0=②④（+加固）先行，P1=①③ 次之。每个 Task 同时承载功能契约（data/api）与 UI 美化契约（design_contract），并标注依赖与配合关系。",
+  "design_baseline": {
+    "token_source": "app/src/styles/tokens.css",
+    "hard_rule": "禁止硬编码 #hex；所有色值/间距/圆角/阴影/动效一律引用 token 变量与现有 keyframes；本次迭代不新增 token。",
+    "reduced_motion": "所有动效在 prefers-reduced-motion: reduce 下退化为即时状态切换（tokens.css 已有全局兜底）。",
+    "color_discipline": "头像圆形预览、退出家庭破坏性行、邀请落地页均沿用 v0.2 既定底卡语言（--color-surface + 1px --color-line + --radius-card），破坏性确认走 ConfirmSheet danger-solid，邀请落地页可用品牌绿做唯一强色锚点。"
+  },
+  "reuse_inventory": {
+    "uploadPlantImage": "app/src/features/plants/uploadPlantImage.ts — 已参数化（generateUploadUrl/getPlantImageUrl 为注入回调），头像注入头像版回调即可复用",
+    "normalizeImageFile": "app/src/features/plants/normalizeImageFile.ts — HEIC→JPEG，与家庭无耦合，直接复用",
+    "StorageImage": "app/src/components/ui/StorageImage.tsx — 当前硬编码 api.plants.getPlantImageUrl，需参数化（D1）",
+    "MemberAvatar": "app/src/features/family/MemberAvatar.tsx — 当前仅接受 name，需扩展 imageStorageId",
+    "NicknameEditSheet": "app/src/features/family/NicknameEditSheet.tsx — 克隆为 FamilyNameEditSheet（②）",
+    "resetInviteCode_admin_pattern": "app/convex/families.ts — admin 权限校验范本（②④ 照搬）",
+    "removeMember_cascade_pattern": "app/convex/families.ts — 级联删 pushSubscriptions / 保留 taskCompletionLogs 范本（④）",
+    "joinFamilyByInviteCode": "app/convex/families.ts — 已含单一家庭校验，③ 后端零新增",
+    "InviteCodeCard": "app/src/features/family/InviteCodeCard.tsx — 新增复制邀请链接（③）",
+    "ConfirmSheet": "app/src/components/ui/ConfirmSheet.tsx — ④ 退出确认 danger-solid",
+    "router_normalizePath": "app/src/app/router.tsx — 当前硬编码白名单不解析 /join，③ 需扩展（D2）"
+  },
+  "tasks": [
+    {
+      "task_id": "SET3-001",
+      "description": "新增 renameFamily mutation（家庭改名，admin-only）：照搬 resetInviteCode 权限模式——loadCurrentUserContext → 校验 userId && familyId → 取 currentMembership 判 role!=='admin' 抛错；args.name.trim() 非空 + 长度上限（≤20，抽常量 FAMILY_NAME_MAX_LENGTH）→ ctx.db.patch(familyId, { name })。",
+      "priority": "0-Critical",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {"tables_or_collections": ["families", "familyMembers"], "key_fields": {"families": "name", "familyMembers": "userId, role"}, "indexes": ["familyMembers.by_familyId_and_userId"], "relations": "取当前用户 familyMembers 判 role；patch families.name。", "notes": "无 schema 变更，纯 mutation。"},
+          "queries": {"read": "校验当前用户 role==='admin'", "write": "api.families.renameFamily({ name })：ctx.db.patch(familyId, { name: trimmed })"},
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {"type": "convex-mutation", "endpoints": ["families.renameFamily (new)"], "notes": "非 admin / 空名 / 超长均抛错；错误文案前端兜底翻译。"},
+        "component_tree": {"entry_component": "FamilyNameEditSheet", "children": [], "notes": "由 SET3-002 改名 sheet 调用。"},
+        "state_management": {"global_store": "N/A", "server_state": "renameFamily 后 getFamilySettingsSummary 实时返回新名", "local_state": "N/A"},
+        "routing": {"path": "/settings", "guard": "authenticated family members", "middleware": "inside the app shell"},
+        "auth": {"provider": "Convex Auth (existing)", "strategy": "仅 role==='admin' 可执行", "rls_or_rbac": "admin-only"},
+        "design_contract": {"ui_spec_ref": "PRD §3", "intent": "支持管理员修改家庭名，非破坏性、无二次确认。", "tokens_new": [], "tokens_reuse": [], "visual_spec": {}, "accessibility": "N/A（纯数据层）", "acceptance": "非 admin 拒绝；空名/超长拒绝；成功 patch 后摘要返回新名。"}
+      },
+      "verification": {"auto": "npx convex dev (typecheck) 编译通过", "data": "构造 admin/member 验证仅 admin 可改、空名/超长被拒", "visual": "N/A", "manual": "改名后 getFamilySettingsSummary 返回新名"},
+      "metadata": {"files_affected": ["app/convex/families.ts (modify)"], "modules": ["settings-page-v0.3"], "layer": "backend", "epic": "E1 家庭改名"},
+      "acceptance_criteria": ["Convex 编译无 error", "仅 admin 可改名", "空名/超长被拒", "成功 patch 后 getFamilySettingsSummary 实时返回新名"]
+    },
+    {
+      "task_id": "SET3-002",
+      "description": "新增 FamilyNameEditSheet（克隆 NicknameEditSheet：ConfirmSheet variant=primary + InputField），把 updateMyProfile 换为 renameFamily，初始值取当前家庭名，保留非空 + maxLength 校验；仅 currentUserRole==='admin' 渲染家庭名可点击行（普通成员纯只读文本，不渲染编辑入口、不置灰）；非破坏性、无二次确认。注意可点击元素内文本仍可被 v0.2 smoke 的 getByText 命中。",
+      "priority": "0-Critical",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": ["families"], "key_fields": {"families": "name"}, "indexes": [], "relations": "消费 getFamilySettingsSummary.familyName/currentUserRole。", "notes": "前端任务，不改 schema。"}, "queries": {"read": "getFamilySettingsSummary（familyName, currentUserRole）", "write": "调用 api.families.renameFamily"}, "migration_strategy": "No schema change."},
+        "api_layer": {"type": "convex-mutation-consumer", "endpoints": ["families.renameFamily", "families.getFamilySettingsSummary"], "notes": "复用 useMutation 模式同 NicknameEditSheet。"},
+        "component_tree": {"entry_component": "FamilyHeroCard / 家庭摘要卡", "children": ["FamilyNameEditSheet", "ConfirmSheet", "InputField"], "notes": "管理员视角家庭名行可点击；克隆 NicknameEditSheet 结构。"},
+        "state_management": {"global_store": "N/A", "server_state": "renameFamily 后摘要自动刷新", "local_state": "sheet open/close + 输入草稿 + 提交态"},
+        "routing": {"path": "/settings", "guard": "authenticated family members", "middleware": "inside the app shell"},
+        "auth": {"provider": "Convex Auth (existing)", "strategy": "currentUserRole 决定入口可见", "rls_or_rbac": "admin 见可点行，member 见只读文本"},
+        "design_contract": {"ui_spec_ref": "PRD §3.2", "intent": "管理员家庭名行可点击进入底部编辑 sheet，非破坏性无二次确认；普通成员只读。", "tokens_new": [], "tokens_reuse": ["--color-surface", "--color-line", "--radius-card", "--color-text-secondary"], "visual_spec": {"editable_row": "尾部细微 chevron/编辑指示", "sheet": "底部升起 primary 编辑 sheet 复用 NicknameEditSheet 视觉"}, "accessibility": "可点行 role=button + 可达点击区；输入框 label 关联。", "acceptance": "admin 可点行可改、保存实时更新所有家庭名展示处；member 只读无入口无置灰；不破坏 v0.2 getByText 断言。"}
+      },
+      "verification": {"auto": "tsc --noEmit 通过；AppRouter/家庭名相关 smoke 通过", "data": "N/A", "visual": "管理员/普通成员两视角截图核对入口可见性", "manual": "admin 改名实时更新；member 无入口；跑一遍 v0.2 smoke 确认 getByText 不破坏"},
+      "metadata": {"files_affected": ["app/src/features/family/FamilyNameEditSheet.tsx (new)", "app/src/features/family/FamilyHeroCard.tsx (modify)"], "modules": ["settings-page-v0.3"], "layer": "frontend", "epic": "E1 家庭改名"},
+      "acceptance_criteria": ["admin 可改名且页面所有家庭名展示处实时更新", "普通成员仅见只读家庭名（无编辑入口、不置灰）", "无二次确认直接保存", "不破坏 v0.2 家庭名 getByText 断言"]
+    },
+    {
+      "task_id": "SET3-003",
+      "description": "家庭改名验证：管理员可改、保存实时更新；普通成员无编辑入口；非 admin 调 renameFamily 被后端拒绝；空名/超长被拒；不破坏 v0.2 getByText。",
+      "priority": "0-Critical",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": ["families"], "key_fields": {}, "indexes": [], "relations": "", "notes": "验证任务。"}, "queries": {"read": "N/A", "write": "N/A"}, "migration_strategy": "N/A"},
+        "api_layer": {"type": "verification", "endpoints": ["families.renameFamily"], "notes": "端到端验证。"},
+        "component_tree": {"entry_component": "FamilyNameEditSheet", "children": [], "notes": ""},
+        "state_management": {"global_store": "N/A", "server_state": "N/A", "local_state": "N/A"},
+        "routing": {"path": "/settings", "guard": "authenticated family members", "middleware": "inside the app shell"},
+        "auth": {"provider": "Convex Auth (existing)", "strategy": "N/A", "rls_or_rbac": "验证 admin/member 差异"},
+        "design_contract": {"ui_spec_ref": "PRD §3.4", "intent": "确认改名功能完整且不引入回归。", "tokens_new": [], "tokens_reuse": [], "visual_spec": {}, "accessibility": "N/A", "acceptance": "见 acceptance_criteria。"}
+      },
+      "verification": {"auto": "tsc --noEmit + 相关 smoke 通过", "data": "非 admin / 空名 / 超长被拒", "visual": "两视角截图", "manual": "管理员改名实时更新、普通成员只读"},
+      "metadata": {"files_affected": [], "modules": ["settings-page-v0.3"], "layer": "qa", "epic": "E1 家庭改名"},
+      "acceptance_criteria": ["管理员可改且实时更新", "普通成员无入口（只读、不置灰）", "非 admin/空名/超长被拒", "不破坏 v0.2 家庭名 getByText 断言"]
+    },
+    {
+      "task_id": "SET3-004",
+      "description": "新增 leaveFamily mutation（退出家庭，含 D5 最简兜底策略）：loadCurrentUserContext → 校验 userId && familyId → 取 currentMembership 与本家庭全部 memberships，按三分支处理：(1) 当前用户是 admin 且家庭内 admin 仅 1 且家庭还有其他成员 → 抛错（唯一管理员暂不能直接退出，后续支持转让）；(2) 最后一人退出（家庭仅剩当前用户）→ 删整个家庭全部数据（plants/plantTasks/taskCompletionLogs/pushSubscriptions/familyMembers 各按 family 维度遍历删，最后删 families 记录）；(3) 普通成员/非唯一管理员退出 → 删自己 familyMembers + 级联删本家庭自己的 pushSubscriptions（照搬 removeMember），保留 taskCompletionLogs。",
+      "priority": "0-Critical",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {"tables_or_collections": ["familyMembers", "pushSubscriptions", "taskCompletionLogs", "plants", "plantTasks", "families"], "key_fields": {"familyMembers": "familyId, userId, role", "pushSubscriptions": "familyId, userId", "plants": "familyId", "plantTasks": "familyId", "taskCompletionLogs": "familyId (普通退出保留)"}, "indexes": ["familyMembers.by_familyId", "familyMembers.by_familyId_and_userId", "pushSubscriptions.by_familyId", "pushSubscriptions.by_familyId_and_userId", "plants.by_familyId", "plantTasks.by_familyId", "taskCompletionLogs.by_familyId_and_completedAt"], "relations": "三分支：唯一 admin（有他人）拒；最后一人删整库；普通退出删自身 membership + 级联 pushSubscriptions、保留 logs。", "notes": "D5 最简兜底，不做管理员转让/自动提升（推迟 v0.4）。"},
+          "queries": {"read": "取本家庭全部 memberships 判 admin 数量与成员数", "write": "api.families.leaveFamily()：按分支 delete familyMembers / 级联 delete / 整库删除"},
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {"type": "convex-mutation", "endpoints": ["families.leaveFamily (new)"], "notes": "唯一管理员（有他人时）抛错并返回明确文案；其余两分支放行。"},
+        "component_tree": {"entry_component": "FamilySettingsPage", "children": [], "notes": "由 SET3-005 退出行 ConfirmSheet 调用。"},
+        "state_management": {"global_store": "N/A", "server_state": "leaveFamily 后用户 familyId 变 null，触发 RouteGate 走 onboarding", "local_state": "N/A"},
+        "routing": {"path": "/settings", "guard": "authenticated family members", "middleware": "inside the app shell"},
+        "auth": {"provider": "Convex Auth (existing)", "strategy": "登录用户均可调，内部按角色与成员数分支", "rls_or_rbac": "唯一管理员/创建者（有他人时）受限"},
+        "design_contract": {"ui_spec_ref": "PRD §5.4 D5", "intent": "提供安全退出能力，保证家庭无主/数据残留不发生。", "tokens_new": [], "tokens_reuse": [], "visual_spec": {}, "accessibility": "N/A（纯数据层）", "acceptance": "唯一 admin（有他人）拒；最后一人删整库无残留；普通退出级联删 pushSubscriptions、保留 logs。"}
+      },
+      "verification": {"auto": "npx convex dev (typecheck) 编译通过", "data": "D5 边界用例：A(admin)+B(member)：A 退被拒、B 退放行；单人家庭 A 退删整库（plants/tasks/logs/subscriptions 全清）", "visual": "N/A", "manual": "三分支逐一手测，确认无脏数据残留"},
+      "metadata": {"files_affected": ["app/convex/families.ts (modify)"], "modules": ["settings-page-v0.3"], "layer": "backend", "epic": "E2 退出家庭"},
+      "acceptance_criteria": ["Convex 编译无 error", "唯一管理员/创建者（家庭有其他成员）退出被拒并返回明确文案", "普通成员退出删自身 membership + 级联删本家庭 pushSubscriptions + 保留 taskCompletionLogs", "最后一人退出删除整个家庭全部数据无残留"]
+    },
+    {
+"task_id": "SET3-005",
+"description": "「退出家庭」破坏性行 + 二次确认：「个人」组在「退出登录」之上新增「退出家庭」行；点击打开 ConfirmSheet variant=danger-solid；确认调 leaveFamily；成功后用户回 familyId===null 走 onboarding 不报错崩溃；后端唯一管理员被拒错误前端兜底翻译为友好文案保留在确认 sheet/toast。确认文案点名后果：退出后离开『{家庭名}』，养护数据仍归家庭所有，需重新邀请才能回来。",
+"priority": "0-Critical",
+"status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": ["familyMembers"], "key_fields": {}, "indexes": [], "relations": "消费 getFamilySettingsSummary.familyName 用于确认文案。", "notes": "前端任务。"}, "queries": {"read": "getFamilySettingsSummary（familyName）", "write": "调用 api.families.leaveFamily"}, "migration_strategy": "No schema change."},
+        "api_layer": {"type": "convex-mutation-consumer", "endpoints": ["families.leaveFamily", "families.getFamilySettingsSummary"], "notes": "捕获唯一管理员被拒错误并友好提示。"},
+        "component_tree": {"entry_component": "FamilySettingsPage", "children": ["ConfirmSheet"], "notes": "「个人」组退出登录之上新增退出家庭行。"},
+        "state_management": {"global_store": "N/A", "server_state": "leaveFamily 成功后 RouteGate 重定向 onboarding", "local_state": "confirm sheet open/close + 提交态 + 错误态"},
+        "routing": {"path": "/settings → onboarding", "guard": "authenticated", "middleware": "RouteGate 据 familyId 重定向"},
+        "auth": {"provider": "Convex Auth (existing)", "strategy": "所有成员可见入口，后端裁决能否退", "rls_or_rbac": "唯一管理员被拒由后端返回前端兜底"},
+        "design_contract": {"ui_spec_ref": "PRD §5.2", "intent": "破坏性退出行 + 危险二次确认，文案点名后果。", "tokens_new": [], "tokens_reuse": ["--color-danger", "--color-surface", "--color-line", "--radius-card"], "visual_spec": {"row": "破坏性视觉，区别于普通行（参考退出登录危险态）", "confirm": "ConfirmSheet danger-solid + 后果文案"}, "accessibility": "确认按钮明确 label；危险态对比度达标。", "acceptance": "退出后回 onboarding 不报错；唯一管理员被拒友好提示；文案点名家庭名与后果。"}
+      },
+      "verification": {"auto": "tsc --noEmit 通过", "data": "N/A", "visual": "退出行与危险确认截图", "manual": "普通成员退出回 onboarding；唯一管理员退出被拒提示"},
+      "metadata": {"files_affected": ["app/src/features/family/FamilySettingsPage.tsx (modify)"], "modules": ["settings-page-v0.3"], "layer": "frontend", "epic": "E2 退出家庭"},
+      "acceptance_criteria": ["「个人」组在退出登录之上有「退出家庭」破坏性行", "二次确认 danger-solid 且文案点名家庭名与后果", "成功退出后回 onboarding 不报错崩溃", "唯一管理员被拒时前端兜底友好提示"]
+    },
+    {
+"task_id": "SET3-006",
+"description": "退出家庭验证：普通成员退出回 onboarding 可重新加入/创建不报错；退出级联删 pushSubscriptions、保留 taskCompletionLogs；唯一管理员/创建者按 D5 被拒并提示；最后一人退出删整个家庭无脏数据残留。",
+"priority": "0-Critical",
+"status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": ["familyMembers", "pushSubscriptions", "taskCompletionLogs", "plants", "plantTasks", "families"], "key_fields": {}, "indexes": [], "relations": "", "notes": "验证任务。"}, "queries": {"read": "N/A", "write": "N/A"}, "migration_strategy": "N/A"},
+        "api_layer": {"type": "verification", "endpoints": ["families.leaveFamily"], "notes": "D5 三分支端到端验证。"},
+        "component_tree": {"entry_component": "FamilySettingsPage", "children": [], "notes": ""},
+        "state_management": {"global_store": "N/A", "server_state": "N/A", "local_state": "N/A"},
+        "routing": {"path": "/settings → onboarding", "guard": "authenticated", "middleware": "RouteGate"},
+        "auth": {"provider": "Convex Auth (existing)", "strategy": "N/A", "rls_or_rbac": "验证唯一管理员限制"},
+        "design_contract": {"ui_spec_ref": "PRD §5", "intent": "确认退出三分支与数据一致性。", "tokens_new": [], "tokens_reuse": [], "visual_spec": {}, "accessibility": "N/A", "acceptance": "见 acceptance_criteria。"}
+      },
+      "verification": {"auto": "tsc --noEmit + convex 编译通过", "data": "三分支数据核对：级联/保留/整库删除", "visual": "退出后 onboarding 截图", "manual": "逐一验证 A+B、单人家庭场景"},
+      "metadata": {"files_affected": [], "modules": ["settings-page-v0.3"], "layer": "qa", "epic": "E2 退出家庭"},
+      "acceptance_criteria": ["普通成员退出回 onboarding 不报错", "退出级联删 pushSubscriptions、保留 taskCompletionLogs", "唯一管理员/创建者退出按 D5 被拒并提示", "最后一人退出删整个家庭无脏数据残留"]
+    },
+    {
+      "task_id": "SET3-007",
+      "description": "头像 schema + 用户级接口（D6）：(1) lib/validators.ts userFields 新增 imageStorageId: v.optional(v.id('_storage'))（不复用 authTables 自带 image，统一 storageId 方案）；(2) users.ts 新增用户级接口（仅校验登录，不带 requireCurrentFamilyMember 家庭门槛）：generateAvatarUploadUrl(mutation)、getAvatarUrl(query, storageId)、updateMyAvatar(mutation, imageStorageId: union(id('_storage'), null) 传 null 移除)；(3) getFamilySettingsSummary 成员对象补 imageStorageId。",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {"tables_or_collections": ["users"], "key_fields": {"users": "imageStorageId (new optional)"}, "indexes": [], "relations": "用户级头像字段，与家庭无耦合；getFamilySettingsSummary 遍历成员透出 imageStorageId。", "notes": "D6：不复用 authTables image(URL 语义)，新增 imageStorageId(id('_storage')) 与植物 imageStorageId 一致；optional 向后兼容。"},
+          "queries": {"read": "api.users.getAvatarUrl(storageId) → ctx.storage.getUrl；getFamilySettingsSummary members 补 imageStorageId", "write": "api.users.generateAvatarUploadUrl() → storage.generateUploadUrl；api.users.updateMyAvatar({ imageStorageId }) → patch(userId)"},
+          "migration_strategy": "Optional 字段，无需回填。"
+        },
+        "api_layer": {"type": "convex-mutation+query", "endpoints": ["users.generateAvatarUploadUrl (new)", "users.getAvatarUrl (new)", "users.updateMyAvatar (new)", "families.getFamilySettingsSummary (extend)"], "notes": "三个头像接口均仅校验登录、不带家庭门槛（区别于 plants.generatePlantImageUploadUrl 的 requireCurrentFamilyMember），因头像是用户级能力。"},
+        "component_tree": {"entry_component": "AvatarUploadField", "children": [], "notes": "由 SET3-008/009 消费。"},
+        "state_management": {"global_store": "N/A", "server_state": "getAvatarUrl 解析 storageId；摘要返回成员 imageStorageId", "local_state": "N/A"},
+        "routing": {"path": "/settings", "guard": "authenticated (no family gate for avatar)", "middleware": "inside the app shell"},
+        "auth": {"provider": "Convex Auth (existing)", "strategy": "identity from ctx.auth，仅校验登录", "rls_or_rbac": "用户级，no-family 状态也可设头像"},
+        "design_contract": {"ui_spec_ref": "PRD §2 / D6", "intent": "为头像提供 storage 写入/读取链路与成员真实头像数据。", "tokens_new": [], "tokens_reuse": [], "visual_spec": {}, "accessibility": "N/A（纯数据层）", "acceptance": "三接口不带家庭门槛；schema 向后兼容；摘要 members[] 含 imageStorageId。"}
+      },
+      "verification": {"auto": "npx convex dev (typecheck) 编译通过", "data": "验证三接口无家庭门槛可被 no-family 用户调用；摘要 members 含 imageStorageId", "visual": "N/A", "manual": "打印摘要核对新字段"},
+      "metadata": {"files_affected": ["app/convex/lib/validators.ts (modify)", "app/convex/users.ts (modify)", "app/convex/families.ts (modify)"], "modules": ["settings-page-v0.3"], "layer": "backend", "epic": "E3 个人头像"},
+      "acceptance_criteria": ["Convex 编译无 error", "userFields 新增 imageStorageId(id('_storage')) optional", "三个头像接口均不带 requireCurrentFamilyMember 家庭门槛", "getFamilySettingsSummary members[] 含 imageStorageId"]
+    },
+    {
+      "task_id": "SET3-008",
+      "description": "头像上传交互：「个人」组首项「我的头像」入口；点击触发 file input；复用 normalizeImageFile(HEIC→JPEG)；复用 uploadPlantImage（注入 generateAvatarUploadUrl/getAvatarUrl 回调）拿 storageId → 调 updateMyAvatar；复用上传中/已保存/错误三态，失败保留原头像。圆形预览（区别于植物圆角矩形），MVP 不做裁剪框/进度百分比。",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": ["users"], "key_fields": {"users": "imageStorageId"}, "indexes": [], "relations": "上传得 storageId → updateMyAvatar 写入。", "notes": "前端任务。"}, "queries": {"read": "getAvatarUrl(storageId) 预览", "write": "generateAvatarUploadUrl → updateMyAvatar"}, "migration_strategy": "No schema change."},
+        "api_layer": {"type": "convex-mutation-consumer", "endpoints": ["users.generateAvatarUploadUrl", "users.getAvatarUrl", "users.updateMyAvatar"], "notes": "uploadPlantImage 已参数化，注入头像回调零改造。"},
+        "component_tree": {"entry_component": "AvatarUploadField", "children": ["StorageImage(圆形)"], "notes": "「个人」组首项接入。"},
+        "state_management": {"global_store": "N/A", "server_state": "updateMyAvatar 后摘要/当前用户头像刷新", "local_state": "uploading/saved/error 三态 + 文件选择"},
+        "routing": {"path": "/settings", "guard": "authenticated", "middleware": "inside the app shell"},
+        "auth": {"provider": "Convex Auth (existing)", "strategy": "用户级", "rls_or_rbac": "no-family 也可上传"},
+        "design_contract": {"ui_spec_ref": "PRD §2.5", "intent": "圆形头像预览 + 三态反馈，失败保留原头像。", "tokens_new": [], "tokens_reuse": ["--color-surface", "--color-line", "--radius-full", "--color-text-secondary"], "visual_spec": {"preview": "圆形（--radius-full），区别于植物圆角矩形", "states": "上传中/已保存/错误三态视觉", "no_crop": "MVP 不做裁剪框/进度百分比"}, "accessibility": "入口可点击区充足；上传态有可读提示。", "acceptance": "可选图上传、HEIC 自动转 JPEG、三态明确、失败保留原头像、圆形预览。"}
+      },
+      "verification": {"auto": "tsc --noEmit 通过", "data": "N/A", "visual": "圆形预览 + 三态截图", "manual": "iOS HEIC 上传转 JPEG 正常显示；失败保留原头像"},
+      "metadata": {"files_affected": ["app/src/features/family/AvatarUploadField.tsx (new)", "app/src/features/family/FamilySettingsPage.tsx (modify)"], "modules": ["settings-page-v0.3"], "layer": "frontend", "epic": "E3 个人头像"},
+      "acceptance_criteria": ["「个人」组有「我的头像」可上传", "iOS HEIC 自动转 JPEG 正常显示", "上传中/已保存/错误三态明确，失败保留原头像", "圆形预览（区别于植物圆角矩形）"]
+    },
+    {
+      "task_id": "SET3-009",
+      "description": "StorageImage 参数化（D1）+ MemberAvatar 改造：StorageImage 新增可选 prop（如 fetchUrl?:(storageId)=>Promise<{imageUrl}>），默认仍走 api.plants.getPlantImageUrl 不回归现有植物调用方，头像场景注入 getAvatarUrl；MemberAvatar 新增可选 imageStorageId，有值用参数化 StorageImage(注入 getAvatarUrl)渲染圆形真实头像，无值/解码失败回退现有首字母色块（保留同人 hash 取色 fallback），尺寸与色块一致(36×36)不抖动。",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": ["users"], "key_fields": {"users": "imageStorageId"}, "indexes": [], "relations": "MemberAvatar 据 imageStorageId 取 URL 渲染。", "notes": "前端组件改造。"}, "queries": {"read": "getAvatarUrl(storageId)（注入）", "write": "N/A"}, "migration_strategy": "No schema change."},
+        "api_layer": {"type": "convex-query-consumer", "endpoints": ["users.getAvatarUrl", "plants.getPlantImageUrl (default)"], "notes": "参数化须有默认值保证植物调用方不回归。"},
+        "component_tree": {"entry_component": "StorageImage", "children": ["MemberAvatar"], "notes": "一套 StorageImage 通吃植物+头像。"},
+        "state_management": {"global_store": "N/A", "server_state": "按注入 fetchUrl 取 URL", "local_state": "图片加载/失败态"},
+        "routing": {"path": "/settings + 全站植物展示", "guard": "authenticated", "middleware": "inside the app shell"},
+        "auth": {"provider": "Convex Auth (existing)", "strategy": "随注入接口鉴权", "rls_or_rbac": "头像走用户级 getAvatarUrl"},
+        "design_contract": {"ui_spec_ref": "PRD §2 / D1", "intent": "复用单一 StorageImage，避免重复造组件；头像圆形回退无缝。", "tokens_new": [], "tokens_reuse": ["--radius-full"], "visual_spec": {"avatar": "圆形裁切 36×36，与首字母色块同尺寸不抖动", "fallback": "无值/解码失败回退首字母色块（保留 hash 取色）"}, "accessibility": "img alt 取成员称呼；fallback 文本可读。", "acceptance": "StorageImage 参数化有默认值不回归植物调用方；MemberAvatar 有头像渲染圆形真实图、无则回退色块。"}
+      },
+      "verification": {"auto": "tsc --noEmit 通过", "data": "N/A", "visual": "成员列表真实头像 + 无头像回退截图", "manual": "回归植物图片所有调用方行为不变"},
+      "metadata": {"files_affected": ["app/src/components/ui/StorageImage.tsx (modify)", "app/src/features/family/MemberAvatar.tsx (modify)"], "modules": ["settings-page-v0.3"], "layer": "frontend", "epic": "E3 个人头像"},
+      "acceptance_criteria": ["StorageImage 参数化取 URL 且默认值保证植物调用方不回归", "MemberAvatar 有 imageStorageId 渲染圆形真实头像", "无值/解码失败回退首字母色块（保留 hash 取色）", "头像与色块同尺寸列表不抖动"]
+    },
+    {
+      "task_id": "SET3-010",
+      "description": "头像验证：「个人」组可上传；iOS HEIC 转 JPEG 正常显示；三态明确失败保留原头像；保存后成员列表中我的头像实时更新真实图；无头像回退首字母色块不报错；StorageImage 植物调用方不回归。",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": ["users"], "key_fields": {}, "indexes": [], "relations": "", "notes": "验证任务。"}, "queries": {"read": "N/A", "write": "N/A"}, "migration_strategy": "N/A"},
+        "api_layer": {"type": "verification", "endpoints": ["users.generateAvatarUploadUrl", "users.getAvatarUrl", "users.updateMyAvatar"], "notes": ""},
+        "component_tree": {"entry_component": "AvatarUploadField", "children": [], "notes": ""},
+        "state_management": {"global_store": "N/A", "server_state": "N/A", "local_state": "N/A"},
+        "routing": {"path": "/settings", "guard": "authenticated", "middleware": "inside the app shell"},
+        "auth": {"provider": "Convex Auth (existing)", "strategy": "N/A", "rls_or_rbac": "N/A"},
+        "design_contract": {"ui_spec_ref": "PRD §2", "intent": "确认头像端到端可用且不回归。", "tokens_new": [], "tokens_reuse": [], "visual_spec": {}, "accessibility": "N/A", "acceptance": "见 acceptance_criteria。"}
+      },
+      "verification": {"auto": "tsc --noEmit 通过", "data": "N/A", "visual": "上传前后 + 回退截图", "manual": "HEIC 转码、三态、列表实时更新、植物回归检查"},
+      "metadata": {"files_affected": [], "modules": ["settings-page-v0.3"], "layer": "qa", "epic": "E3 个人头像"},
+      "acceptance_criteria": ["可上传且 HEIC 自动转 JPEG", "三态明确失败保留原头像", "保存后成员列表我的头像实时更新真实图", "无头像回退色块不报错且 StorageImage 植物调用方不回归"]
+    },
+    {
+      "task_id": "SET3-011",
+      "description": "路由扩展 /join/:code（D2）：router.tsx 的 AppPath 增 '/join'；normalizePath 新增动态段解析 ^\\/join\\/([^/]+)$ → { pathname:'/join', params:{ inviteCode: decodeURIComponent(...) } }；AppRoute.params 增 inviteCode?:string。采用路径段方案（语义清晰、承载独立落地页），不采用 ?invite= query。",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "", "notes": "纯前端路由。"}, "queries": {"read": "N/A", "write": "N/A"}, "migration_strategy": "N/A"},
+        "api_layer": {"type": "frontend-routing", "endpoints": [], "notes": "自建 router normalizePath 扩展。"},
+        "component_tree": {"entry_component": "router.tsx", "children": ["AppRouter"], "notes": "新增 /join 路由 + 动态段解析。"},
+        "state_management": {"global_store": "AppRoute(pathname+params)", "server_state": "N/A", "local_state": "N/A"},
+        "routing": {"path": "/join/:code", "guard": "public(落地)，加入逻辑在 onboarding", "middleware": "normalizePath 解析 inviteCode"},
+        "auth": {"provider": "Convex Auth (existing)", "strategy": "落地页公开可达", "rls_or_rbac": "N/A"},
+        "design_contract": {"ui_spec_ref": "PRD §4 / D2", "intent": "为邀请链接提供可解析路由与独立落地页承载。", "tokens_new": [], "tokens_reuse": [], "visual_spec": {}, "accessibility": "N/A（路由层）", "acceptance": "/join/{code} 正确解析 inviteCode；现有白名单与植物动态段不回归；smoke 通过。"}
+      },
+      "verification": {"auto": "AppRouter.smoke.test 通过（含 /join/:code）", "data": "N/A", "visual": "N/A", "manual": "/join/QWNAE3 解析出 inviteCode"},
+      "metadata": {"files_affected": ["app/src/app/router.tsx (modify)"], "modules": ["settings-page-v0.3"], "layer": "frontend", "epic": "E4 邀请链接"},
+      "acceptance_criteria": ["/join/{code} 正确解析出 inviteCode", "现有路由白名单与植物动态段不回归", "AppRouter.smoke.test 通过"]
+    },
+    {
+      "task_id": "SET3-012",
+      "description": "跨多跳暂存邀请码 + onboarding 自动加入：(1)未登录落在 /join/:code → 邀请码写 sessionStorage(键 pendingInviteCode，关标签页即清) → 走 RouteGate 重定向 /login；(2)经登录/注册→填称呼→onboarding 多跳邀请码始终存活；(3)到 onboarding 创建/加入二选一阶段若有暂存码 → 自动调 joinFamilyByInviteCode → 成功清除暂存 → 跳 /todo，跳过手输码与二选一页；(4)已登录无家庭点链接直接加入→/todo；已登录已有家庭点链接不重复加入、明确提示(见 SET3-013)。",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": ["familyMembers", "families"], "key_fields": {"families": "inviteCode", "familyMembers": "familyId, userId"}, "indexes": ["families.by_inviteCode"], "relations": "joinFamilyByInviteCode 已含单一家庭校验，前端仅喂码。", "notes": "后端零新增，纯前端编排 + sessionStorage 暂存。"}, "queries": {"read": "N/A", "write": "调用既有 api.families.joinFamilyByInviteCode(code)"}, "migration_strategy": "No schema change."},
+        "api_layer": {"type": "convex-mutation-consumer", "endpoints": ["families.joinFamilyByInviteCode (existing)"], "notes": "复用既有 mutation，含 normalize/查家庭/未重复/单一家庭校验。"},
+        "component_tree": {"entry_component": "RouteGate / onboarding 创建加入阶段", "children": ["usePendingInvite"], "notes": "新增 usePendingInvite 封装暂存读写。"},
+        "state_management": {"global_store": "AppRoute", "server_state": "joinFamilyByInviteCode 后 familyId 就绪", "local_state": "sessionStorage.pendingInviteCode（标签页级）"},
+        "routing": {"path": "/join/:code → /login → onboarding → /todo", "guard": "RouteGate 据登录态/familyId 重定向", "middleware": "暂存读写贯穿多跳"},
+        "auth": {"provider": "Convex Auth (existing)", "strategy": "未登录先去登录，登录后据暂存码自动加入", "rls_or_rbac": "单一家庭约束由后端保证"},
+        "design_contract": {"ui_spec_ref": "PRD §4", "intent": "邀请链接全程不手输码，跨多跳无缝自动加入。", "tokens_new": [], "tokens_reuse": [], "visual_spec": {}, "accessibility": "N/A（编排层）", "acceptance": "未登录点链接→注册→填称呼→自动加入；中途放弃随标签页清除不残留；加入后 membership 仅 1 条。"}
+      },
+      "verification": {"auto": "tsc --noEmit 通过", "data": "加入后 membership 仅 1 条（不破坏单一家庭约束）", "visual": "N/A", "manual": "未登录全链路自动加入；中途放弃 sessionStorage 清除"},
+      "metadata": {"files_affected": ["app/src/app/RouteGate.tsx (modify)", "app/src/features/family/usePendingInvite.ts (new)", "onboarding 创建/加入阶段组件 (modify)"], "modules": ["settings-page-v0.3"], "layer": "frontend", "epic": "E4 邀请链接"},
+      "acceptance_criteria": ["未登录点链接→注册→填称呼→自动加入对应家庭全程不手输码", "中途放弃则 sessionStorage 随标签页关闭清除不残留", "已登录无家庭点链接直接加入", "加入后 membership 仅 1 条（不破坏单一家庭约束）"]
+    },
+    {
+      "task_id": "SET3-013",
+      "description": "复制邀请链接 + 邀请落地页：(1)InviteCodeCard 在复制邀请码旁新增复制邀请链接，拼接 origin/join/{inviteCode}，沿用 clipboard 复制 + 长按兜底 + 已复制反馈；(2)新增 JoinLandingPage 渲染 /join/:code 轻量落地页引导未登录去登录/注册（真正加入由 SET3-012 在 onboarding 末端完成）；(3)已登录已有家庭访问落地页不重复加入、明确提示(D3：你已在『{当前家庭名}』中，每位用户同一时间只能属一个家庭)+返回入口；(4)无效/失效码友好兜底不白屏。",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": ["families"], "key_fields": {"families": "inviteCode, name"}, "indexes": ["families.by_inviteCode"], "relations": "落地页据码可选展示家庭名；已有家庭兜底读 currentUserContext。", "notes": "前端任务。"}, "queries": {"read": "getCurrentUserContext(判已有家庭)；可选据码查家庭名", "write": "N/A（加入在 SET3-012）"}, "migration_strategy": "No schema change."},
+        "api_layer": {"type": "convex-query-consumer", "endpoints": ["users.getCurrentUserContext (existing)"], "notes": "落地页只引导，不在此直接加入。"},
+        "component_tree": {"entry_component": "JoinLandingPage", "children": ["InviteCodeCard(复制链接)"], "notes": "router 挂载 /join/:code → JoinLandingPage。"},
+        "state_management": {"global_store": "AppRoute(inviteCode)", "server_state": "getCurrentUserContext", "local_state": "复制反馈态"},
+        "routing": {"path": "/join/:code", "guard": "public", "middleware": "已有家庭兜底分支"},
+        "auth": {"provider": "Convex Auth (existing)", "strategy": "落地公开；已登录据 familyId 分支", "rls_or_rbac": "已有家庭不重复加入(D3)"},
+        "design_contract": {"ui_spec_ref": "PRD §4 / D3", "intent": "落地页贴 botanical 基调，复制链接与复制码同级，已有家庭友好提示。", "tokens_new": [], "tokens_reuse": ["--color-primary", "--color-surface", "--color-line", "--radius-card"], "visual_spec": {"landing": "植物意象 + 暖绿主色 + 移动端单列 + 充足点击区", "copy": "复制邀请链接按钮与复制邀请码视觉同级", "already_in_family": "明确提示 + 返回入口"}, "accessibility": "按钮 label 清晰；落地态可读。", "acceptance": "复制链接=origin/join/{code}；落地页引导登录；已有家庭不重复加入并提示；无效码不白屏。"}
+      },
+      "verification": {"auto": "tsc --noEmit 通过", "data": "N/A", "visual": "落地页 + 复制链接 + 已有家庭提示截图", "manual": "已登录已有家庭访问被拦截提示；无效码兜底"},
+      "metadata": {"files_affected": ["app/src/features/family/InviteCodeCard.tsx (modify)", "app/src/features/family/JoinLandingPage.tsx (new)", "app/src/app/router.tsx (modify)"], "modules": ["settings-page-v0.3"], "layer": "frontend", "epic": "E4 邀请链接"},
+      "acceptance_criteria": ["复制的链接为 origin/join/{code} 可点", "落地页引导未登录去登录/注册（botanical 基调）", "已登录已有家庭访问落地页不重复加入并友好提示(D3)", "无效/失效码友好兜底不白屏"]
+    },
+    {
+      "task_id": "SET3-014",
+      "description": "邀请链接验证：复制链接为 origin/join/{code} 可点；未登录点链接→注册→填称呼→自动加入(不手输码)；已登录无家庭点链接直接加入；已登录已有家庭点链接被拦截友好提示(D3)；无效码不白屏；onboarding 多跳后暂存码存活；中途放弃不残留。",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": ["familyMembers", "families"], "key_fields": {}, "indexes": [], "relations": "", "notes": "验证任务。"}, "queries": {"read": "N/A", "write": "N/A"}, "migration_strategy": "N/A"},
+        "api_layer": {"type": "verification", "endpoints": ["families.joinFamilyByInviteCode"], "notes": ""},
+        "component_tree": {"entry_component": "JoinLandingPage", "children": [], "notes": ""},
+        "state_management": {"global_store": "N/A", "server_state": "N/A", "local_state": "N/A"},
+        "routing": {"path": "/join/:code → onboarding → /todo", "guard": "RouteGate", "middleware": "暂存编排"},
+        "auth": {"provider": "Convex Auth (existing)", "strategy": "N/A", "rls_or_rbac": "已有家庭拦截"},
+        "design_contract": {"ui_spec_ref": "PRD §4", "intent": "确认邀请链接全链路可用。", "tokens_new": [], "tokens_reuse": [], "visual_spec": {}, "accessibility": "N/A", "acceptance": "见 acceptance_criteria。"}
+      },
+      "verification": {"auto": "AppRouter.smoke.test + tsc --noEmit 通过", "data": "加入后 membership 仅 1 条", "visual": "落地页/已有家庭/无效码截图", "manual": "未登录全链路 + 已有家庭拦截 + 暂存存活/清除"},
+      "metadata": {"files_affected": ["app/src/test/AppRouter.smoke.test.tsx (modify)"], "modules": ["settings-page-v0.3"], "layer": "qa", "epic": "E4 邀请链接"},
+      "acceptance_criteria": ["复制链接 origin/join/{code} 可点且未登录全链路自动加入不手输码", "已登录无家庭直接加入、已有家庭被拦截友好提示(D3)", "无效码不白屏、暂存码跨多跳存活", "中途放弃不残留"]
+    },
+    {
+      "task_id": "SET3-015",
+      "description": "全局加固（关 §6.1 红线）：lib/auth.ts getCurrentUserContext 读 familyMembers 处 .unique()→.first()（保留取一条语义，多条时不崩溃取第一条降级 + console.warn 便于排查），严格保持逻辑上单一家庭约束不变；纯防御性，避免边界脏数据让用户彻底无法进应用。建议与 E2 同批落地（④ 是新写 membership 的能力）。",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": ["familyMembers"], "key_fields": {"familyMembers": "userId, familyId"}, "indexes": ["familyMembers.by_userId"], "relations": ".first() 取一条降级；不改业务约束。", "notes": "§6.1 红线：.unique() 多条直接抛错使用户无法进应用。"}, "queries": {"read": "getCurrentUserContext 读用户 membership 由 .unique() 改 .first()", "write": "N/A"}, "migration_strategy": "No schema change."},
+        "api_layer": {"type": "convex-internal-hardening", "endpoints": ["lib/auth.getCurrentUserContext (modify)"], "notes": "纯防御，行为对正常单 membership 用户不变。"},
+        "component_tree": {"entry_component": "N/A", "children": [], "notes": "后端 helper。"},
+        "state_management": {"global_store": "N/A", "server_state": "降级取第一条 membership", "local_state": "N/A"},
+        "routing": {"path": "N/A", "guard": "N/A", "middleware": "N/A"},
+        "auth": {"provider": "Convex Auth (existing)", "strategy": "保持单一家庭约束语义", "rls_or_rbac": "不变"},
+        "design_contract": {"ui_spec_ref": "PRD §6.1", "intent": "避免脏数据导致用户雪崩式无法进应用。", "tokens_new": [], "tokens_reuse": [], "visual_spec": {}, "accessibility": "N/A", "acceptance": "正常用户不变；2 条 membership 脏数据时仍能进应用。"}
+      },
+      "verification": {"auto": "tsc --noEmit + convex 编译通过", "data": "构造 2 条 membership 脏数据用户仍能进应用不崩溃", "visual": "N/A", "manual": "正常单 membership 行为不变"},
+      "metadata": {"files_affected": ["app/convex/lib/auth.ts (modify)"], "modules": ["settings-page-v0.3"], "layer": "backend", "epic": "E5 全局加固"},
+      "acceptance_criteria": ["正常单 membership 用户行为不变", "构造 2 条 membership 脏数据时用户仍能进应用（不崩溃）", "严格保持逻辑上单一家庭约束不变", "类型检查通过"]
+    },
+    {
+      "task_id": "SET3-016",
+      "description": "v0.3 整体回归 + smoke：app 目录 tsc --noEmit 无 error；四个新/改 mutation/query 编译通过；AppRouter.smoke.test 通过(含新 /join/:code)；v0.2 家庭名 getByText 断言不被改名破坏；grep 四项新增前端文件无硬编码 #hex；D5 数据一致性专项手测(唯一管理员拒退/最后一人删整库/普通成员级联删保留)；StorageImage 植物调用方不回归。",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": ["all touched"], "key_fields": {}, "indexes": [], "relations": "", "notes": "整体验收任务。"}, "queries": {"read": "N/A", "write": "N/A"}, "migration_strategy": "N/A"},
+        "api_layer": {"type": "verification", "endpoints": ["families.renameFamily", "families.leaveFamily", "users.updateMyAvatar", "families.joinFamilyByInviteCode"], "notes": "全模块收口。"},
+        "component_tree": {"entry_component": "App", "children": [], "notes": ""},
+        "state_management": {"global_store": "N/A", "server_state": "N/A", "local_state": "N/A"},
+        "routing": {"path": "全站", "guard": "N/A", "middleware": "N/A"},
+        "auth": {"provider": "Convex Auth (existing)", "strategy": "N/A", "rls_or_rbac": "N/A"},
+        "design_contract": {"ui_spec_ref": "PRD §6.2 / §7", "intent": "确认 v0.3 四能力完整且无回归、token 纪律达标。", "tokens_new": [], "tokens_reuse": [], "visual_spec": {}, "accessibility": "N/A", "acceptance": "见 acceptance_criteria。"}
+      },
+      "verification": {"auto": "tsc --noEmit + convex 编译 + AppRouter.smoke.test 全通过", "data": "D5 三分支专项手测", "visual": "四能力关键态截图", "manual": "grep 无 #hex；StorageImage 植物回归；v0.2 smoke 不破坏"},
+      "metadata": {"files_affected": [], "modules": ["settings-page-v0.3"], "layer": "qa", "epic": "E6 整体验收"},
+      "acceptance_criteria": ["tsc --noEmit 与 convex 编译均无 error", "AppRouter.smoke.test 通过且 v0.2 家庭名 getByText 断言不被破坏", "四项新增前端文件 grep 无硬编码 #hex", "D5 三分支专项手测通过且 StorageImage 植物调用方不回归"]
+    }
+  ]
+}

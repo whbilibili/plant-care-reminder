@@ -1,0 +1,7 @@
+/**
+ * App.css — 应用级样式
+ *
+ * 注：原 Vite 脚手架示例样式（.hero/.counter/#next-steps 等）已移除，
+ * 这些类已无任何组件引用。全局 design tokens 见 styles/tokens.css，
+ * 全局基础样式见 index.css。后续如需应用级样式，统一引用 var(--*) token。
+ */

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1170" height="2532" viewBox="0 0 1170 2532">
+  <defs>
+    
+    <filter id="paperNoise" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="4" seed="7"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncA type="table" tableValues="0 0.22"/>
+      </feComponentTransfer>
+    </filter>
+    <pattern id="fiberLines" width="180" height="180" patternUnits="userSpaceOnUse" patternTransform="rotate(32)">
+      <line x1="0" y1="18" x2="180" y2="18" stroke="#c8d8c3" stroke-width="2" opacity="0.18"/>
+      <line x1="0" y1="96" x2="180" y2="96" stroke="#e1c979" stroke-width="1" opacity="0.1"/>
+    </pattern>
+    <radialGradient id="bg-auth-botanical-top" cx="80%" cy="0%" r="70%">
+      <stop offset="0%" stop-color="#dbe8d1" stop-opacity="0.88"/>
+      <stop offset="52%" stop-color="#f4f8f0" stop-opacity="0.62"/>
+      <stop offset="100%" stop-color="#fbfcf7" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="bg-auth-botanical-warm" cx="14%" cy="92%" r="58%">
+      <stop offset="0%" stop-color="#eadb9a" stop-opacity="0.18"/>
+      <stop offset="55%" stop-color="#f7f5ea" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#fbfcf7" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bg-auth-botanical-paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fbfcf7"/>
+      <stop offset="100%" stop-color="#f0f7ee"/>
+    </linearGradient>
+    <filter id="bg-auth-botanical-softBlur">
+      <feGaussianBlur stdDeviation="9"/>
+    </filter>
+  </defs>
+  <rect width="1170" height="2532" fill="url(#bg-auth-botanical-paper)"/>
+  <rect width="1170" height="2532" fill="url(#bg-auth-botanical-top)"/>
+  <rect width="1170" height="2532" fill="url(#bg-auth-botanical-warm)"/>
+  <rect width="1170" height="2532" fill="url(#fiberLines)" opacity="0.42"/>
+  <rect width="1170" height="2532" filter="url(#paperNoise)" opacity="0.34"/>
+  
+      <circle cx="1020" cy="210" r="260" fill="#d8e5ce" opacity="0.28" filter="url(#bg-auth-botanical-softBlur)"/>
+      
+    <g transform="translate(840 92) rotate(-10) scale(1.22)" opacity="0.2">
+      <path d="M0 0 C38 -70 118 -98 180 -64 C116 -34 62 8 0 0Z" fill="#8fa67f"/>
+      <path d="M0 0 C62 -16 118 -38 180 -64" fill="none" stroke="#6f8a70" stroke-width="5" stroke-linecap="round"/>
+    </g>
+      
+    <g transform="translate(970 186) rotate(28) scale(0.92)" opacity="0.16">
+      <path d="M0 0 C38 -70 118 -98 180 -64 C116 -34 62 8 0 0Z" fill="#8fa67f"/>
+      <path d="M0 0 C62 -16 118 -38 180 -64" fill="none" stroke="#6f8a70" stroke-width="5" stroke-linecap="round"/>
+    </g>
+      
+    <g transform="translate(76 2030) rotate(215) scale(1.3)" opacity="0.13">
+      <path d="M0 0 C38 -70 118 -98 180 -64 C116 -34 62 8 0 0Z" fill="#8fa67f"/>
+      <path d="M0 0 C62 -16 118 -38 180 -64" fill="none" stroke="#6f8a70" stroke-width="5" stroke-linecap="round"/>
+    </g>
+      
+    <g transform="translate(190 2170) rotate(244) scale(0.88)" opacity="0.12">
+      <path d="M0 0 C38 -70 118 -98 180 -64 C116 -34 62 8 0 0Z" fill="#8fa67f"/>
+      <path d="M0 0 C62 -16 118 -38 180 -64" fill="none" stroke="#6f8a70" stroke-width="5" stroke-linecap="round"/>
+    </g>
+      <path d="M80 420 C260 330 430 342 560 448" fill="none" stroke="#aec2a7" stroke-width="4" opacity="0.12"/>
+      <path d="M742 2250 C860 2118 1018 2090 1130 2170" fill="none" stroke="#d4be70" stroke-width="3" opacity="0.12"/>
+    
+</svg>

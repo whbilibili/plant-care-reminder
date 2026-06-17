@@ -1,0 +1,1831 @@
+{
+  "project": "plant-care-reminder",
+  "prd": "docs/product-specs/2026-06-05-mvp-requirements.md",
+  "created_at": "2026-06-05",
+  "mode": "modular",
+  "module_index": [
+    {
+      "module": "infra",
+      "file": "docs/exec-plans/modules/infra.json",
+      "description": "Prepare the Convex-backed app foundation: schema, auth, shared contracts, route shell, PWA baseline and test harness.",
+      "task_count": 7,
+      "completed": 7,
+      "depends_on": []
+    },
+    {
+      "module": "family-access",
+      "file": "docs/exec-plans/modules/family-access.json",
+      "description": "Implement login, profile bootstrap, onboarding, family creation/join and shared household settings.",
+      "task_count": 6,
+      "completed": 6,
+      "depends_on": [
+        "infra"
+      ]
+    },
+    {
+      "module": "plant-registry",
+      "file": "docs/exec-plans/modules/plant-registry.json",
+      "description": "Implement plant image handling, plant CRUD, list/detail views and archive lifecycle.",
+      "task_count": 7,
+      "completed": 7,
+      "depends_on": [
+        "infra",
+        "family-access"
+      ]
+    },
+    {
+      "module": "care-reminders",
+      "file": "docs/exec-plans/modules/care-reminders.json",
+      "description": "Implement care-task scheduling, due inbox, completion flow and notification delivery.",
+      "task_count": 8,
+      "completed": 8,
+      "depends_on": [
+        "infra",
+        "family-access",
+        "plant-registry"
+      ]
+    },
+    {
+      "module": "frontend-refresh",
+      "file": "docs/exec-plans/modules/frontend-refresh.json",
+      "description": "建立 Design Token 基础设施，逐页面落地 moodboard botanical 视觉方向：登录、onboarding、待办、植物、设置全路径改造。",
+      "task_count": 13,
+      "completed": 13,
+      "depends_on": [
+        "infra",
+        "family-access",
+        "plant-registry",
+        "care-reminders"
+      ]
+    },
+    {
+      "module": "todo-page-v2",
+      "file": "docs/exec-plans/modules/todo-page-v2.json",
+      "description": "待办页 v0.2 迭代：方案 A（今日完成移出主区）、状态化情感反馈区、推迟（含连续推迟提示）、完成撤销、分区级一键完成，及配套 botanical UI 美化。每个 Task 同时承载功能开发契约（data/api）与 UI 美化契约（design_contract）。",
+      "prd": "docs/product-specs/2026-06-10-todo-page-iteration-spec.md",
+      "ui_spec": "docs/product-specs/2026-06-10-todo-page-ui-spec.md",
+      "task_count": 8,
+      "completed": 8,
+      "depends_on": [
+        "care-reminders",
+        "frontend-refresh"
+      ]
+    },
+    {
+      "module": "plant-list-v2",
+      "file": "docs/exec-plans/modules/plant-list-v2.json",
+      "description": "植物列表页 v0.2 迭代：横向紧凑卡片布局（左图 80×80 + 右文三行）、按最近到期时间排序、归档折叠区、整卡可点击、编辑降级图标、stagger 渐入动效与按压反馈。每个 Task 同时承载功能开发契约与 UI 美化契约。",
+      "prd": "docs/product-specs/2026-06-11-plant-list-iteration-spec.md",
+      "ui_spec": "docs/product-specs/2026-06-11-plant-list-ui-spec.md",
+      "task_count": 10,
+      "completed": 10,
+      "depends_on": [
+        "plant-registry",
+        "care-reminders",
+        "frontend-refresh"
+      ]
+    },
+    {
+      "module": "plant-detail-v2",
+      "file": "docs/exec-plans/modules/plant-detail-v2.json",
+      "description": "植物详情页 v0.2 迭代：从「植物资料卡」重构为「单株养护面板」。NavBar + Compact Hero + Action Zone（到期任务高亮操作区）+ Plan Overview + Plant Archive（可折叠）+ FAB + 全屏图片预览。每个 Task 同时承载功能开发契约与 UI 美化契约。",
+      "prd": "docs/product-specs/2026-06-11-plant-detail-iteration-spec.md",
+      "ui_spec": "docs/product-specs/2026-06-11-plant-detail-ui-spec.md",
+      "task_count": 9,
+      "completed": 9,
+      "depends_on": [
+        "plant-registry",
+        "care-reminders",
+        "frontend-refresh"
+      ]
+    },
+    {
+      "module": "settings-page-v2",
+      "file": "docs/exec-plans/modules/settings-page-v2.json",
+      "description": "设置页 v0.2 迭代：从「扁平 4 卡 + 退出」重构为「个人 / 家庭 / 通知与应用」三分组信息架构。补齐后端能力（移除成员、重置邀请码、设置摘要扩展），新增家庭头图卡情感锚点、成员头像与角色徽章、邀请码高亮容器、收不到提醒排障折叠、关于卡，并抽象通用 ConfirmSheet 承载退出/移除/重置三类破坏性确认。每个 Task 同时承载功能开发契约与 UI 美化契约。",
+      "prd": "docs/product-specs/2026-06-12-settings-page-iteration-spec.md",
+      "ui_spec": "docs/product-specs/2026-06-12-settings-page-ui-spec.md",
+      "task_count": 12,
+      "completed": 12,
+      "depends_on": [
+        "family-access",
+        "care-reminders",
+        "frontend-refresh"
+      ]
+    },
+    {
+      "module": "settings-page-v0.3",
+      "file": "docs/exec-plans/modules/settings-page-v0.3.json",
+      "description": "设置页 v0.3 迭代：在 v0.2 三分组架构上补齐四项能力——①个人头像上传（复用植物 storage 链路 + HEIC 转码，圆形预览，schema 增 imageStorageId，新建用户级头像接口不带家庭门槛）、②家庭改名（admin-only，复用 NicknameEditSheet 范本，无二次确认）、③邀请链接（前端为主，复用既有 joinFamilyByInviteCode；扩展 /join/:code 路由、跨 onboarding sessionStorage 暂存自动加入、复制邀请链接 + 邀请落地页 + 已有家庭兜底）、④退出家庭（新建 leaveFamily，按 D5：唯一管理员/创建者在有他人时禁退、最后一人退出删整库、普通成员退出级联删 pushSubscriptions 保留 logs）。顺带 .unique()→.first() 防御加固。落地节奏 P0=②④（含加固）先行、P1=①③ 次之。",
+      "prd": "docs/product-specs/2026-06-15-settings-page-v0.3-iteration-spec.md",
+      "task_breakdown": "docs/product-specs/2026-06-15-settings-page-v0.3-task-breakdown.md",
+"task_count": 16,
+"completed": 16,
+"depends_on": [
+"family-access",
+"plant-registry",
+        "care-reminders",
+        "settings-page-v2"
+      ]
+    },
+    {
+      "module": "icon-system-v0.4",
+      "file": "docs/exec-plans/modules/icon-system-v0.4.json",
+      "description": "图标系统 v0.4 迁移：emoji → Lucide 线性图标系统化替换。引入 lucide-react@0.471.1 + 封装 Icon 统一壳；按三级分类落地——A 级功能性图标必换（导航/完成/编辑/通知，修复 BottomNav active 态 emoji 白色失效核心 bug）、B 级任务类型图标统一收口（TaskTypeBadge/PlantCard/PlantDetailPage 三处既有不一致 emoji 收敛为 taskTypes.ts 单一 taskTypeIcon 映射）、C 级装饰 emoji（🌿🍃）保留。最后 DetailNavBar 手写 SVG 收口到 Lucide，并以守护单测固化『不准回退 emoji』。所有图标 stroke=currentColor 跟随主题/token，不新增 token、不引入 #hex。落地节奏 P0=基建+导航试点、P1=任务类型收口、P2=操作图标、P3=信息标识+DetailNavBar 收口、回归验收兜底。",
+"prd": "docs/design-docs/icon-system-migration.md",
+      "task_count": 9,
+      "completed": 9,
+"depends_on": [
+"frontend-refresh",
+        "todo-page-v2",
+        "plant-list-v2",
+        "plant-detail-v2",
+        "settings-page-v2"
+      ]
+    },
+    {
+      "module": "long-text-hardening-v0.5",
+      "file": "docs/exec-plans/modules/long-text-hardening-v0.5.json",
+      "description": "超长字符串处理 v0.5：对植物名称/摆放位置/简介/养护备注/自定义任务名五个文本字段，系统性补齐『输入端无上限 + 后端无校验 + 展示端截断不到位』三重缺口（缺陷治理 + 一致性补齐，对齐 families/nickname/inviteCode 既有长度纪律）。四层防御：输入端 maxLength（防错源头）、前端长度校验（可读提示）、后端 Convex mutation 二次校验（防绕过）、展示端单行省略 / 多行 clamp（兜存量超长不撑爆）。三批落地：第一批·止血（纯 CSS 消除截图撑爆，零风险）、第二批·治本（maxLength + 前端校验杜绝新增超长）、第三批·加固（后端校验 + 卡片 clamp + 抽公共截断工具 + PlanTaskRow flex + 回归验收）。上限：植物名 30 / 位置 30 / 简介 200 / 备注 200 / 任务名 20。不新增 token、不引入 #hex。",
+"prd": "docs/design-docs/2026-06-15-long-text-handling-plan.md",
+"task_count": 7,
+"completed": 7,
+"depends_on": [
+"plant-registry",
+        "care-reminders",
+        "plant-list-v2",
+        "plant-detail-v2"
+      ]
+    },
+    {
+      "module": "system-ui-refresh-v0.6",
+      "file": "docs/exec-plans/modules/system-ui-refresh-v0.6.json",
+      "description": "系统级 UI 主路径改造：基于 2026-06-16 设计稿，落地轻量原生导航、GroupedSurface、Photo-led 植物看板、Quiet Form、设置页邀请协作卡，目标主页面 95% 还原设计稿。",
+      "prd": "docs/design-docs/2026-06-16-system-ui-implementation-plan.md",
+      "task_count": 9,
+      "completed": 0,
+      "depends_on": [
+        "frontend-refresh",
+        "todo-page-v2",
+        "plant-list-v2",
+        "plant-detail-v2",
+        "settings-page-v0.3",
+        "icon-system-v0.4",
+        "long-text-hardening-v0.5"
+      ]
+    },
+    {
+      "module": "main-flow-continuity-v0.7",
+      "file": "docs/exec-plans/modules/main-flow-continuity-v0.7.json",
+      "description": "主页面 UI 改造后的流程连续性补全：细化登录注册、忘记密码、邀请加入、onboarding、待办、植物看板、植物详情、安静表单、设置协作和跨页面状态的缺失功能与流转修复。",
+      "prd": "docs/design-docs/2026-06-17-main-flow-continuity-plan.md",
+      "task_count": 14,
+      "completed": 0,
+      "depends_on": [
+        "system-ui-refresh-v0.6",
+        "family-access",
+        "plant-registry",
+        "care-reminders",
+        "plant-list-v2",
+        "plant-detail-v2",
+        "settings-page-v0.3"
+      ]
+    },
+    {
+      "module": "settings-detail-continuity-v0.8",
+      "file": "docs/exec-plans/modules/settings-detail-continuity-v0.8.json",
+      "description": "设置页主设计稿派生交互补全：基于 2026-06-17 settings detail drafts，落地个人资料、成员管理、成员详情、移除确认、邀请详情、通知详情，并回接设置主页面入口。",
+      "prd": "docs/design-docs/2026-06-17-settings-detail-interaction-plan.md",
+      "task_count": 9,
+      "completed": 0,
+      "depends_on": [
+        "system-ui-refresh-v0.6",
+        "main-flow-continuity-v0.7",
+        "settings-page-v0.3",
+        "settings-page-v2"
+      ]
+    },
+    {
+      "module": "onboarding-polish-v0.9",
+      "file": "docs/exec-plans/modules/onboarding-polish-v0.9.json",
+      "description": "Onboarding 流程 UI 精修：按钮色系校正(gold→leaf)、导航栏透明、问候栏卡片化+头像+编辑铅笔、家庭选择卡片横排、RouteGate 返回编辑修复、回归验证。",
+      "prd": "docs/design-docs/2026-06-16-system-ui-drafts/02-family-onboarding.png",
+      "task_count": 6,
+      "completed": 6,
+      "depends_on": [
+        "system-ui-refresh-v0.6",
+        "main-flow-continuity-v0.7",
+        "icon-system-v0.4"
+      ]
+    }
+  ],
+  "tasks_summary": [
+    {
+      "task_id": "INFRA-001",
+      "module": "infra",
+      "description": "Scaffold the app workspace with Vite React TypeScript and Convex runtime bindings.",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "INFRA-002",
+      "module": "infra",
+      "description": "Define Convex schema, auth config and shared validators for all MVP entities.",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "INFRA-003",
+      "module": "infra",
+      "description": "Add current-user and current-family context helpers for route guards and feature modules.",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "INFRA-004",
+      "module": "infra",
+      "description": "Build the root route shell with protected routes, onboarding redirects and bottom navigation.",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "INFRA-005",
+      "module": "infra",
+      "description": "Create shared UI primitives, form helpers and domain formatters for mobile-first screens.",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "INFRA-006",
+      "module": "infra",
+      "description": "Set up test utilities, Convex-friendly fixtures and smoke checks for feature modules.",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "INFRA-007",
+      "module": "infra",
+      "description": "Add the PWA manifest, service-worker registration and install entry points.",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "ACCESS-001",
+      "module": "family-access",
+      "description": "Build the email login screen and session bootstrap flow.",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "ACCESS-002",
+      "module": "family-access",
+      "description": "Capture and persist the user display name/profile after first login.",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "ACCESS-003",
+      "module": "family-access",
+      "description": "Implement the onboarding chooser that routes users to create or join a family.",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "ACCESS-004",
+      "module": "family-access",
+      "description": "Implement family creation with invite-code generation and initial admin membership.",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "ACCESS-005",
+      "module": "family-access",
+      "description": "Implement joining a family by invite code with single-family enforcement.",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "ACCESS-006",
+      "module": "family-access",
+      "description": "Render family settings with members list, invite code and household summary.",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "PLANT-001",
+      "module": "plant-registry",
+      "description": "Create image upload helpers and storage contracts for plant cover photos.",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "PLANT-002",
+      "module": "plant-registry",
+      "description": "Define plant form validation, DTO mapping and reusable plant editor state.",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "PLANT-003",
+      "module": "plant-registry",
+      "description": "Implement the create-plant flow with optional image upload.",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "PLANT-004",
+      "module": "plant-registry",
+      "description": "Implement the edit-plant flow with image replacement and field updates.",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "PLANT-005",
+      "module": "plant-registry",
+      "description": "Build the plant list page with next-due summaries on each card.",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "PLANT-006",
+      "module": "plant-registry",
+      "description": "Build the plant detail page with profile metadata and enabled care tasks.",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "PLANT-007",
+      "module": "plant-registry",
+      "description": "Implement archive and restore behavior without deleting care history.",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "CARE-001",
+      "module": "care-reminders",
+      "description": "Create shared task enums, labels and next-due scheduling helpers.",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "CARE-002",
+      "module": "care-reminders",
+      "description": "Implement the create-task flow for interval-based plant care tasks.",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "CARE-003",
+      "module": "care-reminders",
+      "description": "Implement the edit, enable-disable and delete task flows.",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "CARE-004",
+      "module": "care-reminders",
+      "description": "Render the reusable task list section inside the plant detail page.",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "CARE-005",
+      "module": "care-reminders",
+      "description": "Build the due inbox with overdue, today and upcoming task groups.",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "CARE-006",
+      "module": "care-reminders",
+      "description": "Implement task completion, completion logs and realtime next-due recomputation.",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "CARE-007",
+      "module": "care-reminders",
+      "description": "Implement notification permission prompts and push subscription persistence.",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "CARE-008",
+      "module": "care-reminders",
+      "description": "Implement scheduled due scanning and deduplicated reminder delivery.",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "VIS-001",
+      "module": "frontend-refresh",
+      "description": "建立 Design Token 基础设施（色彩/字体/间距/阴影/圆角 CSS Custom Properties）。",
+      "status": "completed",
+      "priority": "0-Critical"
+    },
+    {
+      "task_id": "VIS-002",
+      "module": "frontend-refresh",
+      "description": "中文文案统一与 accessible name 清理。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "VIS-003",
+      "module": "frontend-refresh",
+      "description": "登录页视觉改造（botanical gradient + 压缩 Hero + 表单卡片重构）。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "VIS-004",
+      "module": "frontend-refresh",
+      "description": "Onboarding 流程视觉统一（quiet-form 设计语言）。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "VIS-005",
+      "module": "frontend-refresh",
+      "description": "App Shell 与底部导航 task-first 改造。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "VIS-006",
+      "module": "frontend-refresh",
+      "description": "待办页 task-first 布局改造（三栏任务卡片）。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "VIS-007",
+      "module": "frontend-refresh",
+      "description": "植物列表页 photo-led 改造（16:10 封面卡片 + 无图占位态）。",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "VIS-008",
+      "module": "frontend-refresh",
+      "description": "植物详情页视觉重构（4:3 Hero + 任务区上移 + 固定操作栏）。",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "VIS-009",
+      "module": "frontend-refresh",
+      "description": "设置页视觉重构（卡片重排 + 退出按钮独立化）。",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "VIS-010",
+      "module": "frontend-refresh",
+      "description": "邀请码复制修复与 Fallback 交互。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "VIS-011",
+      "module": "frontend-refresh",
+      "description": "任务完成即时反馈与状态动效。",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "VIS-012",
+      "module": "frontend-refresh",
+      "description": "通知权限卡片与权限状态可视化。",
+      "status": "completed",
+      "priority": "3-Low"
+    },
+    {
+      "task_id": "VIS-013",
+      "module": "frontend-refresh",
+      "description": "视觉回归验证与整体走查。",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "TODO2-001",
+      "module": "todo-page-v2",
+      "description": "任务类型色条/图标基建：tokens.css 补 --color-task-* 色系 + DueTaskCard 类型识别（纯 UI 美化）。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "TODO2-002",
+      "module": "todo-page-v2",
+      "description": "方案 A 分桶强化：今日完成移出主区，下次落 1–3 天的任务在即将到期区灰态显示。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "TODO2-003",
+      "module": "todo-page-v2",
+      "description": "状态化情感反馈区（全部完成/有今日任务/有逾期三态问候卡，替代 Banner）。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "TODO2-004",
+      "module": "todo-page-v2",
+      "description": "推迟功能：新增 consecutivePostponeCount 字段 + postpone mutation（今天+1）+ 告知文案确认。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "TODO2-005",
+      "module": "todo-page-v2",
+      "description": "连续推迟达阈值温和建议条（默认 3 次），引导调整养护周期；单次推迟不标记。",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "TODO2-006",
+      "module": "todo-page-v2",
+      "description": "完成撤销：会话缓存上一状态还原 + 删除刚写入 log + 3–5 秒撤销浮条。",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "TODO2-007",
+      "module": "todo-page-v2",
+      "description": "分区级一键完成：同类型 ≥2 个时「全部完成」按钮 + 批量 mutation + 复用撤销浮条。",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "TODO2-008",
+      "module": "todo-page-v2",
+      "description": "体验收尾：完成微交互+Haptic、即将到期区折叠、空状态两语境、反馈区数字动效（遵守 reduced-motion）。",
+      "status": "completed",
+      "priority": "3-Low"
+    },
+    {
+      "task_id": "PLIST2-001",
+      "module": "plant-list-v2",
+      "description": "后端排序改造：listPlantsWithNextDue 改为按 nextDueAt 升序（无任务沉底），替代按名称排序。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "PLIST2-002",
+      "module": "plant-list-v2",
+      "description": "归档植物查询：新增 listArchivedPlants query（isArchived===true，按归档时间降序）。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "PLIST2-003",
+      "module": "plant-list-v2",
+      "description": "PlantCard 重写：竖向大图改为横向紧凑布局（左图 80×80 + 右文三行），整卡可点击进详情。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "PLIST2-004",
+      "module": "plant-list-v2",
+      "description": "任务状态行与逾期色条：第三行展示最紧迫任务 emoji+到期文案，逾期时左侧 3px 暖橙色条。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "PLIST2-005",
+      "module": "plant-list-v2",
+      "description": "编辑图标交互：右上角铅笔图标（16×16 视觉/44×44 热区），点击进编辑页并阻止冒泡。",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "PLIST2-006",
+      "module": "plant-list-v2",
+      "description": "归档折叠区组件：ArchivedSection + ArchivedPlantCard（灰态+恢复按钮+展开收起动效）。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "PLIST2-007",
+      "module": "plant-list-v2",
+      "description": "列表 Stagger 渐入动效：卡片依次 fade-in+translateY，stagger 50ms，尊重 reduced-motion。",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "PLIST2-008",
+      "module": "plant-list-v2",
+      "description": "卡片按压反馈：:active 态 scale(0.98)+底色微变，按下 120ms，松开 200ms 回弹缓动。",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "PLIST2-009",
+      "module": "plant-list-v2",
+      "description": "图片渐显与占位态：无图 mist 底+🌿；有图 onLoad 渐显 200ms；失败回退占位态。",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "PLIST2-010",
+      "module": "plant-list-v2",
+      "description": "PlantListPage 整合：集成新卡片+归档区，搜索栏视觉优化，标题栏改造，空状态落地。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "PDETAIL2-001",
+      "module": "plant-detail-v2",
+      "description": "顶部导航栏 + 溢出菜单：DetailNavBar（sticky 顶栏）+ OverflowMenu（编辑/归档/删除）。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "PDETAIL2-002",
+      "module": "plant-detail-v2",
+      "description": "紧凑 Hero 区重构：48×48 缩略图 + 名称 + 位置·状态摘要横向布局，状态摘要动态变色。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "PDETAIL2-003",
+      "module": "plant-detail-v2",
+      "description": "需要处理区（核心操作区）：高亮紧凑行（色条+emoji+标签+到期状态+圆形完成按钮），无到期时不渲染。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "PDETAIL2-004",
+      "module": "plant-detail-v2",
+      "description": "任务完成交互与动效：按钮变绿+emoji上浮+震动→行折叠退场→UndoToast（下次时间+撤销）。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "PDETAIL2-005",
+      "module": "plant-detail-v2",
+      "description": "养护计划区：全部任务下次时间总览（信息行可点击编辑），含空状态引导和添加按钮。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "PDETAIL2-006",
+      "module": "plant-detail-v2",
+      "description": "植物档案折叠区：可折叠描述/备注/时间，默认收起，localStorage 持久化，grid 动效。",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "PDETAIL2-007",
+      "module": "plant-detail-v2",
+      "description": "悬浮添加按钮（FAB）+ 全屏图片预览：pill 形 FAB 跳转创建任务页 + 缩略图全屏 overlay。",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "PDETAIL2-008",
+      "module": "plant-detail-v2",
+      "description": "页面整体组装与布局重构：五层信息架构组装，区域间距，进入动效，条件渲染，废弃旧组件。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "PDETAIL2-009",
+      "module": "plant-detail-v2",
+      "description": "无障碍与跨页面一致性验收：aria 属性补齐，对比度检测，与待办页/列表页视觉一致性。",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "SET2-001",
+      "module": "settings-page-v2",
+      "description": "扩展 getFamilySettingsSummary：追加 createdBy/currentUserRole/currentUserId/myEmail，成员项补 isCreator，支撑移除/重置入口权限渲染与「我的账号」只读行。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "SET2-002",
+      "module": "settings-page-v2",
+      "description": "新增 removeMember mutation：仅 admin，禁移除自己/创建者，级联删除 pushSubscriptions，保留 taskCompletionLogs。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "SET2-003",
+      "module": "settings-page-v2",
+      "description": "新增 resetInviteCode mutation：仅 admin，抽 generateUniqueInviteCode helper，旧码即时失效返回新码。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "SET2-004",
+      "module": "settings-page-v2",
+      "description": "校验/补齐 users.updateMyProfile（非空 + maxLength 40），供设置页改称呼复用，不重造规则。",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "SET2-005",
+      "module": "settings-page-v2",
+      "description": "抽象通用 ConfirmSheet（从 PostponeConfirmSheet 提炼）：参数化 + 三种 variant（描边危险/实底危险/品牌绿），复用现有 sheet 动效与 focus trap。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "SET2-006",
+      "module": "settings-page-v2",
+      "description": "FamilySettingsPage 三分组骨架重构 + SettingsGroup（h2 分组）+ SettingCardHeader（图标 chip + eyebrow + h3），落地 h1 与整页间距。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "SET2-007",
+      "module": "settings-page-v2",
+      "description": "家庭头图卡 FamilyHeroCard（品牌绿渐变情感锚点，全页唯一强色块）+ 人数分支文案。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "SET2-008",
+      "module": "settings-page-v2",
+      "description": "邀请码卡 InviteCodeCard：高亮虚线容器 + 复制/fallback 不回归 + admin 专属重置文字链（primary variant 确认 sheet 调 resetInviteCode）。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "SET2-009",
+      "module": "settings-page-v2",
+      "description": "个人组：SettingRow（称呼可编辑 sheet 复用 updateMyProfile / 账号只读行）+ 退出登录迁组并接 danger-outline 确认 sheet。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "SET2-010",
+      "module": "settings-page-v2",
+      "description": "成员卡：MemberAvatar 首字头像 + 角色徽章 + 我 pill + 标题去重 + 三条件移除入口（danger-solid 确认 sheet 调 removeMember）。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "SET2-011",
+      "module": "settings-page-v2",
+      "description": "通知卡外壳统一 + NotificationTroubleshooting 排障折叠（disclosure + a11y）+ AboutCard 关于卡（版本号构建注入）。",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "SET2-012",
+      "module": "settings-page-v2",
+      "description": "端到端验收：PRD §9 + UI §14 逐条核对、aria/对比度、320px 窄屏、token 纪律、admin/普通成员两视角、跨页面一致性。",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "SET3-001",
+      "module": "settings-page-v0.3",
+      "description": "新增 renameFamily mutation（家庭改名，admin-only）：照搬 resetInviteCode 权限模式，trim 非空 + 长度上限，patch families.name。",
+      "status": "completed",
+      "priority": "0-Critical"
+    },
+    {
+      "task_id": "SET3-002",
+      "module": "settings-page-v0.3",
+      "description": "FamilyNameEditSheet（克隆 NicknameEditSheet）+ 管理员家庭名可点击行（普通成员只读不置灰），非破坏性无二次确认，不破坏 v0.2 getByText。",
+      "status": "completed",
+      "priority": "0-Critical"
+    },
+    {
+      "task_id": "SET3-003",
+      "module": "settings-page-v0.3",
+      "description": "家庭改名验证：管理员可改实时更新、普通成员无入口、非 admin/空名/超长被拒、不破坏 v0.2 getByText。",
+      "status": "completed",
+      "priority": "0-Critical"
+    },
+    {
+      "task_id": "SET3-004",
+      "module": "settings-page-v0.3",
+      "description": "新增 leaveFamily mutation（含 D5 三分支）：唯一管理员/创建者（有他人）禁退、最后一人退出删整库、普通成员退出级联删 pushSubscriptions 保留 taskCompletionLogs。",
+      "status": "completed",
+      "priority": "0-Critical"
+    },
+    {
+"task_id": "SET3-005",
+"module": "settings-page-v0.3",
+"description": "「退出家庭」破坏性行 + ConfirmSheet danger-solid 二次确认，成功回 onboarding 不报错，唯一管理员被拒前端兜底友好提示，文案点名家庭名与后果。",
+"status": "completed",
+      "priority": "0-Critical"
+    },
+    {
+      "task_id": "SET3-006",
+      "module": "settings-page-v0.3",
+      "description": "退出家庭验证：普通成员退出回 onboarding、级联删保留正确、唯一管理员按 D5 被拒、最后一人删整库无残留。",
+      "status": "completed",
+      "priority": "0-Critical"
+    },
+    {
+      "task_id": "SET3-007",
+      "module": "settings-page-v0.3",
+"description": "头像 schema + 用户级接口（D6）：userFields 增 imageStorageId(id('_storage'))；新增 generateAvatarUploadUrl/getAvatarUrl/updateMyAvatar（不带家庭门槛）；摘要 members 补 imageStorageId。",
+"status": "completed",
+"priority": "1-High"
+    },
+    {
+"task_id": "SET3-008",
+"module": "settings-page-v0.3",
+"description": "头像上传交互：「个人」组「我的头像」入口，复用 normalizeImageFile + uploadPlantImage（注入头像回调）+ 三态，圆形预览，MVP 不裁剪/不进度。",
+"status": "completed",
+      "priority": "1-High"
+    },
+    {
+"task_id": "SET3-009",
+"module": "settings-page-v0.3",
+"description": "StorageImage 参数化（D1，默认走植物不回归）+ MemberAvatar 扩展 imageStorageId（圆形真实头像，无值回退首字母色块）。",
+"status": "completed",
+      "priority": "1-High"
+    },
+    {
+"task_id": "SET3-010",
+"module": "settings-page-v0.3",
+      "description": "头像验证：可上传 + HEIC 转 JPEG、三态失败保留、成员列表实时更新真实图、无头像回退色块、StorageImage 植物调用方不回归。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+"task_id": "SET3-011",
+"module": "settings-page-v0.3",
+      "description": "路由扩展 /join/:code（D2）：AppPath 增 /join，normalizePath 新增动态段解析出 inviteCode，不采用 ?invite= query。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "SET3-012",
+      "module": "settings-page-v0.3",
+      "description": "跨多跳暂存邀请码 + onboarding 自动加入：sessionStorage 暂存码跨登录/填称呼/多跳存活，到二选一阶段自动 joinFamilyByInviteCode 跳 /todo；已有家庭不重复加入。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "SET3-013",
+      "module": "settings-page-v0.3",
+      "description": "复制邀请链接（origin/join/{code}）+ 邀请落地页 JoinLandingPage（botanical 基调，引导登录），已有家庭兜底提示（D3），无效码不白屏。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "SET3-014",
+      "module": "settings-page-v0.3",
+      "description": "邀请链接验证：复制链接可点、未登录全链路自动加入不手输码、已有家庭拦截提示、无效码兜底、暂存跨多跳存活、放弃不残留。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "SET3-015",
+      "module": "settings-page-v0.3",
+      "description": "全局加固（§6.1 红线）：lib/auth.ts getCurrentUserContext 读 familyMembers 由 .unique()→.first() 降级取一条 + warn，保持单一家庭约束不变。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "SET3-016",
+      "module": "settings-page-v0.3",
+      "description": "v0.3 整体回归 + smoke：tsc/convex 编译、AppRouter.smoke（含 /join）、v0.2 getByText 不破坏、无 #hex、D5 三分支专项手测、StorageImage 植物回归。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "ICON-001",
+      "module": "icon-system-v0.4",
+      "description": "引入 lucide-react@0.471.1（pin）+ 封装 Icon 统一壳（size/strokeWidth/colorVar/label，默认 currentColor），确立图标统一消费纪律 + 最小渲染测试。",
+      "status": "completed",
+      "priority": "0-Critical"
+    },
+    {
+      "task_id": "ICON-002",
+      "module": "icon-system-v0.4",
+      "description": "BottomNav 试点替换 🗓️🪴⚙️ → CalendarCheck/Sprout/Settings，验证 active 态图标随父级 color 转白，修复 emoji active 态白色失效核心 bug。",
+      "status": "completed",
+      "priority": "0-Critical"
+    },
+    {
+      "task_id": "ICON-003",
+      "module": "icon-system-v0.4",
+      "description": "taskTypes.ts 建立权威 taskTypeIcon 映射（Droplet/Sprout/SprayCan/Flower2/Scissors/Tag）+ 六类型全映射单测，作为 B 级收口唯一来源。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+"task_id": "ICON-004",
+"module": "icon-system-v0.4",
+"description": "任务类型图标三处消费方（TaskTypeBadge/PlantCard/PlantDetailPage）统一切到 taskTypeIcon，删除第二份 emoji 映射，消除 fertilizing/misting/custom 历史不一致，fallback 统一。",
+"status": "completed",
+"priority": "1-High"
+    },
+    {
+"task_id": "ICON-005",
+"module": "icon-system-v0.4",
+      "description": "操作类图标替换：完成态 ✓→Check（CompleteTaskButton/ActionableTaskRow）、编辑入口 ✎→Pencil（FamilyHeroCard），stroke=currentColor 跟随按钮文字色，动效与 aria 不回归。",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "ICON-006",
+      "module": "icon-system-v0.4",
+      "description": "信息标识图标替换：🔔→Bell、📝→NotebookPen、📋→ClipboardList、⚠️→Info（或保留），对齐卡片标题语言与基线，图标 aria-hidden。",
+      "status": "completed",
+      "priority": "3-Low"
+    },
+    {
+"task_id": "ICON-007",
+"module": "icon-system-v0.4",
+"description": "DetailNavBar 手写 SVG（chevron/三点）收口为 Lucide ChevronLeft/EllipsisVertical，统一图标来源，外观像素级一致、交互与 a11y 不回归。",
+"status": "completed",
+"priority": "3-Low"
+    },
+    {
+      "task_id": "ICON-008",
+      "module": "icon-system-v0.4",
+      "description": "图标纪律守护单测：任务类型映射完整性 + A/B 级文件 emoji 不回灌（白名单仅 C 级装饰）+ Icon a11y 契约，故意回灌 emoji 应失败。",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "ICON-009",
+      "module": "icon-system-v0.4",
+      "description": "整体回归验收：tsc+convex typecheck+vitest 全绿、A/B 级 emoji 全清 C 级保留、tree-shaking/reduced-motion/#hex 纪律核对、四页面双视角走查、迁移验收小结追加。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "TEXT-001",
+      "module": "long-text-hardening-v0.5",
+      "description": "第一批·止血①：PlantCard nameRowStyle 补 minWidth:0 让既有 ellipsis 生效（消除植物名假截断撑爆卡片），核对 location 单行省略不回归。纯 CSS 零风险。",
+      "status": "completed",
+      "priority": "0-Critical"
+    },
+    {
+      "task_id": "TEXT-002",
+      "module": "long-text-hardening-v0.5",
+      "description": "第一批·止血②：PageHeader 标题 + DeleteTaskAction 删除文案加 overflowWrap/wordBreak:break-word，超长连续串/任务名换行不溢出气泡弹窗。纯 CSS 零风险。",
+      "status": "completed",
+      "priority": "0-Critical"
+    },
+    {
+      "task_id": "TEXT-003",
+      "module": "long-text-hardening-v0.5",
+      "description": "第一批·止血③：PlantCard 概览卡片简介不平铺（或限 1-2 行 clamp + break-word），次要文本不撑宽卡片；位置由 TEXT-001 覆盖。纯 CSS / 展示决策零风险。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "TEXT-004",
+      "module": "long-text-hardening-v0.5",
+      "description": "第二批·治本①：constants.ts 抽五个长度常量（名30/位置30/简介200/备注200/任务名20），PlantForm 四字段 + TaskForm 任务名加 maxLength，简介/备注加字数计数。源头杜绝新增超长。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "TEXT-005",
+      "module": "long-text-hardening-v0.5",
+      "description": "第二批·治本②：validatePlantEditorValues 四字段 + validateCustomTaskName 追加长度校验，超限返回可读错误文案（消费同组常量），补单测。maxLength 被绕过时的前端二道防线。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "TEXT-006",
+      "module": "long-text-hardening-v0.5",
+"description": "第三批·加固①：convex/lib/validators.ts 新增 assertMaxLength；plants.createPlant/updatePlant 补 name trim+非空+长度及 location/description/note 长度；tasks mutation customTaskName 复用增强校验。后端二次校验防绕过。",
+"status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "TEXT-007",
+      "module": "long-text-hardening-v0.5",
+"description": "第三批·加固②：新建 textTruncate.ts 公共截断工具收口复制粘贴；TaskListItem/DueTaskCard/UpcomingDueCard 任务名 clamp(2)+植物名单行省略；PlanTaskRow flex 加固；整体回归验收 500+ 字符全页面无溢出 + 验收小结。",
+"status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "UI-SYS-001",
+      "module": "system-ui-refresh-v0.6",
+      "description": "建立系统级 UI 改造共享基元：ScreenNav、GroupedSurface、ObjectSummaryBand、TaskActionRow、InviteCard，并定义视觉 QA 截图规范。",
+      "status": "pending",
+      "priority": "0-Critical"
+    },
+    {
+      "task_id": "UI-SYS-002",
+      "module": "system-ui-refresh-v0.6",
+      "description": "改造登录/注册页为 v2 同页双模式表单：保留 /login 单路由，通过 登录/注册 segmented control 切换模式，首屏展示输入框和主按钮。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "UI-SYS-003",
+      "module": "system-ui-refresh-v0.6",
+      "description": "改造家庭接入选择页：压缩说明文案，突出创建新家庭/加入家人的家庭两个决策 surface，并保留现有 profile/create/join 链路。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "UI-SYS-004",
+      "module": "system-ui-refresh-v0.6",
+      "description": "改造待办首页：首屏优先展示逾期/今天任务、完成进度、右侧圆形完成按钮和即将到期轻列表。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "UI-SYS-005",
+      "module": "system-ui-refresh-v0.6",
+      "description": "改造植物看板：重建 photo-led 植物卡片、搜索栏、添加入口和无图/坏图占位态，保持整卡进入详情和归档区能力。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "UI-SYS-006",
+      "module": "system-ui-refresh-v0.6",
+      "description": "改造植物详情页：替换顶部为 ScreenNav + ObjectSummaryBand，解决白条贴片感；将需要处理和养护计划上移，低频动作下沉。",
+      "status": "pending",
+      "priority": "0-Critical"
+    },
+    {
+      "task_id": "UI-SYS-007",
+      "module": "system-ui-refresh-v0.6",
+      "description": "改造安静表单模板：统一添加/编辑植物与添加/编辑养护任务的顶部导航、上下文摘要、字段分组、预览/状态和危险操作分离。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "UI-SYS-008",
+      "module": "system-ui-refresh-v0.6",
+      "description": "改造设置页 v2：重建家庭协作优先的设置页，InviteCard 同时支持复制邀请链接和快捷复制邀请码，并保留手动查看兜底。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "UI-SYS-009",
+      "module": "system-ui-refresh-v0.6",
+      "description": "跨页面视觉 QA 与 95% 还原修正：对七张主设计稿对应页面进行 375/390/430px 截图验收，修正间距、层级、按钮、长文本和移动端遮挡问题。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "FLOW-001",
+      "module": "main-flow-continuity-v0.7",
+      "description": "建立主流程路由与状态审计表：逐页核对进入、返回、成功跳转、失败兜底、加载态、空态和丢失功能，形成修复清单与截图证据。",
+      "status": "pending",
+      "priority": "0-Critical"
+    },
+    {
+      "task_id": "FLOW-002",
+      "module": "main-flow-continuity-v0.7",
+      "description": "补齐登录/注册入口连续性：保留同页双模式，确认登录、注册、邀请上下文、错误提示、提交中状态和成功后 RouteGate 跳转稳定。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "FLOW-003",
+      "module": "main-flow-continuity-v0.7",
+      "description": "正式化忘记密码流程：补齐请求验证码、验证码验证、新密码设置、返回登录、重新发送、错误翻译和成功回填邮箱。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "FLOW-004",
+      "module": "main-flow-continuity-v0.7",
+      "description": "补齐邀请落地页与 pending invite 链路：/join/:code 对匿名、已登录无家庭、已登录已有家庭三种状态给出明确引导。",
+      "status": "pending",
+      "priority": "0-Critical"
+    },
+    {
+      "task_id": "FLOW-005",
+      "module": "main-flow-continuity-v0.7",
+      "description": "补齐 onboarding 创建/加入家庭的成功、返回、失败和 RouteGate 放行，避免表单成功后停留或被重定向到错误页面。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "FLOW-006",
+      "module": "main-flow-continuity-v0.7",
+      "description": "补齐待办首页任务操作连续性：完成、撤销、进入植物详情、展开即将到期、空态和加载态都按新版 UI 稳定展示。",
+      "status": "pending",
+      "priority": "0-Critical"
+    },
+    {
+      "task_id": "FLOW-007",
+      "module": "main-flow-continuity-v0.7",
+      "description": "补齐植物看板入口能力：添加第一株植物 CTA、搜索无结果、整卡进入详情、归档折叠、无图/坏图占位和主导航 active 态。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "FLOW-008",
+      "module": "main-flow-continuity-v0.7",
+      "description": "补齐植物详情操作闭环：需要处理、养护计划、添加/编辑任务、图片预览、归档/恢复/删除、缺失植物和返回路径全部稳定。",
+      "status": "pending",
+      "priority": "0-Critical"
+    },
+    {
+      "task_id": "FLOW-009",
+      "module": "main-flow-continuity-v0.7",
+      "description": "统一添加/编辑植物 quiet form 流程：保存、取消、返回、脏数据确认、校验错误、图片上传失败和危险操作分离。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "FLOW-010",
+      "module": "main-flow-continuity-v0.7",
+      "description": "统一添加/编辑养护计划 quiet form 流程：植物上下文摘要、保存后回详情、取消确认、删除任务确认、频率/类型/名称校验。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "FLOW-011",
+      "module": "main-flow-continuity-v0.7",
+      "description": "补齐设置页协作功能连续性：复制邀请链接/邀请码、复制失败 fallback、家庭改名刷新、成员管理占位、通知开关真实状态说明、退出确认。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "FLOW-012",
+      "module": "main-flow-continuity-v0.7",
+      "description": "抽象并应用跨页面状态组件：LoadingSurface、ErrorSurface、SuccessToast 或等价封装，统一主路径状态表达。",
+      "status": "pending",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "FLOW-013",
+      "module": "main-flow-continuity-v0.7",
+      "description": "补齐主路径 E2E smoke：覆盖新用户注册、创建家庭、添加植物、添加任务、完成任务、撤销、编辑、设置页复制邀请和退出登录。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "FLOW-014",
+      "module": "main-flow-continuity-v0.7",
+      "description": "主流程视觉与交互回归：对 v0.7 修复后的核心路径做 375/390/430px 截图验收，修正导航层级、按钮溢出、文本遮挡和底部导航范围。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "SETD-001",
+      "module": "settings-detail-continuity-v0.8",
+      "description": "设置细节页路由与页面壳：扩展个人资料、管理成员、成员资料、邀请家人、提醒通知等设置子页；二级页统一 ScreenNav，不显示底部 TabBar。",
+      "status": "pending",
+      "priority": "0-Critical"
+    },
+    {
+      "task_id": "SETD-002",
+      "module": "settings-detail-continuity-v0.8",
+      "description": "个人资料编辑页：从设置页右上头像进入，支持头像上传、HEIC 转 JPEG、上传中/已保存/错误三态、显示名称编辑和脏数据返回确认。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "SETD-003",
+      "module": "settings-detail-continuity-v0.8",
+      "description": "管理成员列表页：展示家庭名、成员数量、成员头像、角色、当前用户标记、最后活跃，并提供邀请更多家人的入口。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "SETD-004",
+      "module": "settings-detail-continuity-v0.8",
+      "description": "成员资料页：展示成员头像、名称、角色、加入时间、最后活跃、近期养护摘要；管理员可对非自己成员打开移除确认。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "SETD-005",
+      "module": "settings-detail-continuity-v0.8",
+      "description": "移除成员确认与后端接线：ConfirmSheet danger-solid 调用 families.removeMember，成功返回成员列表并刷新，失败在 sheet 内展示友好错误。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "SETD-006",
+      "module": "settings-detail-continuity-v0.8",
+      "description": "邀请家人详情页：展示完整链接和邀请码，支持复制链接、复制邀请码、复制成功反馈和复制失败手动兜底。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "SETD-007",
+      "module": "settings-detail-continuity-v0.8",
+      "description": "提醒通知详情页：展示提醒开关、当前本地/账号级状态说明、浏览器通知权限检查和添加到主屏幕排障入口。",
+      "status": "pending",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "SETD-008",
+      "module": "settings-detail-continuity-v0.8",
+      "description": "设置主页面入口回接：右上头像、管理成员、成员行、手动查看邀请码、通知行全部接入对应二级页；未实现入口不再作为静态可点击样式出现。",
+      "status": "pending",
+      "priority": "0-Critical"
+    },
+    {
+      "task_id": "SETD-009",
+      "module": "settings-detail-continuity-v0.8",
+      "description": "设置细节页视觉与流程回归：按 6 张补充设计稿做 375/390/430px 截图验收，覆盖管理员/普通成员、复制失败、权限失败、长名称和无头像 fallback。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "OBP-001",
+      "module": "onboarding-polish-v0.9",
+      "description": "Button primary 色系校正 gold→leaf，新增 accent 变体保留原 gold 语义，onboarding 三表单主按钮变深绿。",
+      "status": "completed",
+      "priority": "0-Critical"
+    },
+    {
+      "task_id": "OBP-002",
+      "module": "onboarding-polish-v0.9",
+      "description": "ScreenNav 背景透明化：navStyle.background 从 var(--color-paper) 改为 transparent，消除渐变页面顶部色带。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "OBP-003",
+      "module": "onboarding-polish-v0.9",
+      "description": "FamilyOnboardingChoicePage 问候栏精修：GroupedSurface 卡片包裹、MemberAvatar 替换空 div、编辑按钮加 Pencil 图标。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "OBP-004",
+      "module": "onboarding-polish-v0.9",
+      "description": "家庭选择卡片布局重构：从纵向堆叠改为左图标右文字水平排列，对齐设计稿。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "OBP-005",
+      "module": "onboarding-polish-v0.9",
+      "description": "RouteGate 修复：允许已有 displayName 的用户重新访问 /onboarding/profile 以支持返回编辑。",
+      "status": "completed",
+      "priority": "0-Critical"
+    },
+    {
+      "task_id": "OBP-006",
+      "module": "onboarding-polish-v0.9",
+      "description": "Onboarding 精修回归验证：全流程走通新注册→设昵称→选择家庭→创建/加入→首页，截图对比设计稿。",
+      "status": "completed",
+      "priority": "1-High"
+    }
+  ],
+  "cross_module_dependencies": [
+    {
+      "from": "SETD-001",
+      "to": "FLOW-001",
+      "reason": "设置细节页路由扩展应纳入主流程路由与状态审计，避免设置域子路径刷新或返回异常。"
+    },
+    {
+      "from": "SETD-001",
+      "to": "UI-SYS-008",
+      "reason": "设置二级页视觉和入口来自 v0.6 设置主页面与 InviteCard 结构。"
+    },
+    {
+      "from": "SETD-002",
+      "to": "SET3-008",
+      "reason": "个人资料编辑页复用设置页 v0.3 已建立的头像上传交互。"
+    },
+    {
+      "from": "SETD-002",
+      "to": "SET3-009",
+      "reason": "个人资料头像展示依赖 StorageImage 参数化和 MemberAvatar 真实头像改造。"
+    },
+    {
+      "from": "SETD-003",
+      "to": "SETD-001",
+      "reason": "成员管理列表依赖设置子页面路由和 ScreenNav 页面壳。"
+    },
+    {
+      "from": "SETD-004",
+      "to": "SETD-003",
+      "reason": "成员资料页从成员管理列表成员行进入。"
+    },
+    {
+      "from": "SETD-005",
+      "to": "SETD-004",
+      "reason": "移除成员确认由成员资料页的危险操作触发。"
+    },
+    {
+      "from": "SETD-006",
+      "to": "SET3-013",
+      "reason": "邀请家人详情页依赖 v0.3 已建立的邀请链接与 /join/:code 能力。"
+    },
+    {
+      "from": "SETD-008",
+      "to": "SETD-002",
+      "reason": "设置主页面右上头像入口回接依赖个人资料页完成。"
+    },
+    {
+      "from": "SETD-008",
+      "to": "SETD-003",
+      "reason": "设置主页面管理成员入口回接依赖成员管理页完成。"
+    },
+    {
+      "from": "SETD-008",
+      "to": "SETD-006",
+      "reason": "设置主页面手动查看邀请码入口回接依赖邀请详情页完成。"
+    },
+    {
+      "from": "SETD-009",
+      "to": "SETD-008",
+      "reason": "设置细节页最终视觉与流程回归应在主页面入口全部接线后执行。"
+    },
+    {
+      "from": "FLOW-001",
+      "to": "UI-SYS-009",
+      "reason": "主流程连续性审计应建立在 v0.6 主页面视觉回归之后，先确认视觉改造实际造成的流转和状态缺口。"
+    },
+    {
+      "from": "FLOW-002",
+      "to": "UI-SYS-002",
+      "reason": "登录/注册连续性修复基于 v0.6 同页双模式登录页结构。"
+    },
+    {
+      "from": "FLOW-004",
+      "to": "SET3-013",
+      "reason": "邀请落地页和 pending invite 链路依赖设置页 v0.3 已建立的 /join/:code 与邀请码加入能力。"
+    },
+    {
+      "from": "FLOW-005",
+      "to": "UI-SYS-003",
+      "reason": "onboarding 成功/失败/返回状态补齐基于 v0.6 家庭接入选择页。"
+    },
+    {
+      "from": "FLOW-006",
+      "to": "UI-SYS-004",
+      "reason": "待办首页功能连续性补齐基于 v0.6 待办首页视觉结构。"
+    },
+    {
+      "from": "FLOW-007",
+      "to": "UI-SYS-005",
+      "reason": "植物看板入口能力补齐基于 v0.6 photo-led 植物看板。"
+    },
+    {
+      "from": "FLOW-008",
+      "to": "UI-SYS-006",
+      "reason": "植物详情操作闭环补齐基于 v0.6 ScreenNav + ObjectSummaryBand 详情结构。"
+    },
+    {
+      "from": "FLOW-009",
+      "to": "UI-SYS-007",
+      "reason": "添加/编辑植物的保存、取消、脏数据确认基于 v0.6 quiet form 模板。"
+    },
+    {
+      "from": "FLOW-010",
+      "to": "UI-SYS-007",
+      "reason": "添加/编辑养护计划的保存、取消、删除确认同样基于 v0.6 quiet form 模板。"
+    },
+    {
+      "from": "FLOW-011",
+      "to": "UI-SYS-008",
+      "reason": "设置页协作连续性补齐基于 v0.6 InviteCard 和家庭协作设置页结构。"
+    },
+    {
+      "from": "FLOW-013",
+      "to": "FLOW-002",
+      "reason": "E2E 主路径验收需要登录/注册入口稳定。"
+    },
+    {
+      "from": "FLOW-014",
+      "to": "FLOW-013",
+      "reason": "最终视觉与交互回归应在主路径 smoke 通过后执行。"
+    },
+    {
+      "from": "ACCESS-001",
+      "to": "INFRA-004",
+      "reason": "Session bootstrap needs the root route shell and protected-route behavior."
+    },
+    {
+      "from": "ACCESS-004",
+      "to": "INFRA-002",
+      "reason": "Family creation depends on schema, auth and validator definitions."
+    },
+    {
+      "from": "PLANT-001",
+      "to": "INFRA-002",
+      "reason": "Image upload contracts depend on schema and storage-ready validators."
+    },
+    {
+      "from": "PLANT-005",
+      "to": "ACCESS-005",
+      "reason": "Plant queries require an authenticated user already scoped to a family."
+    },
+    {
+      "from": "CARE-002",
+      "to": "PLANT-006",
+      "reason": "Task creation starts from the plant detail workflow."
+    },
+    {
+      "from": "CARE-005",
+      "to": "PLANT-005",
+      "reason": "The due inbox reuses family-scoped plant and task summary data."
+    },
+    {
+      "from": "CARE-006",
+      "to": "CARE-001",
+      "reason": "Completion relies on shared scheduling helpers and task type contracts."
+    },
+    {
+      "from": "CARE-007",
+      "to": "INFRA-007",
+      "reason": "Push subscriptions require the PWA manifest and service-worker baseline."
+    },
+    {
+      "from": "CARE-008",
+      "to": "CARE-007",
+      "reason": "Reminder delivery depends on persisted push subscriptions."
+    },
+    {
+      "from": "VIS-010",
+      "to": "ACCESS-006",
+      "reason": "邀请码 fallback 依赖现有家庭设置摘要和邀请码 surface。"
+    },
+    {
+      "from": "VIS-005",
+      "to": "CARE-005",
+      "reason": "Task-first shell 默认落点依赖现有 due inbox route。"
+    },
+    {
+      "from": "VIS-007",
+      "to": "PLANT-001",
+      "reason": "Photo-led 改造依赖图片上传和 storage URL 机制。"
+    },
+    {
+      "from": "VIS-007",
+      "to": "PLANT-005",
+      "reason": "植物卡片改造复用 plant list 查询和 next-due 数据。"
+    },
+    {
+      "from": "VIS-004",
+      "to": "ACCESS-003",
+      "reason": "Onboarding 视觉改造基于现有 create/join family 流程。"
+    },
+    {
+      "from": "VIS-006",
+      "to": "CARE-005",
+      "reason": "待办页改造复用现有 due inbox 分组和 completion workflow。"
+    },
+    {
+      "from": "TODO2-002",
+      "to": "CARE-005",
+      "reason": "分桶强化基于现有 listDueTasks 的 overdue/today/upcoming 三桶逻辑增量扩展。"
+    },
+    {
+      "from": "TODO2-002",
+      "to": "CARE-006",
+      "reason": "判定「今日是否已完成」依赖现有 completePlantTask 写入的 lastCompletedAt / completionLog。"
+    },
+    {
+      "from": "TODO2-003",
+      "to": "TODO2-002",
+      "reason": "情感反馈区三态由强化后的 listDueTasks 分桶结果派生。"
+    },
+    {
+      "from": "TODO2-004",
+      "to": "CARE-001",
+      "reason": "推迟顺延计算复用 scheduling 共享 helper，并新增 consecutivePostponeCount 到 INFRA-002 schema。"
+    },
+    {
+      "from": "TODO2-005",
+      "to": "TODO2-004",
+      "reason": "连续推迟提示消费 TODO2-004 写入的 consecutivePostponeCount。"
+    },
+    {
+      "from": "TODO2-006",
+      "to": "CARE-006",
+      "reason": "撤销扩展现有 completePlantTask（返回 logId + previous 快照）并删除刚写入的 completionLog。"
+    },
+    {
+      "from": "TODO2-007",
+      "to": "TODO2-006",
+      "reason": "批量完成复用单个完成 undo 内核与撤销浮条。"
+    },
+    {
+      "from": "TODO2-001",
+      "to": "VIS-001",
+      "reason": "任务类型色 --color-task-* 在 VIS-001 建立的 token 基础设施上扩展。"
+    },
+    {
+      "from": "TODO2-008",
+      "to": "VIS-011",
+      "reason": "完成微交互在 VIS-011 已有的完成即时反馈/状态动效上增强。"
+    },
+    {
+      "from": "PLIST2-001",
+      "to": "CARE-001",
+      "reason": "排序依据 nextDueAt 由 care-reminders 模块的 scheduling helper 计算写入。"
+    },
+    {
+      "from": "PLIST2-001",
+      "to": "PLANT-005",
+      "reason": "改造现有 listPlantsWithNextDue query，该 query 在 plant-registry 模块建立。"
+    },
+    {
+      "from": "PLIST2-002",
+      "to": "PLANT-007",
+      "reason": "归档查询依赖 PLANT-007 实现的 archive/restore 生命周期和 archivedAt 字段。"
+    },
+    {
+      "from": "PLIST2-003",
+      "to": "PLIST2-001",
+      "reason": "新卡片消费 PLIST2-001 改造后的排序数据，直接使用后端返回顺序。"
+    },
+    {
+      "from": "PLIST2-004",
+      "to": "PLIST2-003",
+      "reason": "任务状态行是 PlantCard 重写的子组件，依赖卡片结构先就位。"
+    },
+    {
+      "from": "PLIST2-005",
+      "to": "PLIST2-003",
+      "reason": "编辑图标嵌入重写后的 PlantCard 第一行右侧。"
+    },
+    {
+      "from": "PLIST2-006",
+      "to": "PLIST2-002",
+      "reason": "归档折叠区组件消费 PLIST2-002 新增的 listArchivedPlants query。"
+    },
+    {
+      "from": "PLIST2-007",
+      "to": "PLIST2-003",
+      "reason": "Stagger 动效作用于重写后的 PlantCard 列表。"
+    },
+    {
+      "from": "PLIST2-008",
+      "to": "PLIST2-003",
+      "reason": "按压反馈 CSS 加在重写后的 PlantCard 容器上。"
+    },
+    {
+      "from": "PLIST2-009",
+      "to": "PLIST2-003",
+      "reason": "PlantImage 组件是 PlantCard 重写的子组件。"
+    },
+    {
+      "from": "PLIST2-010",
+      "to": "PLIST2-003",
+      "reason": "页面整合依赖新 PlantCard 组件已完成。"
+    },
+    {
+      "from": "PLIST2-010",
+      "to": "PLIST2-006",
+      "reason": "页面整合需要集成归档折叠区组件。"
+    },
+    {
+      "from": "PLIST2-010",
+      "to": "VIS-001",
+      "reason": "页面布局全面引用 VIS-001 建立的 design token 基础设施。"
+    },
+    {
+      "from": "PDETAIL2-003",
+      "to": "CARE-006",
+      "reason": "需要处理区的完成按钮复用 care-reminders 模块的 completePlantTask mutation。"
+    },
+    {
+      "from": "PDETAIL2-004",
+      "to": "CARE-006",
+      "reason": "完成交互复用 completePlantTask / undoCompletePlantTask mutation 和 UndoToast 组件。"
+    },
+    {
+      "from": "PDETAIL2-002",
+      "to": "PLANT-006",
+      "reason": "Hero 区重构基于 plant-registry 模块建立的 getPlantDetail query 和 PlantHeroCard 组件。"
+    },
+    {
+      "from": "PDETAIL2-008",
+      "to": "VIS-001",
+      "reason": "页面布局全面引用 VIS-001 建立的 design token 基础设施。"
+    },
+    {
+      "from": "PDETAIL2-008",
+      "to": "PDETAIL2-001",
+      "reason": "页面组装依赖 DetailNavBar 组件已完成。"
+    },
+    {
+      "from": "PDETAIL2-008",
+      "to": "PDETAIL2-002",
+      "reason": "页面组装依赖紧凑 Hero 区已完成。"
+    },
+    {
+      "from": "PDETAIL2-008",
+      "to": "PDETAIL2-003",
+      "reason": "页面组装依赖需要处理区已完成。"
+    },
+    {
+      "from": "PDETAIL2-008",
+      "to": "PDETAIL2-005",
+      "reason": "页面组装依赖养护计划区已完成。"
+    },
+    {
+      "from": "PDETAIL2-008",
+      "to": "PDETAIL2-006",
+      "reason": "页面组装依赖植物档案折叠区已完成。"
+    },
+    {
+      "from": "PDETAIL2-008",
+      "to": "PDETAIL2-007",
+      "reason": "页面组装依赖 FAB 和图片预览已完成。"
+    },
+    {
+      "from": "SET2-001",
+      "to": "ACCESS-006",
+      "reason": "扩展 getFamilySettingsSummary 基于 family-access 模块 ACCESS-006 建立的家庭设置摘要 query。"
+    },
+    {
+      "from": "SET2-002",
+      "to": "SET2-001",
+      "reason": "removeMember 的角色判定与创建者保护依赖 SET2-001 透出的 currentUserRole / createdBy。"
+    },
+    {
+      "from": "SET2-002",
+      "to": "CARE-007",
+      "reason": "移除成员需级联删除 pushSubscriptions，该表由 care-reminders 模块 CARE-007 建立。"
+    },
+    {
+      "from": "SET2-003",
+      "to": "ACCESS-003",
+      "reason": "resetInviteCode 复用 createFamily（ACCESS-003）的 generateInviteCode 逻辑，抽 generateUniqueInviteCode helper 共用。"
+    },
+    {
+      "from": "SET2-004",
+      "to": "ACCESS-002",
+      "reason": "复用 onboarding（ACCESS-002 profile bootstrap）建立的 users.updateMyProfile 写入链路与校验。"
+    },
+    {
+      "from": "SET2-005",
+      "to": "TODO2-004",
+      "reason": "通用 ConfirmSheet 从 todo-page-v2 的 PostponeConfirmSheet（TODO2-004 推迟确认）提炼复用其遮罩/动效/退场时序。"
+    },
+    {
+      "from": "SET2-006",
+      "to": "SET2-001",
+      "reason": "三分组骨架的条件渲染消费 SET2-001 扩展后的 currentUserRole / createdBy 字段。"
+    },
+    {
+      "from": "SET2-006",
+      "to": "VIS-009",
+      "reason": "三分组重构在 VIS-009 设置页视觉重构与 frontend-refresh design token 基础上迭代。"
+    },
+    {
+      "from": "SET2-007",
+      "to": "SET2-006",
+      "reason": "家庭头图卡作为家庭组首卡嵌入 SET2-006 建立的分组骨架与卡片头部语言。"
+    },
+    {
+      "from": "SET2-008",
+      "to": "SET2-003",
+      "reason": "邀请码卡重置入口调用 SET2-003 的 resetInviteCode mutation。"
+    },
+    {
+      "from": "SET2-008",
+      "to": "SET2-005",
+      "reason": "重置邀请码确认复用 SET2-005 ConfirmSheet（primary variant）。"
+    },
+    {
+      "from": "SET2-008",
+      "to": "VIS-010",
+      "reason": "复制 + fallback 交互不回归，沿用 VIS-010 邀请码复制修复建立的逻辑。"
+    },
+    {
+      "from": "SET2-009",
+      "to": "SET2-004",
+      "reason": "称呼编辑 sheet 复用 SET2-004 校验完整的 users.updateMyProfile。"
+    },
+    {
+      "from": "SET2-009",
+      "to": "SET2-005",
+      "reason": "退出登录二次确认复用 SET2-005 ConfirmSheet（danger-outline variant）。"
+    },
+    {
+      "from": "SET2-010",
+      "to": "SET2-002",
+      "reason": "成员移除入口调用 SET2-002 的 removeMember mutation。"
+    },
+    {
+      "from": "SET2-010",
+      "to": "SET2-005",
+      "reason": "移除成员确认复用 SET2-005 ConfirmSheet（danger-solid variant）。"
+    },
+    {
+      "from": "SET2-011",
+      "to": "VIS-012",
+      "reason": "通知卡外壳统一在 VIS-012 通知权限卡基础上对齐，三态与 needs_install 兜底不回归。"
+    },
+    {
+      "from": "SET2-012",
+      "to": "SET2-006",
+      "reason": "端到端验收依赖三分组骨架与全部子组件就位。"
+    },
+    {
+      "from": "SET2-012",
+      "to": "SET2-007",
+      "reason": "验收覆盖家庭头图卡的窄屏适配与对比度。"
+    },
+    {
+      "from": "SET2-012",
+      "to": "SET2-008",
+      "reason": "验收覆盖邀请码卡两视角权限与窄屏溢出。"
+    },
+    {
+      "from": "SET2-012",
+      "to": "SET2-009",
+      "reason": "验收覆盖个人组称呼编辑与退出确认链路。"
+    },
+    {
+      "from": "SET2-012",
+      "to": "SET2-010",
+      "reason": "验收覆盖成员卡两视角移除入口与头像一致性。"
+    },
+    {
+      "from": "SET2-012",
+      "to": "SET2-011",
+      "reason": "验收覆盖通知卡外壳、排障无障碍与关于卡版本号。"
+    },
+    {
+      "from": "ICON-002",
+      "to": "VIS-005",
+      "reason": "BottomNav 图标替换在 frontend-refresh VIS-005 建立的 task-first 底栏外壳与 active 态样式上原位改造。"
+    },
+    {
+      "from": "ICON-002",
+      "to": "ICON-001",
+      "reason": "试点替换消费 ICON-001 引入的 lucide-react 依赖与 Icon 统一壳。"
+    },
+    {
+      "from": "ICON-003",
+      "to": "CARE-001",
+      "reason": "taskTypeIcon 权威映射与 care-reminders CARE-001 建立的 careTaskType 类型集合一一对应，须保持类型同源。"
+    },
+    {
+      "from": "ICON-004",
+      "to": "ICON-003",
+      "reason": "三处消费方收口统一依赖 ICON-003 已建立的 taskTypeIcon 权威映射。"
+    },
+    {
+      "from": "ICON-004",
+      "to": "PLIST2-003",
+      "reason": "PlantCard 任务类型图标改造在 plant-list-v2 PLIST2-003 重写后的卡片结构上原位替换。"
+    },
+    {
+      "from": "ICON-004",
+      "to": "PDETAIL2-003",
+      "reason": "PlantDetailPage 任务类型图标改造在 plant-detail-v2 PDETAIL2-003 需要处理区结构上原位替换。"
+    },
+    {
+      "from": "ICON-005",
+      "to": "ICON-001",
+      "reason": "操作类图标替换消费 ICON-001 的 Icon 壳并遵循 currentColor 跟随纪律。"
+    },
+    {
+      "from": "ICON-006",
+      "to": "ICON-001",
+      "reason": "信息标识图标替换消费 ICON-001 的 Icon 壳。"
+    },
+    {
+      "from": "ICON-007",
+      "to": "PDETAIL2-001",
+      "reason": "DetailNavBar 手写 SVG 收口在 plant-detail-v2 PDETAIL2-001 建立的导航栏组件上像素级等价替换。"
+    },
+    {
+      "from": "ICON-008",
+      "to": "ICON-003",
+      "reason": "守护单测的映射完整性断言依赖 ICON-003 的 taskTypeIcon 权威映射。"
+    },
+    {
+      "from": "ICON-009",
+      "to": "ICON-008",
+      "reason": "整体验收依赖 ICON-008 守护单测就位，并核对全部 A/B/C 级替换结果。"
+    },
+    {
+      "from": "TEXT-001",
+      "to": "PLIST2-003",
+      "reason": "PlantCard nameRowStyle minWidth:0 修复落在 plant-list-v2 PLIST2-003 重写后的卡片结构上。"
+    },
+    {
+      "from": "TEXT-003",
+      "to": "PLIST2-003",
+      "reason": "PlantCard 简介/位置展示策略基于 plant-list-v2 PLIST2-003 的卡片布局原位处理。"
+    },
+    {
+      "from": "TEXT-002",
+      "to": "PDETAIL2-001",
+      "reason": "PageHeader/DeleteTaskAction 文案换行修复作用于编辑/详情侧已建立的页头与删除交互组件。"
+    },
+    {
+      "from": "TEXT-005",
+      "to": "TEXT-004",
+      "reason": "前端长度校验复用 TEXT-004 在 constants.ts 抽取的同组长度常量，保证文案与 maxLength 一致。"
+    },
+    {
+      "from": "TEXT-006",
+      "to": "TEXT-005",
+      "reason": "后端 Convex 校验与前端 validateCustomTaskName/长度规则同源对齐，复用增强后的校验语义与上限数值。"
+    },
+    {
+      "from": "TEXT-007",
+      "to": "TEXT-001",
+      "reason": "公共截断工具 textTruncate.ts 收口 TEXT-001 的单行省略写法，并统一全列表卡片截断；回归验收覆盖前序所有 TEXT 任务结果。"
+    }
+  ]
+}

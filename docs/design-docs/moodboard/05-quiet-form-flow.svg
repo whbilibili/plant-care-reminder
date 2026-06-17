@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200">
+  <rect width="900" height="1200" fill="#f6f8ef"/>
+  <g transform="translate(170 80)">
+    <rect width="560" height="1040" rx="42" fill="#ffffff" stroke="#dbe6d8"/>
+    <text x="52" y="92" font-family="Arial, sans-serif" font-size="36" font-weight="700" fill="#183c34">添加植物</text>
+    <rect x="52" y="138" width="456" height="236" rx="22" fill="#e1efe7"/>
+    <circle cx="280" cy="256" r="48" fill="#98c0aa"/>
+    <path d="M260 264c12-49 38-66 74-49-8 50-35 67-74 49Z" fill="#f9fbf1"/>
+    <text x="224" y="334" font-family="Arial, sans-serif" font-size="16" fill="#5f786e">上传封面图</text>
+    <g transform="translate(52 426)">
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#60776c">名称</text>
+      <rect y="18" width="456" height="62" rx="14" fill="#f3f6ef" stroke="#d8e4d8"/>
+      <text x="20" y="57" font-family="Arial, sans-serif" font-size="20" fill="#183c34">龟背竹</text>
+    </g>
+    <g transform="translate(52 540)">
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#60776c">位置</text>
+      <rect y="18" width="456" height="62" rx="14" fill="#f3f6ef" stroke="#d8e4d8"/>
+      <text x="20" y="57" font-family="Arial, sans-serif" font-size="20" fill="#183c34">客厅西窗</text>
+    </g>
+    <g transform="translate(52 654)">
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#60776c">描述</text>
+      <rect y="18" width="456" height="134" rx="14" fill="#f3f6ef" stroke="#d8e4d8"/>
+      <text x="20" y="58" font-family="Arial, sans-serif" font-size="19" fill="#183c34">大叶绿植，喜欢明亮散射光。</text>
+    </g>
+    <rect x="52" y="878" width="456" height="68" rx="18" fill="#1e473d"/>
+    <text x="245" y="921" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#fffaf2">保存</text>
+  </g>
+</svg>

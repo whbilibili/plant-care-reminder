@@ -1,0 +1,184 @@
+{
+  "project": "plant-care-reminder",
+  "prd": "docs/design-docs/2026-06-15-long-text-handling-plan.md",
+  "created_at": "2026-06-15",
+  "module_intent": "超长字符串处理 v0.5：对植物名称/摆放位置/简介/养护备注/自定义任务名五个文本字段，系统性补齐『输入端无上限 + 后端无校验 + 展示端截断不到位』的三重缺口。这是缺陷治理 + 一致性补齐——项目中 families(60)/nickname(40)/inviteCode(12) 等字段前后端均已有长度约束，本模块把同一套纪律补到被遗漏字段上。遵循四原则（防错优于纠错 / 即时反馈 / 防御式编程 / 优雅降级）落地四层防御：①输入端 maxLength 不让用户输入超长（治本源头）、②前端长度校验给可读提示、③后端 Convex mutation 二次校验防绕过、④展示端按场景区分单行省略 / 多行 clamp 兜住存量超长数据不撑爆布局。落地节奏分三批：第一批·止血（纯 CSS，立刻消除截图 1/3/4/5 视觉撑爆，零数据风险）；第二批·治本（maxLength + 前端校验，源头杜绝新增超长数据）；第三批·加固（后端校验 + 卡片 line-clamp + 抽公共截断工具 + PlanTaskRow flex 加固 + 回归验收）。长度上限：植物名 30、位置 30、简介 200、备注 200、自定义任务名 20（按 JS String.length / UTF-16 码元计，与 <input maxLength> 一致，集中抽常量管理）。",
+  "design_baseline": {
+    "token_source": "app/src/styles/tokens.css",
+    "hard_rule": "不新增 token、不引入 #hex 字面色。截断样式统一走既有 token 与公共截断工具，禁止各卡片复制粘贴第二份 whiteSpace/overflow 组合。",
+    "length_limits": {
+      "PLANT_NAME_MAX_LENGTH": 30,
+      "PLANT_LOCATION_MAX_LENGTH": 30,
+      "PLANT_DESCRIPTION_MAX_LENGTH": 200,
+      "PLANT_NOTE_MAX_LENGTH": 200,
+      "CUSTOM_TASK_NAME_MAX_LENGTH": 20,
+      "counting": "JS String.length（UTF-16 码元，中文 1 字符=1，与 <input maxLength> 行为一致）；如需精确字素改 Array.from(str).length，本场景非必需。",
+      "constants_home": "app/src/lib/constants.ts（前端）；后端 convex 侧复用同一组数值，避免漂移。"
+    },
+    "truncation_strategy": "单行字段（名称/位置）用 truncateSingleLine（whiteSpace:nowrap + overflow:hidden + textOverflow:ellipsis + 父级 minWidth:0）；多行字段（简介/任务名卡片展示）用 clampLines(n)（WebkitLineClamp + overflowWrap/wordBreak:break-word）；大字号标题（PageHeader）/正文嵌入（DeleteTaskAction）用 overflowWrap:break-word + wordBreak:break-word 允许换行不溢出。",
+    "consistency_rule": "抽公共截断工具收口当前 8+ 处复制粘贴及部分缺 whiteSpace:nowrap 的不一致写法。"
+  },
+  "reuse_inventory": {
+    "constants.ts": "app/src/lib/constants.ts — 集中存放五个长度上限常量，前端表单与前端校验共同消费（新增或扩展）",
+    "PlantForm.tsx": "app/src/features/plants/PlantForm.tsx — 名称 InputField(29-38)/简介 TextArea(39-47)/备注 TextArea(48-56)/位置 InputField(57-65)，第一层 maxLength 落点",
+    "TaskForm.tsx": "app/src/features/tasks/TaskForm.tsx — 自定义任务名 InputField(83-91)，第一层 maxLength 落点",
+    "plantSchema.ts": "app/src/features/plants/plantSchema.ts — validatePlantEditorValues 当前仅非空校验，第二层长度校验追加点",
+    "taskTypes.ts": "app/src/features/tasks/taskTypes.ts — validateCustomTaskName 当前 trim+非空，第二层长度校验追加点（CreateTaskPage/EditTaskPage 复用，增强后自动生效）",
+    "convex/lib/validators.ts": "app/convex/lib/validators.ts — 已有 SSO/families 校验器同款模式，新增 assertMaxLength(value,max,fieldName) 第三层兜底",
+    "convex/plants.ts": "app/convex/plants.ts — createPlant/updatePlant，name 补 trim+非空+长度（顺带补当前缺失的非空校验），location/description/note 补长度",
+    "convex/tasks.ts": "app/convex/tasks.ts — createPlantTask/updatePlantTask，customTaskName 复用增强后的 validateCustomTaskName（families.renameFamily 后端二次校验同模式）",
+    "PlantCard.tsx": "app/src/features/plants/PlantCard.tsx — nameRowStyle(141-145) 缺 minWidth:0 致名称假截断；location(177-185) 单行省略已具备；不渲染 description",
+    "PageHeader.tsx": "app/src/components/ui/PageHeader.tsx — 大字号标题无 word-break，超长连续串溢出（编辑页标题撑爆）",
+    "DeleteTaskAction.tsx": "app/src/features/tasks/DeleteTaskAction.tsx — 删除确认文案嵌任务名无 word-break，溢出气泡/弹窗",
+    "PlanTaskRow.tsx": "app/src/features/tasks/PlanTaskRow.tsx — 任务名与 intervalStyle flex:1 收缩竞争，单行省略偏脆弱",
+    "TaskListItem.tsx / DueTaskCard.tsx / UpcomingDueCard.tsx": "app/src/features/tasks/ — 任务名建议 2 行 clamp、植物名单行省略，统一引用公共截断工具",
+    "textTruncate.ts": "app/src/lib/textTruncate.ts（新建）— truncateSingleLine / clampLines(n) 公共截断样式工具，收口全列表卡片"
+  },
+  "field_status_baseline": {
+    "plant_name": "前端 maxLength 无 / 前端仅非空 / 后端 v.string() / 后端连非空都缺 / 展示部分假截断；上限 30",
+    "plant_location": "前端 maxLength 无 / 前端无校验 / 后端 v.optional / 后端无 / 列表卡单行省略已具备；上限 30",
+    "plant_description": "前端 maxLength 无 / 前端无校验 / 后端 v.optional / 后端无 / 卡片若平铺无防护；上限 200",
+    "plant_note": "前端 maxLength 无 / 前端无校验 / 后端 v.optional / 后端无；上限 200",
+    "custom_task_name": "前端 maxLength 无 / 前端仅非空 / 后端 v.optional / 后端有 trim+非空无长度 / 多处完全无防护；上限 20"
+  },
+  "tasks": [
+    {
+      "task_id": "TEXT-001",
+      "description": "第一批·止血①（截图1 植物名称撑爆卡片）：PlantCard.tsx nameRowStyle(141-145) 补 minWidth:0，让既有 nameStyle 的 textOverflow:ellipsis 实际生效（当前为假截断）。纯 CSS 改动，零数据风险。同步确认 location(177-185) 单行省略在所有渲染分支生效（现状已具备，仅核对不回归）。",
+      "priority": "0-Critical",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "纯前端样式。", "notes": "无 schema 变更。"}, "queries": {"read": "N/A", "write": "N/A"}, "migration_strategy": "No schema change."},
+        "api_layer": {"type": "frontend", "endpoints": [], "notes": "无接口。"},
+        "component_tree": {"entry_component": "PlantCard", "children": [], "notes": "nameRowStyle 补 minWidth:0 让 flex 子项可收缩。"},
+        "state_management": {"global_store": "N/A", "server_state": "N/A", "local_state": "N/A"},
+        "routing": {"path": "/plants", "guard": "authenticated family members", "middleware": "app shell"},
+        "auth": {"provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A"},
+        "design_contract": {"ui_spec_ref": "long-text-handling-plan.md §5 第四层 + §2 场景1", "intent": "植物名超长时单行省略不撑爆卡片。", "tokens_new": [], "tokens_reuse": ["既有 nameStyle/nameRowStyle token"], "visual_spec": {"name_row": "flex 容器补 minWidth:0", "name": "whiteSpace:nowrap + overflow:hidden + textOverflow:ellipsis（既有）生效"}, "accessibility": "名称完整值可经 title 属性兜底（可选），不影响读屏。", "acceptance": "灌入 500 字植物名，列表卡片宽度不变、名称单行省略号截断、卡内其余元素不位移。"}
+      },
+      "verification": {"auto": "npm run typecheck 通过；npm run test PlantCard 相关用例不回归", "data": "N/A", "visual": "超长名称列表卡片截图：宽度不变、ellipsis 生效", "manual": "对照截图1 复现场景确认撑爆消失"},
+      "metadata": {"files_affected": ["app/src/features/plants/PlantCard.tsx (modify)"], "modules": ["long-text-hardening-v0.5"], "layer": "frontend", "epic": "E1 止血"},
+      "acceptance_criteria": ["nameRowStyle 补 minWidth:0、ellipsis 实际生效（消除假截断）", "location 单行省略不回归", "超长名称不撑爆卡片", "typecheck + test 通过"]
+    },
+    {
+      "task_id": "TEXT-002",
+      "description": "第一批·止血②（截图3 编辑页标题撑爆 + 截图4 删除区文案溢出）：(1) PageHeader.tsx 标题样式加 overflowWrap:break-word + wordBreak:break-word（可选 2 行 WebkitLineClamp），让超长连续串/植物名+任务名拼接标题换行不横向溢出；(2) DeleteTaskAction.tsx 删除确认正文 bodyStyle/dialogTitleStyle 加 overflowWrap/wordBreak:break-word，嵌入的任务名不溢出气泡/弹窗。纯 CSS，零数据风险。",
+      "priority": "0-Critical",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "纯前端样式。", "notes": "无 schema 变更。"}, "queries": {"read": "N/A", "write": "N/A"}, "migration_strategy": "No schema change."},
+        "api_layer": {"type": "frontend", "endpoints": [], "notes": "无接口。"},
+        "component_tree": {"entry_component": "PageHeader / DeleteTaskAction", "children": [], "notes": "标题与删除文案加 word-break。"},
+        "state_management": {"global_store": "N/A", "server_state": "N/A", "local_state": "删除确认开合（既有）"},
+        "routing": {"path": "/tasks/:id/edit /tasks/new", "guard": "authenticated family members", "middleware": "app shell"},
+        "auth": {"provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A"},
+        "design_contract": {"ui_spec_ref": "long-text-handling-plan.md §5 第四层 + §2 场景3/4", "intent": "大字号标题与删除文案超长时换行不溢出。", "tokens_new": [], "tokens_reuse": ["既有标题/正文 token"], "visual_spec": {"page_header": "overflowWrap:break-word + wordBreak:break-word（可选 clamp 2 行）", "delete_action": "bodyStyle/dialogTitleStyle 同样 break-word"}, "accessibility": "换行不影响标题语义与读屏顺序。", "acceptance": "编辑页标题灌入超长连续串换行不横向溢出；删除确认嵌入超长任务名不撑破气泡/弹窗。"}
+      },
+      "verification": {"auto": "npm run typecheck 通过；相关 smoke 不回归", "data": "N/A", "visual": "编辑页标题 + 删除确认两处超长截图核对", "manual": "对照截图3/4 复现确认溢出消失"},
+      "metadata": {"files_affected": ["app/src/components/ui/PageHeader.tsx (modify)", "app/src/features/tasks/DeleteTaskAction.tsx (modify)"], "modules": ["long-text-hardening-v0.5"], "layer": "frontend", "epic": "E1 止血"},
+      "acceptance_criteria": ["PageHeader 标题 break-word 换行不溢出", "DeleteTaskAction 文案 break-word 不撑破气泡/弹窗", "标题语义/读屏不回归", "typecheck 通过"]
+    },
+    {
+      "task_id": "TEXT-003",
+      "description": "第一批·止血③（截图5 简介/位置铺满撑宽卡片）：PlantCard 概览卡片不应平铺整段简介——若当前不渲染 description 则核对确认无平铺（仅文档化结论）；若需露出则限 1-2 行 WebkitLineClamp + break-word，不让次要文本横向铺满撑宽卡片。位置字段单行省略由 TEXT-001 已覆盖，此处仅处理简介展示策略。纯 CSS / 展示决策，零数据风险。",
+      "completion_note": "核对结论（无代码改动）：PlantCard 的 PlantListCardData 接口虽含 description:string|null 字段，但组件 JSX 全程零引用（grep plant.description / .description 均 0 命中），列表概览卡片只渲染 name（h2）与 location（p，单行省略）——不存在简介整段平铺撑宽卡片的风险。位置单行省略由 TEXT-001 的 ellipsis 修复覆盖。故概览展示策略确认为『不露出简介』，无需 clamp，无需改动 PlantCard。简介完整内容在详情页可读。验收：typecheck 0 错误、vitest 22 files 135 tests 全绿（不回归）。",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "纯前端样式。", "notes": "无 schema 变更。"}, "queries": {"read": "N/A", "write": "N/A"}, "migration_strategy": "No schema change."},
+        "api_layer": {"type": "frontend", "endpoints": [], "notes": "无接口。"},
+        "component_tree": {"entry_component": "PlantCard", "children": [], "notes": "简介展示策略：不平铺或 clamp。"},
+        "state_management": {"global_store": "N/A", "server_state": "N/A", "local_state": "N/A"},
+        "routing": {"path": "/plants", "guard": "authenticated family members", "middleware": "app shell"},
+        "auth": {"provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A"},
+        "design_contract": {"ui_spec_ref": "long-text-handling-plan.md §5 第四层 + §2 场景5", "intent": "概览卡片次要文本不撑宽卡片。", "tokens_new": [], "tokens_reuse": ["既有卡片 token"], "visual_spec": {"description": "概览不平铺整段；如露出限 1-2 行 WebkitLineClamp + overflowWrap/wordBreak:break-word", "location": "单行省略（TEXT-001 已覆盖）"}, "accessibility": "截断不影响完整信息在详情页可读。", "acceptance": "灌入超长简介/位置，列表卡片宽度不变、不被次要文本铺满撑宽。"}
+      },
+      "verification": {"auto": "npm run typecheck 通过；PlantCard 测试不回归", "data": "N/A", "visual": "超长简介/位置列表卡片截图", "manual": "对照截图5 复现确认卡片不被撑宽"},
+      "metadata": {"files_affected": ["app/src/features/plants/PlantCard.tsx (modify)"], "modules": ["long-text-hardening-v0.5"], "layer": "frontend", "epic": "E1 止血"},
+      "acceptance_criteria": ["概览卡片简介不平铺或限 1-2 行 clamp", "次要文本不撑宽卡片", "简介完整内容在详情页仍可读", "typecheck + test 通过"]
+    },
+    {
+      "task_id": "TEXT-004",
+      "description": "第二批·治本①（输入端 maxLength）：在 app/src/lib/constants.ts 抽五个常量（PLANT_NAME_MAX_LENGTH=30 / PLANT_LOCATION_MAX_LENGTH=30 / PLANT_DESCRIPTION_MAX_LENGTH=200 / PLANT_NOTE_MAX_LENGTH=200 / CUSTOM_TASK_NAME_MAX_LENGTH=20），并接到表单控件：PlantForm.tsx 名称(29-38)/位置(57-65) InputField 加 maxLength，简介(39-47)/备注(48-56) TextArea 加 maxLength + 字数计数（hint 右侧 12/30，接近上限变橙色，可选增强）；TaskForm.tsx 自定义任务名(83-91) 加 maxLength。源头杜绝新增超长数据。",
+      "completion_note": "已落地：新建 app/src/lib/constants.ts 集中五个长度上限常量。PlantForm.tsx 导入四常量，名称/位置 InputField 与简介/备注 TextAreaField 均加 maxLength；并增强 TextAreaField 渲染字数计数（hint 右侧『N/max』，currentLength 达 max*0.9 切到 var(--color-warning) 橙色加粗，aria-describedby 关联），新增 hintRowStyle/counterStyle/counterNearLimitStyle 三组样式，全部走既有 token、零 #hex 字面色。TaskForm.tsx 导入 CUSTOM_TASK_NAME_MAX_LENGTH，自定义任务名 InputField 加 maxLength。InputField/TextAreaField 均通过 ...props/原生属性把 maxLength 下发到 <input>/<textarea>，达上限无法继续输入。验收：typecheck 0 错误、vitest 22 files 135 tests 全绿（不回归）。",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "纯前端常量 + 控件属性。", "notes": "无 schema 变更。"}, "queries": {"read": "N/A", "write": "N/A"}, "migration_strategy": "No schema change."},
+        "api_layer": {"type": "frontend", "endpoints": [], "notes": "无接口。"},
+        "component_tree": {"entry_component": "PlantForm / TaskForm", "children": ["InputField", "TextAreaField"], "notes": "五字段控件加 maxLength；可选字数计数。"},
+        "state_management": {"global_store": "N/A", "server_state": "N/A", "local_state": "表单受控值（既有）"},
+        "routing": {"path": "/plants/new /plants/:id/edit /tasks/new /tasks/:id/edit", "guard": "authenticated family members", "middleware": "app shell"},
+        "auth": {"provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A"},
+        "design_contract": {"ui_spec_ref": "long-text-handling-plan.md §4 + §5 第一层", "intent": "输入端硬上限 + 即时字数反馈，防错优于纠错。", "tokens_new": [], "tokens_reuse": ["既有 hint/warning 色 token（计数变橙）"], "visual_spec": {"input": "maxLength 限制输入", "textarea": "maxLength + hint 右侧 12/30 计数，接近上限变橙"}, "accessibility": "字数计数关联输入控件（aria-describedby 可选），达上限有可见反馈。", "acceptance": "五字段达上限即无法继续输入，简介/备注显示字数计数。"}
+      },
+      "verification": {"auto": "npm run typecheck 通过；PlantForm/TaskForm 测试覆盖 maxLength 属性下发", "data": "N/A", "visual": "达上限输入框 + 计数橙色截图", "manual": "逐字段输入超上限确认无法继续、计数正确"},
+      "metadata": {"files_affected": ["app/src/lib/constants.ts (new or modify)", "app/src/features/plants/PlantForm.tsx (modify)", "app/src/features/tasks/TaskForm.tsx (modify)"], "modules": ["long-text-hardening-v0.5"], "layer": "frontend", "epic": "E2 治本"},
+      "acceptance_criteria": ["五个长度常量集中在 constants.ts", "五字段控件 maxLength 生效，达上限无法继续输入", "简介/备注字数计数（可选橙色提示）", "typecheck + test 通过"]
+    },
+    {
+      "task_id": "TEXT-005",
+      "description": "第二批·治本②（前端长度校验）：plantSchema.ts validatePlantEditorValues 在非空后追加长度校验——超限返回可读提示（『植物名称不能超过 30 个字符』，位置/简介/备注同理），消费 constants.ts 同组常量；taskTypes.ts validateCustomTaskName 在非空后追加长度校验（『任务名称不能超过 20 个字符』），CreateTaskPage/EditTaskPage 复用后自动生效。作为 maxLength 被绕过（粘贴/IME 等）时的前端二道防线，并产出明确错误文案。补充对应单测。",
+      "completion_note": "已落地：① plantSchema.ts 导入四常量，validatePlantEditorValues 在非空判断后追加四字段长度校验——name 用 else if（与必填互斥）超限报『植物名称不能超过 30 个字符』，location/description/note 各自独立 if 超限报对应文案，全部用模板串嵌入常量、与 maxLength 一致。② taskTypes.ts 导入 CUSTOM_TASK_NAME_MAX_LENGTH，validateCustomTaskName 改为先取 normalized：非空→必填提示；超 20→『任务名称不能超过 20 个字符』；否则 null。CreateTaskPage/EditTaskPage 复用此函数自动生效。③ 新建 plantSchema.test.ts 7 用例（四字段超限各 1 + 名称必填 + 边界等于上限不报错），taskTypes.test.ts 追加 validateCustomTaskName 4 用例（非 custom 不校验 / 必填 / 超限 / 边界）。验收：typecheck 0 错误、vitest 23 files 145 tests 全绿（+1 文件 +10 用例）。",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "前端纯函数校验。", "notes": "无 schema 变更。"}, "queries": {"read": "N/A", "write": "N/A"}, "migration_strategy": "No schema change."},
+        "api_layer": {"type": "frontend", "endpoints": [], "notes": "无接口。"},
+        "component_tree": {"entry_component": "plantSchema / taskTypes", "children": [], "notes": "校验函数追加长度规则，多处表单复用。"},
+        "state_management": {"global_store": "N/A", "server_state": "N/A", "local_state": "表单错误态（既有）"},
+        "routing": {"path": "/plants/new /plants/:id/edit /tasks/new /tasks/:id/edit", "guard": "authenticated family members", "middleware": "app shell"},
+        "auth": {"provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A"},
+        "design_contract": {"ui_spec_ref": "long-text-handling-plan.md §5 第二层", "intent": "前端长度校验作为 maxLength 绕过的二道防线，给可读错误文案。", "tokens_new": [], "tokens_reuse": ["既有表单 error 态 token"], "visual_spec": {"error_message": "『植物名称不能超过 30 个字符』『任务名称不能超过 20 个字符』等"}, "accessibility": "错误文案与对应字段关联，读屏可达。", "acceptance": "超限值提交时前端校验拦截并展示对应字段错误文案。"}
+      },
+      "verification": {"auto": "npm run typecheck 通过；vitest 覆盖 validatePlantEditorValues / validateCustomTaskName 超限分支返回正确错误", "data": "N/A", "visual": "超限提交错误文案截图", "manual": "粘贴超长内容提交确认前端拦截"},
+      "metadata": {"files_affected": ["app/src/features/plants/plantSchema.ts (modify)", "app/src/features/tasks/taskTypes.ts (modify)", "app/src/features/plants/plantSchema.test.ts (new or modify)", "app/src/features/tasks/taskHelpers.test.ts (modify)"], "modules": ["long-text-hardening-v0.5"], "layer": "frontend", "epic": "E2 治本"},
+      "acceptance_criteria": ["validatePlantEditorValues 四字段超限返回可读错误", "validateCustomTaskName 超限返回可读错误", "错误文案消费 constants.ts 常量、与 maxLength 一致", "单测覆盖超限分支、typecheck + test 通过"]
+    },
+    {
+      "task_id": "TEXT-006",
+      "description": "第三批·加固①（后端 Convex 兜底）：convex/lib/validators.ts 新增 assertMaxLength(value,max,fieldName)（families.renameFamily 后端二次校验同模式）；convex/plants.ts createPlant/updatePlant 对 name 补 trim+非空+长度（顺带补当前缺失的非空校验），location/description/note 补长度校验；convex/tasks.ts createPlantTask/updatePlantTask 的 customTaskName 复用增强后的 validateCustomTaskName（长度校验自动生效）。防御式编程：前端可被绕过（API 直调/旧端/并发），后端必须二次校验 reject 超长数据。",
+      "completion_note": "已落地：① convex/lib/validators.ts 新增四个后端长度常量（PLANT_NAME/LOCATION/DESCRIPTION/NOTE_MAX_LENGTH，刻意不跨 src/convex 边界 import、与前端 constants.ts 同源手写，注释标注两处需同步——families 同款纪律）与 assertMaxLength(value,max,fieldName) 兜底断言（超 UTF-16 长度抛『${fieldName}不能超过 ${max} 个字符。』）。② convex/plants.ts 抽 assertPlantTextWithinLimits(args) 纯校验函数（name trim 后必填，否则抛『请填写植物名称。』——补齐此前缺失的后端非空校验；name/location/description/note 逐一 assertMaxLength，可选字段为 null 时跳过；返回 trim 后 name 供写库），createPlant 与 updatePlant 均在鉴权后调用并以返回的 name 入库。③ convex/tasks.ts 无需改动：createPlantTask(82)/updatePlantTask(172) 早已调用 validateCustomTaskName，TEXT-005 对该函数的长度增强令后端自定义任务名校验自动生效（接口复用红利）。④ 单测：导出 assertPlantTextWithinLimits/PlantTextArgs，新建 tests/unit/plants/plantTextLimits.test.ts 11 用例（assertMaxLength 边界/超限/空串 3 例 + assertPlantTextWithinLimits trim 返回/空白必填/四字段各超限/可选 null 跳过/四字段同时等于上限放行 8 例），沿用项目对 convex 纯函数做单测的既有模式，不引入 convex-test runtime。验收：typecheck 0 错误、vitest 24 files 156 tests 全绿（+1 文件 +11 用例）。",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": ["plants", "tasks"], "key_fields": {"plants": "name/location/description/note", "tasks": "customTaskName"}, "indexes": [], "relations": "不改 schema 形状，仅在 mutation 入参处增加运行时长度断言。", "notes": "name 维持 v.string()，但 mutation 内补 trim+非空+长度；location/description/note 维持 v.optional 并补长度。"}, "queries": {"read": "N/A", "write": "createPlant / updatePlant / createPlantTask / updatePlantTask 入参长度断言"}, "migration_strategy": "No schema change（存量超长数据由展示层 clamp 兜底，不强制回写）。"},
+        "api_layer": {"type": "convex-mutation", "endpoints": ["plants.createPlant", "plants.updatePlant", "tasks.createPlantTask", "tasks.updatePlantTask"], "notes": "超长入参抛错 reject，错误信息含字段名与上限。"},
+        "component_tree": {"entry_component": "convex/lib/validators.ts", "children": [], "notes": "assertMaxLength 被 plants/tasks mutation 复用。"},
+        "state_management": {"global_store": "N/A", "server_state": "Convex mutation 校验", "local_state": "N/A"},
+        "routing": {"path": "N/A", "guard": "authenticated family members（既有 mutation 鉴权）", "middleware": "N/A"},
+        "auth": {"provider": "Convex", "strategy": "既有家庭成员鉴权", "rls_or_rbac": "不变"},
+        "design_contract": {"ui_spec_ref": "long-text-handling-plan.md §5 第三层", "intent": "后端二次校验防绕过，与 families 既有纪律对齐。", "tokens_new": [], "tokens_reuse": [], "visual_spec": {}, "accessibility": "N/A", "acceptance": "绕过前端直调 mutation 提交超长数据被后端 reject，错误信息含字段与上限。"}
+      },
+      "verification": {"auto": "npm run typecheck 通过；npx convex dev --once --typecheck enable 部署成功；vitest/convex-test 覆盖四 mutation 超长入参被 reject、name 非空补齐", "data": "直调 mutation 提交超长 name/location/description/note/customTaskName 均抛错", "visual": "N/A", "manual": "用 convex 控制台或测试直调提交超长值确认 reject"},
+      "metadata": {"files_affected": ["app/convex/lib/validators.ts (modify)", "app/convex/plants.ts (modify)", "app/convex/tasks.ts (modify)"], "modules": ["long-text-hardening-v0.5"], "layer": "backend", "epic": "E3 加固"},
+      "acceptance_criteria": ["assertMaxLength 新增并被复用", "plants 四字段 + tasks customTaskName 后端长度校验生效", "name 补齐当前缺失的 trim+非空校验", "convex typecheck 通过、直调超长被 reject"]
+    },
+    {
+      "task_id": "TEXT-007",
+      "description": "第三批·加固②（公共截断工具 + 列表卡 clamp + PlanTaskRow 加固 + 回归验收）：(1) 新建 app/src/lib/textTruncate.ts 导出 truncateSingleLine 与 clampLines(n)，收口当前 8+ 处复制粘贴/缺 whiteSpace:nowrap 的不一致写法；(2) TaskListItem/DueTaskCard/UpcomingDueCard 任务名 WebkitLineClamp:2、植物名单行省略，统一引用公共工具；(3) PlanTaskRow（截图2）label 明确 flex:1、interval 补 minWidth:0 加固单行省略；(4) 整体回归验收：tsc + convex typecheck + vitest 全绿，任意字段灌 500+ 字符在列表/详情/编辑/待办/删除确认/页头全无横向溢出、无卡片异常撑宽撑高，关键信息（名称）始终可读，出具一页验收小结。",
+      "completion_note": "已落地（模块结项任务）：① 新建 app/src/lib/textTruncate.ts 导出 truncateSingleLine（whiteSpace:nowrap+overflow:hidden+textOverflow:ellipsis+minWidth:0 兜底）与 clampLines(n)（display:-webkit-box + WebkitBoxOrient:vertical + WebkitLineClamp:n + overflow:hidden + overflowWrap/wordBreak:break-word），收口此前散落各卡片的复制粘贴截断写法为单一来源；配 textTruncate.test.ts 3 用例。② TaskListItem 任务名 ...clampLines(2)；DueTaskCard 植物名 ...truncateSingleLine + 任务名 ...clampLines(2)；UpcomingDueCard 同 DueTaskCard（三卡 contentStyle 既有 minWidth:0 满足单行省略父级要求，无需额外改父容器）。③ PlanTaskRow（截图2）labelStyle 由『仅 minWidth:0 无 flex 增长权、被 intervalStyle 的 flex:1 挤压』修正为 flex:1 + ...truncateSingleLine 成为主收缩列；intervalStyle 去掉 flex:1 改 flexShrink:0 + minWidth:0（去掉随 flex:1 失效的 textAlign:center），interval 短文案不再抢占主空间，长任务名脆弱单行省略问题根治。④ 全部走既有 token / 公共工具，零 #hex、零新增 token。验收四件套：tsc -b 0 错误；vitest 25 files 156→159 tests 全绿（+1 文件 +3 用例 textTruncate.test.ts）；convex --once --typecheck 部署成功；npm run build 构建成功（主 bundle 427KB/gzip122KB）。plan 文档追加 §8 验收小结。模块 long-text-hardening-v0.5 七任务全部完成结项。",
+      "priority": "2-Medium",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "纯前端展示工具 + 回归。", "notes": "无 schema 变更。"}, "queries": {"read": "N/A", "write": "N/A"}, "migration_strategy": "No schema change."},
+        "api_layer": {"type": "frontend", "endpoints": [], "notes": "无接口。"},
+        "component_tree": {"entry_component": "textTruncate.ts", "children": ["TaskListItem", "DueTaskCard", "UpcomingDueCard", "PlanTaskRow"], "notes": "公共截断工具被列表卡片统一复用。"},
+        "state_management": {"global_store": "N/A", "server_state": "N/A", "local_state": "N/A"},
+        "routing": {"path": "/todo /plants /plants/:id /tasks/:id/edit", "guard": "authenticated family members", "middleware": "app shell"},
+        "auth": {"provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A"},
+        "design_contract": {"ui_spec_ref": "long-text-handling-plan.md §5 第四层 + §6 + §7", "intent": "统一截断工具 + 列表卡 clamp + 回归验收，防御纵深与代码一致性。", "tokens_new": [], "tokens_reuse": ["既有列表卡片 token"], "visual_spec": {"truncateSingleLine": "whiteSpace:nowrap + overflow:hidden + textOverflow:ellipsis（配父级 minWidth:0）", "clampLines": "WebkitLineClamp:n + overflowWrap/wordBreak:break-word", "task_cards": "任务名 clamp(2)、植物名单行省略", "plan_task_row": "label flex:1 + interval minWidth:0"}, "accessibility": "截断不影响完整信息在详情页可读，名称始终可读。", "acceptance": "见 acceptance_criteria。"}
+      },
+      "verification": {"auto": "npm run typecheck + npm run test + npx convex dev --once --typecheck enable 全绿；npm run build 目视布局", "data": "N/A", "visual": "灌 500+ 字符走查列表/详情/编辑/待办/删除确认/页头六处无溢出截图", "manual": "逐页面灌超长数据确认无横向溢出、无撑宽撑高、名称可读，写入验收小结"},
+      "metadata": {"files_affected": ["app/src/lib/textTruncate.ts (new)", "app/src/features/tasks/TaskListItem.tsx (modify)", "app/src/features/tasks/DueTaskCard.tsx (modify)", "app/src/features/tasks/UpcomingDueCard.tsx (modify)", "app/src/features/tasks/PlanTaskRow.tsx (modify)", "docs/design-docs/2026-06-15-long-text-handling-plan.md (modify, 追加验收小结)"], "modules": ["long-text-hardening-v0.5"], "layer": "frontend", "epic": "E3 加固"},
+      "acceptance_criteria": ["textTruncate.ts 公共工具交付并被列表卡统一复用", "TaskListItem/DueTaskCard/UpcomingDueCard 任务名 clamp(2)、植物名单行省略", "PlanTaskRow 单行省略加固（label flex:1 + interval minWidth:0）", "全页面 500+ 字符无溢出、tsc+convex+vitest 全绿、验收小结追加"]
+    }
+  ]
+}

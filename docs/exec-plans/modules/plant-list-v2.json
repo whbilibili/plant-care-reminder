@@ -1,0 +1,648 @@
+{
+  "project": "plant-care-reminder",
+  "prd": "docs/product-specs/2026-06-11-plant-list-iteration-spec.md",
+  "ui_spec": "docs/product-specs/2026-06-11-plant-list-ui-spec.md",
+  "created_at": "2026-06-11",
+  "module_intent": "植物列表页 v0.2 迭代：从竖向大图卡片改为横向紧凑布局（左图 80×80 + 右文三行），默认按最近到期时间排序，新增归档折叠区，整卡可点击进详情，编辑降级为图标，配套 stagger 渐入动效与按压反馈。每个 Task 同时承载功能开发契约（data/api）与 UI 美化契约（design_contract），二者结合交付。",
+  "design_baseline": {
+    "token_source": "app/src/styles/tokens.css",
+    "hard_rule": "禁止硬编码 #hex；所有色值/间距/圆角/阴影一律引用 token 变量；本次迭代不新增 token（现有 token 已覆盖全部需求）。",
+    "reduced_motion": "所有动效在 prefers-reduced-motion: reduce 下退化为即时状态切换（tokens.css 已有全局兜底）。"
+  },
+  "tasks": [
+    {
+      "task_id": "PLIST2-001",
+      "description": "后端排序改造：listPlantsWithNextDue 改为按 nextDueAt 升序排列（无任务植物沉底，沉底内按 _creationTime 降序），替代当前按名称排序。",
+      "priority": "1-High",
+      "status": "done",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": ["plants", "plantTasks"],
+            "key_fields": {
+              "plants": "_id, familyId, name, isArchived, _creationTime",
+              "plantTasks": "plantId, nextDueAt"
+            },
+            "indexes": ["plantTasks.by_plant_and_due (plantId, nextDueAt)"],
+            "relations": "plants 1:N plantTasks；排序依据为每株植物最早的 nextDueAt。",
+            "notes": "无 schema 变更，仅修改 query 排序逻辑。"
+          },
+          "queries": {
+            "read": "listPlantsWithNextDue：改排序为 nextDueAt asc（null 沉底），沉底内 _creationTime desc。",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change. Query logic only."
+        },
+        "api_layer": {
+          "type": "convex-query",
+          "endpoints": ["plants.listPlantsWithNextDue"],
+          "notes": "返回字段不变，仅排序逻辑变更。前端无需适配新字段。"
+        },
+        "component_tree": {
+          "entry_component": "PlantListPage",
+          "children": [],
+          "notes": "前端移除本地 localeCompare 排序，直接使用后端返回顺序。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "useQuery(api.plants.listPlantsWithNextDue) 返回已排序数据",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "/plants",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "familyId scope（已有）"
+        },
+        "design_contract": {
+          "ui_spec_ref": "plant-list-iteration-spec §2.2",
+          "intent": "列表顺序反映养护紧迫度，最需要关注的植物排最前面。",
+          "tokens_new": [],
+          "tokens_reuse": [],
+          "visual_change": "无直接视觉变化，但列表顺序改变会影响用户感知。",
+          "acceptance": "逾期/今天到期的植物排在列表最前面，无任务植物排在最后。"
+        }
+      }
+    },
+    {
+      "task_id": "PLIST2-002",
+      "description": "归档植物查询：新增 listArchivedPlants query（isArchived===true，按归档时间降序），供归档折叠区使用。",
+      "priority": "1-High",
+      "status": "done",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": ["plants"],
+            "key_fields": {
+              "plants": "_id, familyId, name, isArchived, archivedAt, imageUrl, _creationTime"
+            },
+            "indexes": ["plants.by_family_archived (familyId, isArchived)"],
+            "relations": "N/A",
+            "notes": "archivedAt 字段已存在（archive mutation 写入）。若无 archivedAt 字段则回退用 _creationTime。"
+          },
+          "queries": {
+            "read": "listArchivedPlants(familyId)：返回 {_id, name, imageUrl, archivedAt}[]，按 archivedAt desc。",
+            "write": "N/A（restorePlant mutation 已存在）"
+          },
+          "migration_strategy": "No schema change. New query only."
+        },
+        "api_layer": {
+          "type": "convex-query",
+          "endpoints": ["plants.listArchivedPlants"],
+          "notes": "新增 query。返回精简字段（不含任务信息，归档后任务无意义）。"
+        },
+        "component_tree": {
+          "entry_component": "ArchivedSection",
+          "children": ["ArchivedPlantCard"],
+          "notes": "新组件消费此 query。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "useQuery(api.plants.listArchivedPlants)",
+          "local_state": "isExpanded: boolean（折叠状态，默认 false）"
+        },
+        "routing": {
+          "path": "/plants",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "familyId scope"
+        },
+        "design_contract": {
+          "ui_spec_ref": "plant-list-ui-spec §5",
+          "intent": "归档植物不占日常视野，但需要时能找到并恢复。",
+          "tokens_new": [],
+          "tokens_reuse": ["--color-muted", "--color-line", "--color-leaf"],
+          "visual_change": "列表底部新增折叠入口，展开后显示灰态归档卡片。",
+          "acceptance": "归档区默认收起，点击展开后显示灰态卡片列表，每张卡片有「恢复」按钮。"
+        }
+      }
+    },
+    {
+      "task_id": "PLIST2-003",
+      "description": "PlantCard 重写：从竖向大图布局改为横向紧凑布局（左图 80×80 + 右文三行：名称+编辑图标、位置、任务状态），整卡可点击进详情。",
+      "priority": "1-High",
+      "status": "done",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "纯前端组件重写，不触碰后端。"
+          },
+          "queries": {
+            "read": "N/A（消费 PLIST2-001 返回的数据）",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "none",
+          "endpoints": [],
+          "notes": "复用 listPlantsWithNextDue 已返回的全部字段。"
+        },
+        "component_tree": {
+          "entry_component": "PlantCard",
+          "children": ["PlantImage", "PlantCardTextArea"],
+          "notes": "PlantCard 整体重写。内部拆分图片区和文字区子组件。整卡用 <article> 语义化。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A（props 驱动）",
+          "local_state": "imageLoaded: boolean（控制图片渐显）"
+        },
+        "routing": {
+          "path": "/plants",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        },
+        "design_contract": {
+          "ui_spec_ref": "plant-list-ui-spec §4.1-§4.4",
+          "intent": "一屏 4-5 株植物，左图右文横向布局，信息层级清晰（名称→位置→状态）。",
+          "tokens_new": [],
+          "tokens_reuse": ["--color-surface", "--color-line", "--color-ink", "--color-muted", "--color-mist", "--radius-card", "--space-sm", "--space-md", "--font-heading", "--font-body"],
+          "layout": {
+            "container": "flex, align-items: center, padding 12px, border-radius 16px, border 1px --color-line, min-height 104px",
+            "image": "80×80, border-radius 12px, object-fit cover, flex-shrink 0, margin-right 16px",
+            "text_area": "flex: 1, min-width: 0, flex-direction: column, gap: 2-4px"
+          },
+          "acceptance": "卡片为横向布局，图片 80×80 方图在左，右侧三行文字层级分明，一屏可见 ≥4 张完整卡片。"
+        }
+      }
+    },
+    {
+      "task_id": "PLIST2-004",
+      "description": "任务状态行与逾期色条：卡片第三行展示最紧迫任务（emoji + 类型 + 到期文案），逾期时文字用 --color-warning 并在卡片左侧显示 3px 暖橙色条。",
+      "priority": "1-High",
+      "status": "done",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "纯前端展示逻辑。nextDueTask 数据已由 listPlantsWithNextDue 返回。"
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "none",
+          "endpoints": [],
+          "notes": "消费现有 nextDueTask: { taskType, nextDueAt } 字段。"
+        },
+        "component_tree": {
+          "entry_component": "PlantCard",
+          "children": ["TaskStatusLine"],
+          "notes": "新增 TaskStatusLine 子组件，负责 emoji 映射 + 到期文案计算 + 颜色选择。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "N/A（纯计算派生）"
+        },
+        "routing": {
+          "path": "/plants",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        },
+        "design_contract": {
+          "ui_spec_ref": "plant-list-ui-spec §4.5 + plant-list-iteration-spec §4.5",
+          "intent": "不进详情就能感知养护压力；逾期是页面唯一的彩色信号。",
+          "tokens_new": [],
+          "tokens_reuse": ["--color-warning", "--color-ink", "--color-muted"],
+          "task_type_emoji": {
+            "watering": "💧",
+            "fertilizing": "🧪",
+            "misting": "🌫️",
+            "repotting": "🪴",
+            "pruning": "✂️",
+            "custom": "📋"
+          },
+          "overdue_bar": {
+            "position": "卡片最左侧，贯穿全高",
+            "width": "3px",
+            "color": "--color-warning",
+            "implementation": "border-left: 3px solid var(--color-warning)，padding-left 相应减少 3px"
+          },
+          "acceptance": "逾期植物卡片左侧有 3px 暖橙色条，状态文案为 --color-warning；非逾期植物无色条。"
+        }
+      }
+    },
+    {
+      "task_id": "PLIST2-005",
+      "description": "编辑图标交互：右上角铅笔图标（16×16 视觉，44×44 热区），点击进入编辑页并阻止冒泡，默认 opacity 0.4，按下时 opacity 1.0。",
+      "priority": "2-Medium",
+      "status": "done",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "纯前端交互，不触碰后端。"
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "none",
+          "endpoints": [],
+          "notes": "N/A"
+        },
+        "component_tree": {
+          "entry_component": "PlantCard",
+          "children": ["EditIconButton"],
+          "notes": "EditIconButton 内含铅笔 SVG + 扩展热区 + stopPropagation + navigate(/plants/:id/edit)。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "/plants/:id/edit",
+          "guard": "authenticated family members",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        },
+        "design_contract": {
+          "ui_spec_ref": "plant-list-ui-spec §4.4 第一行 + §4.6",
+          "intent": "编辑是低频操作，视觉弱化但可发现；不与主点击区混淆。",
+          "tokens_new": [],
+          "tokens_reuse": ["--color-muted"],
+          "states": {
+            "default": "opacity 0.4, --color-muted",
+            "active": "opacity 1.0, transition 100ms",
+            "card_pressed": "跟随卡片缩放，不单独变化"
+          },
+          "acceptance": "编辑图标点击进入编辑页而非详情页；点击编辑图标不触发卡片跳转。"
+        }
+      }
+    },
+    {
+      "task_id": "PLIST2-006",
+      "description": "归档折叠区组件：ArchivedSection（折叠触发器 + 展开/收起动效）+ ArchivedPlantCard（灰态卡片 + 恢复按钮），消费 PLIST2-002 的 query。",
+      "priority": "1-High",
+      "status": "done",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "消费 PLIST2-002 的 listArchivedPlants query。恢复操作调用已有 restorePlant mutation。"
+          },
+          "queries": {
+            "read": "useQuery(api.plants.listArchivedPlants)",
+            "write": "useMutation(api.plants.restorePlant)"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "convex-mutation",
+          "endpoints": ["plants.restorePlant（已存在）"],
+          "notes": "恢复后植物回到活跃列表，归档区数量 -1。"
+        },
+        "component_tree": {
+          "entry_component": "ArchivedSection",
+          "children": ["ArchivedPlantCard"],
+          "notes": "ArchivedSection 管理折叠状态和动效；ArchivedPlantCard 渲染灰态卡片。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "useQuery(api.plants.listArchivedPlants)",
+          "local_state": "isExpanded: boolean（默认 false）"
+        },
+        "routing": {
+          "path": "/plants",
+          "guard": "authenticated family members",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "familyId scope"
+        },
+        "design_contract": {
+          "ui_spec_ref": "plant-list-ui-spec §5.1-§5.3",
+          "intent": "归档植物不占日常视野，但需要时能找到并一键恢复。",
+          "tokens_new": [],
+          "tokens_reuse": ["--color-muted", "--color-line", "--color-leaf", "--color-mist", "--color-surface"],
+          "archived_card_style": {
+            "opacity": "0.55",
+            "image_filter": "grayscale(0.6)",
+            "name_color": "--color-muted",
+            "second_line": "归档时间（替代位置）",
+            "third_line": "不显示",
+            "edit_icon": "不显示",
+            "right_action": "「恢复」文字按钮，--color-leaf，14px",
+            "click_behavior": "整卡不可点击（需先恢复）",
+            "overdue_bar": "无"
+          },
+          "fold_animation": {
+            "expand": "max-height 0→auto, 300ms ease-out + opacity 0→1",
+            "collapse": "反向, 200ms ease-in",
+            "arrow": "▶→▼, rotate(90deg), 200ms"
+          },
+          "acceptance": "归档区默认收起显示「▶ 已归档 (N)」；展开后灰态卡片正确渲染；点击恢复后植物回到活跃列表。"
+        }
+      }
+    },
+    {
+      "task_id": "PLIST2-007",
+      "description": "列表 Stagger 渐入动效：首次加载完成后卡片依次 fade-in + translateY(8px→0)，stagger 50ms，单卡 250ms，前 6 张有延迟第 7 张起同时出现，尊重 reduced-motion。",
+      "priority": "2-Medium",
+      "status": "done",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "纯前端动效，不触碰后端。"
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "none",
+          "endpoints": [],
+          "notes": "N/A"
+        },
+        "component_tree": {
+          "entry_component": "PlantListPage",
+          "children": ["PlantCard"],
+          "notes": "在 PlantListPage 中为每张卡片计算 animation-delay，通过 CSS 变量或 inline style 传递。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "hasAnimated: boolean（防止路由切换回来时重复动画）"
+        },
+        "routing": {
+          "path": "/plants",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        },
+        "design_contract": {
+          "ui_spec_ref": "plant-list-ui-spec §6.2",
+          "intent": "页面「活」的感觉，但不拖慢使用效率。",
+          "tokens_new": [],
+          "tokens_reuse": [],
+          "animation_spec": {
+            "initial": "opacity: 0; transform: translateY(8px)",
+            "final": "opacity: 1; transform: translateY(0)",
+            "duration_per_card": "250ms",
+            "easing": "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+            "stagger_delay": "50ms",
+            "stagger_cap": "前 6 张有 stagger，第 7 张起 delay 固定为 300ms（6×50ms）",
+            "reduced_motion": "跳过动画，直接 opacity:1 transform:none",
+            "replay_guard": "仅首次加载播放，路由返回时不重复"
+          },
+          "acceptance": "首次进入页面卡片依次淡入，总时长 ≤ 550ms（6×50ms + 250ms）；开启 reduced-motion 后无动画。"
+        }
+      }
+    },
+    {
+      "task_id": "PLIST2-008",
+      "description": "卡片按压反馈：整卡 :active 态 scale(0.98) + 底色微变（surface→mist），按下 120ms ease-out，松开 200ms 回弹缓动。",
+      "priority": "2-Medium",
+      "status": "done",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "纯 CSS 交互，不触碰后端。"
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "none",
+          "endpoints": [],
+          "notes": "N/A"
+        },
+        "component_tree": {
+          "entry_component": "PlantCard",
+          "children": [],
+          "notes": "在 PlantCard 容器上添加 CSS transition + :active 伪类样式。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "N/A（纯 CSS）"
+        },
+        "routing": {
+          "path": "/plants",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        },
+        "design_contract": {
+          "ui_spec_ref": "plant-list-ui-spec §6.1",
+          "intent": "触觉确认——按下时用户知道「我点到了」。",
+          "tokens_new": [],
+          "tokens_reuse": ["--color-surface", "--color-mist"],
+          "press_spec": {
+            "transform_active": "scale(0.98)",
+            "background_active": "--color-mist",
+            "transition_down": "120ms ease-out",
+            "transition_up": "200ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+            "reduced_motion": "保留（scale 微小，不触发 motion 敏感）"
+          },
+          "acceptance": "手指按下卡片时可感知缩放和底色变化；松开后有轻微回弹感。"
+        }
+      }
+    },
+    {
+      "task_id": "PLIST2-009",
+      "description": "图片渐显与占位态：无图时显示 --color-mist 底 + 🌿 居中；有图时 onLoad 后 opacity 0→1（200ms）；加载失败回退占位态。",
+      "priority": "2-Medium",
+      "status": "done",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "纯前端展示逻辑。"
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "none",
+          "endpoints": [],
+          "notes": "N/A"
+        },
+        "component_tree": {
+          "entry_component": "PlantImage",
+          "children": [],
+          "notes": "PlantImage 组件封装：接收 imageUrl prop，内部管理 loaded/error 状态。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "status: 'loading' | 'loaded' | 'error'"
+        },
+        "routing": {
+          "path": "/plants",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        },
+        "design_contract": {
+          "ui_spec_ref": "plant-list-ui-spec §4.3",
+          "intent": "避免图片突然闪现或显示浏览器默认坏图；占位态与有图态尺寸一致不影响布局。",
+          "tokens_new": [],
+          "tokens_reuse": ["--color-mist"],
+          "placeholder": {
+            "background": "--color-mist",
+            "content": "🌿 emoji, 32px, 居中",
+            "size": "80×80, border-radius 12px"
+          },
+          "image_transition": {
+            "initial": "opacity: 0（背景为 --color-mist 色块）",
+            "loaded": "opacity: 1, 200ms ease-in",
+            "error": "保持占位态，不闪烁"
+          },
+          "acceptance": "无图植物显示 mist 底色 + 🌿；有图植物加载完成后渐显；加载失败不出现浏览器默认坏图。"
+        }
+      }
+    },
+    {
+      "task_id": "PLIST2-010",
+      "description": "PlantListPage 整合与搜索栏视觉优化：集成新 PlantCard + ArchivedSection，调整列表间距为 8px，搜索栏改为无边框 mist 底色 + 聚焦内描边，标题栏改为 Lora 24px + 文字型添加按钮。",
+      "priority": "1-High",
+      "status": "done",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "纯前端布局调整。"
+          },
+          "queries": {
+            "read": "N/A（消费 PLIST2-001 和 PLIST2-002 的 query）",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "none",
+          "endpoints": [],
+          "notes": "N/A"
+        },
+        "component_tree": {
+          "entry_component": "PlantListPage",
+          "children": ["TitleBar", "SearchBar", "PlantCard (×N)", "ArchivedSection"],
+          "notes": "PlantListPage 作为容器页，组装标题栏、搜索栏、活跃列表、归档区四层结构。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "useQuery × 2（活跃 + 归档）",
+          "local_state": "searchQuery: string"
+        },
+        "routing": {
+          "path": "/plants",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        },
+        "design_contract": {
+          "ui_spec_ref": "plant-list-ui-spec §1-§3 + §7 + §12",
+          "intent": "页面整体布局落地：标题栏安静、搜索栏轻量、列表紧凑、归档区分隔明确。",
+          "tokens_new": [],
+          "tokens_reuse": ["--color-paper", "--color-surface", "--color-mist", "--color-leaf", "--color-ink", "--color-muted", "--color-line", "--color-gold", "--space-sm", "--space-md", "--space-lg", "--radius-input", "--radius-card", "--font-heading", "--font-body"],
+          "layout_structure": [
+            "① 标题栏：Lora 24px 700 左对齐 + 右侧「+ 添加植物」文字按钮 --color-leaf",
+            "② 搜索栏：40px 高，--color-mist 底色，无边框，聚焦时 2px --color-leaf 内描边",
+            "③ 活跃列表：卡片间距 --space-sm(8px)，主体区域",
+            "④ 归档区：上方 24px + 1px --color-line 分隔"
+          ],
+          "empty_states": {
+            "no_plants": "🌱 48px + 标题 + 描述 + --color-gold CTA 按钮",
+            "no_search_results": "🔍 + 标题 + 描述，无按钮"
+          },
+          "acceptance": "页面四层结构完整渲染；搜索栏无边框 mist 底色；标题为 Lora 衬线体；空状态正确展示。"
+        }
+      }
+    }
+  ]
+}

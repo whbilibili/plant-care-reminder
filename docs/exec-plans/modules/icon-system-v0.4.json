@@ -1,0 +1,214 @@
+{
+  "project": "plant-care-reminder",
+  "prd": "docs/design-docs/icon-system-migration.md",
+  "created_at": "2026-06-15",
+  "module_intent": "图标系统 v0.4 迁移：把散落在组件中的 emoji 系统性替换为 Lucide 线性图标，消除 emoji 三大硬伤——①彩色位图不受 CSS color/currentColor 控制（BottomNav active 态设 color:var(--color-paper) 白色失效、emoji 仍彩色，是当前最显眼的 UI bug）、②跨平台渲染不一致、③视觉重量与品牌克制线性语言冲突。落地按三级分类：A 级功能性图标必换（导航/完成/编辑/通知等承载交互或状态语义者）、B 级任务类型图标统一收口（TaskTypeBadge/PlantCard/PlantDetailPage 三处既有不一致 emoji 收敛为 taskTypes.ts 单一 taskTypeIcon 映射）、C 级装饰/情感化 emoji（🌿🍃 等空状态/Hero 装饰）保留不动。技术底座：引入 lucide-react@0.471.1 + 封装 app/src/components/ui/Icon.tsx 统一壳（size/strokeWidth/colorVar/label），所有图标走 stroke=currentColor 跟随主题色，与 DetailNavBar 既有内联 SVG（viewBox 0 0 24 24 / strokeWidth 2）风格对齐，最后把 DetailNavBar 手写 SVG 收口到 Lucide 统一来源。落地节奏：P0=依赖引入+Icon 壳+BottomNav 试点（修复核心 bug）；P1=任务类型图标统一收口（修三处不一致）；P2=操作类图标替换；P3=信息标识图标替换；P4=DetailNavBar 收口 + 整体回归。每个 Task 同时承载替换契约（落点文件/图标名）与 UI 美化契约（design_contract：尺寸/色 token/无障碍 label）。",
+  "design_baseline": {
+    "token_source": "app/src/styles/tokens.css",
+    "hard_rule": "禁止硬编码 #hex；图标颜色一律用 currentColor 继承父级或 style={{ color: 'var(--color-*)' }}，禁止给 Lucide 组件传字面色值。本次迁移不新增 token。",
+    "reduced_motion": "图标自身无动效；若处于既有完成/退场动效容器内，沿用容器已有 prefers-reduced-motion 兜底，不新增动效。",
+    "color_discipline": "功能性图标默认 stroke=currentColor 跟随上下文文字色；任务类型图标用 style 注入对应 --color-task-* token；导航 active 态由父级 color:var(--color-paper) 驱动、图标 currentColor 自动转白（本次修复核心收益）。装饰类 emoji 不在替换范围。",
+    "icon_library": "lucide-react@0.471.1（线性、stroke=currentColor、tree-shakeable，与 DetailNavBar 既有内联 SVG 风格一致）。所有图标名已逐一核实存在于该版本类型声明。"
+  },
+  "reuse_inventory": {
+    "taskTypes.ts": "app/src/features/tasks/taskTypes.ts — 任务类型单一数据源（careTaskTypeValues/labels/options），当前无图标字段，本模块在此新增 taskTypeIcon 映射作为唯一权威来源（B 级收口落点）",
+    "TaskTypeBadge.tsx": "app/src/features/tasks/TaskTypeBadge.tsx:8-13 — 内含一份 taskTypeVisuals(emoji+colorVar)，导出 taskTypeEmoji()/taskTypeColorVar()，改为消费统一映射",
+    "PlantCard.tsx": "app/src/features/plants/PlantCard.tsx:24-29,45,71 — 内含第二份 taskTypeEmoji 映射（与 TaskTypeBadge 在 fertilizing/misting/custom 三处不一致）+ ✏️ 编辑图标，改为消费统一映射",
+    "PlantDetailPage.tsx": "app/src/features/plants/PlantDetailPage.tsx:137 — 调 taskTypeEmoji(task.taskType)，改为统一图标 API",
+    "DetailNavBar.tsx": "app/src/features/plants/DetailNavBar.tsx — 已用内联 SVG（chevron 返回 + 三点更多菜单，stroke=currentColor viewBox 0 0 24 24 strokeWidth 2），P4 收口为 Lucide ChevronLeft/EllipsisVertical",
+    "BottomNav.tsx": "app/src/components/navigation/BottomNav.tsx:9-11 — 导航项 icon: 🗓️🪴⚙️，active 态 color:var(--color-paper) 对 emoji 失效（核心 bug），P0 试点落点",
+    "CompleteTaskButton.tsx": "app/src/features/tasks/CompleteTaskButton.tsx:25,73,75 — 🍃 celebrateEmoji + ✓ 完成态",
+    "ActionableTaskRow.tsx": "app/src/features/tasks/ActionableTaskRow.tsx:89 — …/✓ 完成态切换",
+    "FamilyHeroCard.tsx": "app/src/features/family/FamilyHeroCard.tsx:45 — ✎ 编辑入口（:33 的 🌿 是装饰，保留）",
+    "PlantArchiveSection.tsx": "app/src/features/plants/PlantArchiveSection.tsx:72 — 📝 植物档案",
+    "NotificationPromptCard.tsx": "app/src/features/notifications/NotificationPromptCard.tsx:157 — 🔔 通知",
+    "ActionableTaskSection.tsx": "app/src/features/tasks/ActionableTaskSection.tsx:40 — ⚠️ 需要处理标题",
+    "PlanSection.tsx": "app/src/features/tasks/PlanSection.tsx:35 — 📋 养护计划"
+  },
+  "icon_mapping_authority": {
+    "navigation": {"todo": "CalendarCheck", "plants": "Sprout", "settings": "Settings"},
+    "task_type": {"watering": "Droplet", "fertilizing": "Sprout", "misting": "SprayCan", "repotting": "Flower2", "pruning": "Scissors", "custom": "Tag"},
+    "operation": {"edit": "Pencil", "complete": "Check", "complete_pending": "Loader", "notify": "Bell", "archive_note": "NotebookPen", "plan": "ClipboardList", "attention": "Info"},
+    "detail_nav": {"back": "ChevronLeft", "more": "EllipsisVertical"},
+    "note": "全部图标名已核实存在于 lucide-react@0.471.1（FlowerPot 不存在，换盆用 Flower2；MoreVertical 已更名 EllipsisVertical）。装饰类 🌿🍃 不在映射内，保留 emoji。"
+  },
+  "tasks": [
+    {
+      "task_id": "ICON-001",
+      "description": "引入图标库 + 封装统一 Icon 壳：(1) app 工作区 npm i lucide-react@0.471.1（pin 版本写入 package.json dependencies）；(2) 新建 app/src/components/ui/Icon.tsx —— props { icon: LucideIcon, size?(默认20), strokeWidth?(默认2), colorVar?(注入 style.color=var(...)，缺省继承 currentColor), label?(有则 role=img+aria-label，无则 aria-hidden), className? }；(3) 不替换任何业务 emoji，仅交付底座 + 最小渲染测试。确立『所有 Lucide 图标经 Icon 壳消费、禁止业务组件直接传字面色』纪律。",
+      "priority": "0-Critical",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "纯前端基建。", "notes": "无 schema 变更。"}, "queries": {"read": "N/A", "write": "N/A"}, "migration_strategy": "No schema change."},
+        "api_layer": {"type": "frontend-infra", "endpoints": [], "notes": "无后端接口。"},
+        "component_tree": {"entry_component": "Icon", "children": [], "notes": "ui 基础原语，被后续所有图标任务复用。"},
+        "state_management": {"global_store": "N/A", "server_state": "N/A", "local_state": "N/A"},
+        "routing": {"path": "N/A", "guard": "N/A", "middleware": "N/A"},
+        "auth": {"provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A"},
+        "design_contract": {"ui_spec_ref": "icon-system-migration.md §4", "intent": "统一图标消费入口，颜色走 currentColor/token，尺寸/线宽标准化，无障碍 label 收口。", "tokens_new": [], "tokens_reuse": ["currentColor 继承上下文文字色"], "visual_spec": {"default_size": "20px", "default_strokeWidth": "2", "color": "缺省 currentColor；colorVar 时 style.color=var(...)"}, "accessibility": "label 有值 → role=img+aria-label；无值 → aria-hidden=true。", "acceptance": "Icon 壳可渲染任意 Lucide 图标，color 跟随 currentColor，传 colorVar 变对应 token 色，label/无 label 两路 a11y 正确。"}
+      },
+      "verification": {"auto": "tsc --noEmit 通过；npx convex dev typecheck 不受影响；vitest 跑通 Icon 最小渲染测试（currentColor 与 colorVar 两路、a11y 两路）", "data": "N/A", "visual": "测试快照确认线性图标渲染正常", "manual": "传 colorVar='--color-leaf' 渲染品牌绿；不传 label 时 DOM 含 aria-hidden"},
+      "metadata": {"files_affected": ["app/package.json (modify)", "app/src/components/ui/Icon.tsx (new)", "app/src/components/ui/Icon.test.tsx (new)"], "modules": ["icon-system-v0.4"], "layer": "frontend", "epic": "E0 基建"},
+      "acceptance_criteria": ["lucide-react@0.471.1 pin 进 package.json", "Icon.tsx 统一壳交付，color 默认 currentColor、可经 colorVar 注入 token", "label 有/无两路无障碍正确", "tsc + vitest 通过，无 #hex 字面色"]
+    },
+    {
+      "task_id": "ICON-002",
+"description": "BottomNav 试点替换（修复核心 bug）：把 BottomNav.tsx:9-11 的 icon 字段由 emoji(🗓️🪴⚙️) 改为 Lucide 组件引用（待办=CalendarCheck、植物=Sprout、设置=Settings），经 Icon 壳渲染，size 对齐当前导航视觉尺寸（约22-24），图标颜色继承导航项 color（未选中 muted、选中 var(--color-paper)）。验证 active 态图标随父级 color 正确转白——本模块最核心收益验证点。保持 label 文案与点击热区不变，图标 aria-hidden。",
+"priority": "0-Critical",
+"status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "纯前端。", "notes": "无 schema 变更。"}, "queries": {"read": "N/A", "write": "N/A"}, "migration_strategy": "No schema change."},
+        "api_layer": {"type": "frontend", "endpoints": [], "notes": "无接口。"},
+        "component_tree": {"entry_component": "BottomNav", "children": ["Icon"], "notes": "navItems 的 icon 由 string emoji 改为 LucideIcon 组件引用。"},
+        "state_management": {"global_store": "N/A", "server_state": "N/A", "local_state": "当前激活路由（既有）"},
+        "routing": {"path": "/todo /plants /settings", "guard": "authenticated family members", "middleware": "app shell 底部导航"},
+        "auth": {"provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A"},
+        "design_contract": {"ui_spec_ref": "icon-system-migration.md §3.1 A 级 + §1 emoji 硬伤", "intent": "导航图标随选中态变色，修复 emoji active 态白色失效核心 bug。", "tokens_new": [], "tokens_reuse": ["--color-paper", "--color-muted", "--color-ink"], "visual_spec": {"size": "对齐既有导航图标视觉尺寸（约22-24）", "color": "inactive=muted/ink，active=var(--color-paper) 经 currentColor 自动转白", "layout": "图标在上文案在下结构不变"}, "accessibility": "图标 aria-hidden=true（同行 label 承载可读名）；导航项可点击区 ≥44×44。", "acceptance": "三导航图标为线性 Lucide；active 态图标转白与文案一致；inactive 弱化色；热区与文案不回归。"}
+      },
+      "verification": {"auto": "tsc --noEmit 通过；AppRouter/导航 smoke 不破坏（label getByText 仍命中）", "data": "N/A", "visual": "active/inactive 两态截图核对——active 图标为白色（核心验证）", "manual": "切换三 tab 确认选中图标变白、未选中弱化色，对比修复前 emoji 仍彩色问题"},
+      "metadata": {"files_affected": ["app/src/components/navigation/BottomNav.tsx (modify)"], "modules": ["icon-system-v0.4"], "layer": "frontend", "epic": "E1 导航试点"},
+      "acceptance_criteria": ["BottomNav 三图标替换为 Lucide（CalendarCheck/Sprout/Settings）", "active 态图标随父级 color 正确转白（修复核心 bug）", "inactive 弱化色、文案与热区不回归", "图标 aria-hidden、导航 label 保留可读名"]
+    },
+    {
+      "task_id": "ICON-003",
+      "description": "任务类型图标单一来源建立：在 taskTypes.ts 新增权威映射 taskTypeIcon: Record<CareTaskType, LucideIcon> = { watering: Droplet, fertilizing: Sprout, misting: SprayCan, repotting: Flower2, pruning: Scissors, custom: Tag } 并导出取值函数。这是 B 级收口唯一权威源，从根上消除 TaskTypeBadge/PlantCard 两处映射在 fertilizing/misting/custom 三处的不一致。本任务只建来源 + 单测覆盖六类型全映射，不改消费方。",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "消费既有 CareTaskType，扩展 taskTypes.ts。", "notes": "纯前端常量映射。"}, "queries": {"read": "N/A", "write": "N/A"}, "migration_strategy": "No schema change."},
+        "api_layer": {"type": "frontend", "endpoints": [], "notes": "无接口。"},
+        "component_tree": {"entry_component": "taskTypes.ts (module)", "children": [], "notes": "被 TaskTypeBadge/PlantCard/PlantDetailPage 复用。"},
+        "state_management": {"global_store": "N/A", "server_state": "N/A", "local_state": "N/A"},
+        "routing": {"path": "N/A", "guard": "N/A", "middleware": "N/A"},
+        "auth": {"provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A"},
+        "design_contract": {"ui_spec_ref": "icon-system-migration.md §3.2 B 级", "intent": "任务类型图标收敛为单一权威映射，消除三处既有不一致。", "tokens_new": [], "tokens_reuse": ["--color-task-watering", "--color-task-fertilizing", "--color-task-misting", "--color-task-repotting", "--color-task-pruning", "--color-task-custom"], "visual_spec": {"mapping": "watering=Droplet, fertilizing=Sprout, misting=SprayCan, repotting=Flower2, pruning=Scissors, custom=Tag"}, "accessibility": "映射本身无 DOM；消费方负责 label。", "acceptance": "六种 CareTaskType 全部有唯一 Lucide 图标，无遗漏无歧义无第二份映射。"}
+      },
+      "verification": {"auto": "tsc --noEmit 通过；vitest 断言 careTaskTypeValues 每个值在 taskTypeIcon 有定义且为合法 LucideIcon", "data": "N/A", "visual": "N/A（不渲染）", "manual": "review 确认六类型映射与 icon_mapping_authority.task_type 完全一致"},
+      "metadata": {"files_affected": ["app/src/features/tasks/taskTypes.ts (modify)", "app/src/features/tasks/taskTypes.test.ts (new or modify)"], "modules": ["icon-system-v0.4"], "layer": "frontend", "epic": "E2 任务类型收口"},
+      "acceptance_criteria": ["taskTypes.ts 含权威 taskTypeIcon 覆盖全部六类型", "单测覆盖六类型全映射", "图标名与 icon_mapping_authority 一致（repotting=Flower2 非 FlowerPot）", "不改动任何消费方"]
+    },
+    {
+      "task_id": "ICON-004",
+      "description": "任务类型图标三处消费方统一切换：(1) TaskTypeBadge.tsx 改消费 taskTypeIcon，删除内部 taskTypeVisuals 的 emoji 字段（colorVar 保留或一并迁来源），徽章内渲染 Icon 壳 + style 注入对应 --color-task-* 色；(2) PlantCard.tsx:24-29 删除第二份 taskTypeEmoji，:45/:71 改用统一 API + Pencil 编辑图标；(3) PlantDetailPage.tsx:137 改统一图标 API。完成后全仓库只剩一份任务类型图标来源。PlantDetailPage(原'🍃')与 PlantCard(原'📋') fallback 统一为同一缺省图标（实现时锁定并在 PR 说明）。",
+      "priority": "1-High",
+      "status": "completed",
+      "completion_note": "实现时扩大到全部 taskTypeEmoji 消费方以彻底实现单一来源：除契约列出的 TaskTypeBadge/PlantCard/PlantDetailPage 外，ActionableTaskRow.tsx 与 PlanTaskRow.tsx 的任务类型 emoji 也同步切到 getTaskTypeIcon+Icon 壳（着色用 taskTypeColorVar）。DueTaskCard 的 celebrateEmoji、ActionableTaskRow 的完成 FX、PlantDetailPage 的 toast 文案前缀属 C 级情感装饰，统一固定为 🍃（按 ICON-005 指引保留装饰 emoji，不再依赖任务类型映射）。删除 TaskTypeBadge 导出的 taskTypeEmoji 与 PlantCard 本地 taskTypeEmoji 两份映射，全仓库 grep taskTypeEmoji 0 命中。fallback 统一为 taskTypeIcon.custom(Tag)。新增 TaskTypeBadge.test.tsx 3 用例固化。",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "消费 ICON-003 的 taskTypeIcon。", "notes": "无 schema 变更。"}, "queries": {"read": "N/A", "write": "N/A"}, "migration_strategy": "No schema change."},
+        "api_layer": {"type": "frontend", "endpoints": [], "notes": "无接口。"},
+        "component_tree": {"entry_component": "TaskTypeBadge / PlantCard / PlantDetailPage", "children": ["Icon"], "notes": "三处消费方统一切到 taskTypeIcon。"},
+        "state_management": {"global_store": "N/A", "server_state": "N/A", "local_state": "N/A"},
+        "routing": {"path": "/todo /plants /plants/:id", "guard": "authenticated family members", "middleware": "app shell"},
+        "auth": {"provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A"},
+        "design_contract": {"ui_spec_ref": "icon-system-migration.md §3.2 B 级", "intent": "三处任务类型图标统一渲染统一着色，消除既有不一致。", "tokens_new": [], "tokens_reuse": ["--color-task-watering", "--color-task-fertilizing", "--color-task-misting", "--color-task-repotting", "--color-task-pruning", "--color-task-custom"], "visual_spec": {"badge": "TaskTypeBadge 18×18 角标维持尺寸，内嵌线性图标 + 对应 task 色", "card": "PlantCard 任务状态行图标对齐文字行高", "detail": "PlantDetailPage 任务行图标与既有布局一致", "fallback": "三处缺省图标统一锁定一种"}, "accessibility": "图标旁有类型文案则 aria-hidden；独立承载语义则给 label。", "acceptance": "三处渲染同一映射同一着色；fertilizing/misting/custom 不再出现历史不一致；fallback 统一。"}
+      },
+      "verification": {"auto": "tsc --noEmit 通过；vitest 跑通 TaskTypeBadge/PlantCard 相关测试；grep 确认无第二份 taskTypeEmoji 残留", "data": "N/A", "visual": "待办/列表/详情三处同一任务类型截图比对，图标与颜色一致", "manual": "逐一核对六类型在三个页面渲染一致，历史不一致 emoji 消失"},
+      "metadata": {"files_affected": ["app/src/features/tasks/TaskTypeBadge.tsx (modify)", "app/src/features/plants/PlantCard.tsx (modify)", "app/src/features/plants/PlantDetailPage.tsx (modify)"], "modules": ["icon-system-v0.4"], "layer": "frontend", "epic": "E2 任务类型收口"},
+      "acceptance_criteria": ["三处消费方统一切到 taskTypeIcon，全仓库无第二份任务类型 emoji 映射", "fertilizing/misting/custom 历史不一致彻底消除", "TaskTypeBadge 角标尺寸/着色不回归", "PlantDetailPage 与 PlantCard fallback 统一"]
+    },
+    {
+      "task_id": "ICON-005",
+      "description": "操作类图标替换（A 级·完成/编辑）：(1) CompleteTaskButton.tsx:73/75 完成态 ✓ 改 Check（pending 态 '…' 可改 Loader 或保留文字省略号，二选一锁定），:25 celebrateEmoji '🍃' 属情感装饰可保留或换克制图标，实现时锁定；(2) ActionableTaskRow.tsx:89 ✓/… 完成态切换与 CompleteTaskButton 对齐同一图标语言；(3) FamilyHeroCard.tsx:45 ✎ 编辑入口改 Pencil（:33 🌿 装饰保留）。所有图标 stroke=currentColor 跟随既有按钮/链接文字色，不引入新色。",
+      "priority": "2-Medium",
+      "status": "completed",
+      "completion_note": "锁定二选一决策：完成态 ✓→Check、pending 态 …→Loader2（加 .complete-spin 旋转，reduced-motion 由 tokens.css 全局兜底压制时长）。celebrateEmoji '🍃' 与 FamilyHeroCard:33 '🌿' 属 C 级情感装饰，按 PRD 保留。改动：① CompleteTaskButton.tsx——圆形态/文字态完成与 pending 全部切到 Icon(Check/Loader2)，aria-label='完成' 不变；② ActionableTaskRow.tsx:89——圆形完成按钮 ✓/… 切到同一 Check/Loader2 图标语言，aria-label='完成{label}' 不变；③ FamilyHeroCard.tsx:45——编辑指示 ✎→Icon(Pencil size14)，aria-label='修改家庭名' 与点击回调不变。tokens.css 新增 @keyframes complete-spin + .complete-spin。新建 FamilyHeroCard.test.tsx 3 用例：管理员视角渲染 svg.lucide-pencil 且无 ✎ 字符(防回退) / 普通成员视角不渲染编辑入口 / aria-label 与回调保留且图标 aria-hidden。验收：typecheck 0 错误、19 files / 112 tests 全绿（+3）、grep 操作 emoji 0 命中。",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "纯前端。", "notes": "无 schema 变更。"}, "queries": {"read": "N/A", "write": "N/A"}, "migration_strategy": "No schema change."},
+        "api_layer": {"type": "frontend", "endpoints": [], "notes": "无接口。"},
+        "component_tree": {"entry_component": "CompleteTaskButton / ActionableTaskRow / FamilyHeroCard", "children": ["Icon"], "notes": "完成态与编辑入口图标替换。"},
+        "state_management": {"global_store": "N/A", "server_state": "N/A", "local_state": "完成 pending/done 态（既有）"},
+        "routing": {"path": "/todo /plants/:id /settings", "guard": "authenticated family members", "middleware": "app shell"},
+        "auth": {"provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A"},
+        "design_contract": {"ui_spec_ref": "icon-system-migration.md §3.1 A 级", "intent": "完成/编辑操作图标统一为线性图标，跟随按钮文字色。", "tokens_new": [], "tokens_reuse": ["--color-success", "--color-leaf", "currentColor"], "visual_spec": {"complete": "Check 居中于圆形完成按钮，完成态随按钮变色", "edit": "Pencil 替换 ✎/编辑入口，尺寸对齐既有视觉", "pending": "pending 态图标/省略号二选一锁定"}, "accessibility": "完成按钮 aria-label 保留（如'标记完成'）；编辑入口 aria-label 保留。", "acceptance": "完成态 Check 随按钮态变色；编辑 Pencil 替换到位；既有完成动效/退场不破坏。"}
+      },
+      "verification": {"auto": "tsc --noEmit 通过；vitest 跑通完成流程相关测试（完成→退场→撤销 不破坏）", "data": "N/A", "visual": "完成按钮三态 + 编辑入口截图", "manual": "点击完成确认 Check 出现并随动效变色；编辑入口点击进编辑页"},
+      "metadata": {"files_affected": ["app/src/features/tasks/CompleteTaskButton.tsx (modify)", "app/src/features/tasks/ActionableTaskRow.tsx (modify)", "app/src/features/family/FamilyHeroCard.tsx (modify)"], "modules": ["icon-system-v0.4"], "layer": "frontend", "epic": "E3 操作图标"},
+      "acceptance_criteria": ["完成态 ✓ 替换为 Check 并随按钮态变色", "编辑入口 ✎ 替换为 Pencil", "完成→退场→撤销动效与 aria-label 不回归", "🌿/🍃 装饰按既定保留策略不误删"]
+    },
+    {
+      "task_id": "ICON-006",
+      "description": "信息标识图标替换（A/B 级·通知/档案/计划/提示）：(1) NotificationPromptCard.tsx:157 🔔 改 Bell；(2) PlantArchiveSection.tsx:72 📝 改 NotebookPen；(3) PlanSection.tsx:35 📋 养护计划 改 ClipboardList；(4) ActionableTaskSection.tsx:40 ⚠️ 需要处理 改 Info（或保留 ⚠️ 视情感强度，实现时锁定）。这些图标位于卡片标题/eyebrow 处，与 SettingCardHeader chip 视觉语言对齐，stroke=currentColor 跟随标题色。",
+      "priority": "3-Low",
+      "status": "completed",
+      "completion_note": "四处信息标识 emoji 全部线性化：① NotificationPromptCard 🔔→Icon(Bell size18)，沿用 32px mist chip 容器；② PlantArchiveSection:72 📝→Icon(NotebookPen size15)，triggerLabel 改 inline-flex 对齐（折叠箭头 ▾/▴ 不在本任务范围，保留）；③ PlanSection:35 📋→Icon(ClipboardList size13 strokeWidth2.5)，titleStyle 改 flex+gap6；④ ActionableTaskSection:40 锁定 ⚠️→Icon(Info size13 strokeWidth2.5)（颜色已由 accentColor=warning/leaf-light 经 currentColor 表达紧急度，无需保留 emoji），titleStyle 改 flex+gap6。所有标题图标 aria-hidden，标题可访问名（如『养护计划（N）』『开启设备提醒』）不变——AppRouter smoke 的 heading name 断言全部未回归。PlanSection 空态 🌱 与各卡装饰属 C 级，保留。新建 PlanSection.test.tsx 2 用例：养护计划标题渲染 svg.lucide-clipboard-list 且无 📋、需要处理标题渲染 svg.lucide-info 且无 ⚠️，均断言可访问名保留。验收：typecheck 0 错误、20 files / 114 tests 全绿（+2）。",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "纯前端。", "notes": "无 schema 变更。"}, "queries": {"read": "N/A", "write": "N/A"}, "migration_strategy": "No schema change."},
+        "api_layer": {"type": "frontend", "endpoints": [], "notes": "无接口。"},
+        "component_tree": {"entry_component": "NotificationPromptCard / PlantArchiveSection / PlanSection / ActionableTaskSection", "children": ["Icon"], "notes": "卡片标题/eyebrow 图标替换。"},
+        "state_management": {"global_store": "N/A", "server_state": "N/A", "local_state": "N/A"},
+        "routing": {"path": "/todo /plants/:id /settings", "guard": "authenticated family members", "middleware": "app shell"},
+        "auth": {"provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A"},
+        "design_contract": {"ui_spec_ref": "icon-system-migration.md §3.1 §3.2", "intent": "信息标识图标线性化，与卡片标题语言对齐。", "tokens_new": [], "tokens_reuse": ["currentColor", "--color-ink", "--color-muted"], "visual_spec": {"placement": "标题/eyebrow 左侧，尺寸对齐文字 cap height", "color": "currentColor 跟随标题色"}, "accessibility": "标题文案已承载语义，图标 aria-hidden。", "acceptance": "四处标识图标线性化、对齐标题色与基线，不破坏卡片布局。"}
+      },
+      "verification": {"auto": "tsc --noEmit 通过；相关组件 smoke/快照不破坏", "data": "N/A", "visual": "四处卡片标题截图核对图标对齐", "manual": "逐一确认图标垂直居中于标题文字、颜色一致"},
+      "metadata": {"files_affected": ["app/src/features/notifications/NotificationPromptCard.tsx (modify)", "app/src/features/plants/PlantArchiveSection.tsx (modify)", "app/src/features/tasks/PlanSection.tsx (modify)", "app/src/features/tasks/ActionableTaskSection.tsx (modify)"], "modules": ["icon-system-v0.4"], "layer": "frontend", "epic": "E4 信息标识图标"},
+      "acceptance_criteria": ["🔔→Bell、📝→NotebookPen、📋→ClipboardList 替换到位", "⚠️ 处理（Info 或保留）按实现锁定且一致", "图标 aria-hidden、对齐标题基线与色", "卡片布局不回归"]
+    },
+    {
+      "task_id": "ICON-007",
+      "description": "DetailNavBar 手写 SVG 收口（A 级·去重）：把 DetailNavBar.tsx 内联手写 SVG（chevron 返回 + 三点更多）替换为 Lucide ChevronLeft / EllipsisVertical 经 Icon 壳渲染，删除手写 path，统一图标来源。保持既有 viewBox 视觉尺寸、strokeWidth、currentColor 行为与点击热区/aria-label 完全不变（这是纯重构，外观应像素级一致）。",
+      "priority": "3-Low",
+      "status": "completed",
+      "completion_note": "DetailNavBar.tsx 两处手写内联 SVG 全部收口到 Lucide 经 Icon 壳渲染：① 返回按钮手写 <polyline points='15 18 9 12 15 6'> → <Icon icon={ChevronLeft} size={20} strokeWidth={2}/>，删除手写 path；② 更多按钮手写三点 <circle r='1.5'×3 fill=currentColor> → <Icon icon={EllipsisVertical} size={20} strokeWidth={2}/>，删除手写 circle。尺寸/线宽/currentColor 行为对齐原值（size20 strokeWidth2），按钮 44×44 热区、aria-label（返回/更多操作）、aria-haspopup/aria-expanded 与 onMenuToggle 回调完全不变，Icon 壳自动给图标加 aria-hidden 不污染可访问名。注意：Lucide EllipsisVertical 本身以三个 r='1' circle 描边实现（非手写 r='1.5' 填充），属正常——防回退断言改为校验 svg 带 lucide class 且不含手写 r='1.5' 圆点。新建 DetailNavBar.test.tsx 3 用例：返回按钮渲染 svg.lucide-chevron-left 且无手写 polyline / 更多按钮渲染 svg.lucide-ellipsis-vertical 且无手写 r=1.5 圆点 / aria-label+aria-expanded+菜单回调+图标 aria-hidden 不回归。验收：typecheck 0 错误、21 files / 117 tests 全绿（+3）。",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "纯前端重构。", "notes": "无 schema 变更。"}, "queries": {"read": "N/A", "write": "N/A"}, "migration_strategy": "No schema change."},
+        "api_layer": {"type": "frontend", "endpoints": [], "notes": "无接口。"},
+        "component_tree": {"entry_component": "DetailNavBar", "children": ["Icon"], "notes": "手写 SVG → Lucide 收口。"},
+        "state_management": {"global_store": "N/A", "server_state": "N/A", "local_state": "更多菜单开合（既有）"},
+        "routing": {"path": "/plants/:id", "guard": "authenticated family members", "middleware": "app shell"},
+        "auth": {"provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A"},
+        "design_contract": {"ui_spec_ref": "icon-system-migration.md §3.1 §4", "intent": "统一图标来源，去除手写 SVG 重复，外观像素级一致。", "tokens_new": [], "tokens_reuse": ["currentColor"], "visual_spec": {"back": "ChevronLeft 对齐原 chevron 尺寸/线宽", "more": "EllipsisVertical 对齐原三点尺寸/线宽"}, "accessibility": "返回/更多按钮既有 aria-label 与热区不变。", "acceptance": "两处图标改用 Lucide、外观与原手写 SVG 一致、菜单交互与 a11y 不回归。"}
+      },
+      "verification": {"auto": "tsc --noEmit 通过；DetailNavBar/详情页 smoke 不破坏", "data": "N/A", "visual": "替换前后顶栏对比截图确认像素级一致", "manual": "点返回退出详情、点更多展开菜单，确认交互不变"},
+      "metadata": {"files_affected": ["app/src/features/plants/DetailNavBar.tsx (modify)"], "modules": ["icon-system-v0.4"], "layer": "frontend", "epic": "E4 信息标识图标"},
+      "acceptance_criteria": ["chevron/三点手写 SVG 替换为 Lucide ChevronLeft/EllipsisVertical", "外观与原手写 SVG 像素级一致", "返回/更多 aria-label 与点击热区不回归", "删除冗余手写 path"]
+    },
+    {
+      "task_id": "ICON-008",
+      "description": "图标系统纪律守护单测：新增测试断言 (1) careTaskTypeValues 每个值在 taskTypeIcon 有唯一映射；(2) grep 风格的源码扫描测试或约定——A/B 级目标文件不再包含被替换的 emoji 字符（白名单允许 C 级装饰 🌿🍃）；(3) Icon 壳 a11y 契约（label→role=img、无 label→aria-hidden）回归。把『不准回退到 emoji』固化为可执行守护，防止后续 PR 回灌。",
+      "priority": "2-Medium",
+      "status": "completed",
+      "completion_note": "三类守护齐备。(1) 映射完整性：taskTypeIcon 六类型唯一映射 + getTaskTypeIcon fallback 已由 taskTypes.test.ts 覆盖（ICON-003 建立，复用）。(2) Icon a11y 契约：label→role=img+aria-label、无 label→aria-hidden、colorVar 注入、currentColor 缺省、size/strokeWidth 已由 Icon.test.tsx 覆盖（ICON-001 建立，复用）。(3) 核心新增——源码扫描守护 `app/src/__tests__/no-functional-emoji.test.ts`：用 Vite import.meta.glob('?raw', eager) 在构建期把本模块迁移过的 15 个 A/B 级落点源文件读成原始文本（规避 src/ 测试引入 node:fs 导致 tsc 报错，app tsconfig 仅含 vite/client 类型），断言均不含黑名单功能性 emoji（导航 🗓️⚙️ / 任务类型 💧🧪🌫️✂️🏷️📋 / 操作 ✔✎✏️🔔 / 信息标识 📝⚠️）；C 级白名单 🌿🍃🌱 明确放行（含『黑白名单无交集』自检 + 『FamilyHeroCard 保留装饰 🌿』正向用例 + 『glob 命中 15 文件防空转』哨兵）。范围纪律：仅扫本模块 9 任务实际改过的文件，未纳入 SettingCardHeader chip(🔑🙂✉️👥ℹ️)/CompleteAllButton(✅)/头像兜底(👤) 等不在本模块任务范围的 emoji，避免误伤。自验证有效性：临时向 PlanSection.tsx 注入 💧 后该守护正确变红、移除后恢复全绿（已实操验证并还原）。验收：typecheck 0 错误、22 files / 135 tests 全绿（+18，其中扫描 it.each 15 例）。",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "测试任务。", "notes": "无 schema 变更。"}, "queries": {"read": "N/A", "write": "N/A"}, "migration_strategy": "No schema change."},
+        "api_layer": {"type": "verification", "endpoints": [], "notes": "纯测试。"},
+        "component_tree": {"entry_component": "taskTypes / Icon", "children": [], "notes": "守护测试。"},
+        "state_management": {"global_store": "N/A", "server_state": "N/A", "local_state": "N/A"},
+        "routing": {"path": "N/A", "guard": "N/A", "middleware": "N/A"},
+        "auth": {"provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A"},
+        "design_contract": {"ui_spec_ref": "icon-system-migration.md §5", "intent": "把图标纪律固化为可执行守护，防回退。", "tokens_new": [], "tokens_reuse": [], "visual_spec": {}, "accessibility": "校验 Icon a11y 契约。", "acceptance": "守护测试覆盖映射完整性、emoji 不回灌、a11y 契约三项。"}
+      },
+      "verification": {"auto": "vitest 守护测试全绿；故意在目标文件回灌一个 emoji 时测试应失败（自验证有效性）", "data": "N/A", "visual": "N/A", "manual": "review 守护测试白名单仅含 C 级装饰字符"},
+      "metadata": {"files_affected": ["app/src/components/ui/Icon.test.tsx (modify)", "app/src/features/tasks/taskTypes.test.ts (modify)", "app/src/__tests__/no-functional-emoji.test.ts (new)"], "modules": ["icon-system-v0.4"], "layer": "qa", "epic": "E5 守护与回归"},
+      "acceptance_criteria": ["任务类型映射完整性测试", "A/B 级文件 emoji 不回灌守护测试（白名单仅 C 级装饰）", "Icon a11y 契约测试", "故意回灌 emoji 时守护测试失败"]
+    },
+    {
+      "task_id": "ICON-009",
+      "description": "整体回归验收：(1) tsc --noEmit + npx convex --once typecheck + vitest 全绿；(2) 全局 grep 确认 A/B 级落点文件 emoji 已清、C 级装饰保留；(3) bundle 体积核对（lucide-react tree-shaking 生效，仅打入实际使用图标）；(4) 三页面（待办/植物/详情/设置）双视角走查截图：导航 active 态图标转白、任务类型六图标一致、操作/标识图标线性化；(5) reduced-motion 下图标无异常；(6) 无 #hex 字面色纪律核对。出具一页迁移验收小结追加到 icon-system-migration.md 末尾。",
+      "priority": "1-High",
+      "status": "completed",
+      "completion_note": "icon-system-v0.4 模块收尾验收通过（9/9 全部完成）。① 自动化三件套：npm run typecheck（tsc -b）0 错误 / npm run test 22 files 135 tests 全绿 / npx convex dev --once --typecheck enable 函数编译部署成功；额外 npm run build（tsc -b && vite build）1732 模块构建成功。② emoji 清理：grep taskTypeEmoji 全仓库 0 命中；本模块 13 个 A/B 级落点源文件无功能性 emoji 残留（no-functional-emoji.test.ts 守护，故意回灌已验证变红）；C 级 🌿🍃🌱 按策略保留（空态/Hero/完成反馈）；SettingCardHeader chip 与 PlantHeroCard 占位 🪴 不在本模块范围未动。③ token 纪律：.tsx 全仓库 grep 无 #hex 字面色，图标色一律 currentColor/colorVar 注入 var(--color-*)。④ tree-shaking：全部 lucide import 为具名按需引入无整包导入，主 bundle index 426KB(gzip122KB)，未使用图标未打入（反证 airplay/anchor/banana/rocket/zap 0 命中）。⑤ reduced-motion：唯一新增动效 .complete-spin 由 tokens.css 全局 @media(prefers-reduced-motion:reduce) 压制为 0.01ms 单次等效静止。⑥ a11y：Icon 壳 label→role=img+aria-label、缺省 aria-hidden，AppRouter smoke heading/button name 断言 40/40 未回归。⑦ 文档：icon-system-migration.md 末尾追加 §8 迁移验收小结。无图形界面，走查项以代码/构建/测试证据核对替代截图。",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "验收任务。", "notes": "无 schema 变更。"}, "queries": {"read": "N/A", "write": "N/A"}, "migration_strategy": "No schema change."},
+        "api_layer": {"type": "verification", "endpoints": [], "notes": "端到端回归。"},
+        "component_tree": {"entry_component": "全图标改造面", "children": [], "notes": "整体走查。"},
+        "state_management": {"global_store": "N/A", "server_state": "N/A", "local_state": "N/A"},
+        "routing": {"path": "/todo /plants /plants/:id /settings", "guard": "authenticated family members", "middleware": "app shell"},
+        "auth": {"provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A"},
+        "design_contract": {"ui_spec_ref": "icon-system-migration.md §5 §6", "intent": "确认迁移完整、无回归、纪律达标。", "tokens_new": [], "tokens_reuse": [], "visual_spec": {}, "accessibility": "全图标 a11y 复核。", "acceptance": "见 acceptance_criteria。"}
+      },
+      "verification": {"auto": "tsc + convex --once typecheck + vitest 全绿", "data": "N/A", "visual": "四页面双视角走查截图（含导航 active 转白核心验证）", "manual": "grep emoji 清点、bundle 体积、reduced-motion、#hex 纪律逐项核对，写入迁移验收小结"},
+      "metadata": {"files_affected": ["docs/design-docs/icon-system-migration.md (modify, 追加验收小结)"], "modules": ["icon-system-v0.4"], "layer": "qa", "epic": "E5 守护与回归"},
+      "acceptance_criteria": ["tsc + convex typecheck + vitest 全绿", "A/B 级 emoji 全清、C 级装饰保留、无 #hex 字面色", "导航 active 图标转白、任务类型六图标三页面一致", "lucide-react tree-shaking 生效、reduced-motion 无异常、验收小结追加完成"]
+    }
+  ]
+}

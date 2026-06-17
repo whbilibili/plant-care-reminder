@@ -1,0 +1,761 @@
+{
+  "project": "plant-care-reminder",
+  "prd": "docs/product-specs/2026-06-05-mvp-requirements.md",
+  "created_at": "2026-06-09",
+  "updated_at": "2026-06-10",
+  "module": "frontend-refresh",
+  "description": "将前端 UI 层拉回 moodboard 设计方向：建立 Design Token 基础设施，逐页面落地视觉改造，统一状态反馈与交互模式。",
+  "design_references": [
+    "docs/design-docs/moodboard/moodboard.html",
+    "docs/design-docs/2026-06-09-frontend-refresh-plan.md",
+    "docs/design-docs/2026-06-09-ui-ux-visual-spec.md"
+  ],
+  "tasks": [
+    {
+"task_id": "VIS-001",
+"description": "建立 Design Token 基础设施：将 moodboard 中的色彩、字体、间距、阴影、圆角规范提取为 CSS Custom Properties，创建全局 Token 文件并替换现有硬编码色值。",
+"priority": "0-Critical",
+"status": "completed",
+"depends_on": [],
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": { "notes": "纯样式层变更，不涉及数据模型。" },
+          "queries": { "read": "N/A", "write": "N/A" },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": { "type": "N/A", "endpoints": [], "notes": "不涉及 API。" },
+        "component_tree": {
+          "entry_component": "index.css / App.css",
+          "children": ["tokens.css (新建)"],
+          "notes": "创建 app/src/styles/tokens.css 集中管理所有 design tokens，在 index.css 中 @import。清理现有 App.css/index.css 中的硬编码色值，统一指向 token 变量。"
+        },
+        "state_management": { "notes": "N/A" },
+        "routing": { "notes": "N/A" },
+        "auth": { "notes": "N/A" },
+        "coding_standards_ref": {
+          "note": "Token 命名遵循 --color-{semantic}、--space-{size}、--radius-{size}、--shadow-{level}、--font-{role} 格式。"
+        },
+        "design_contract": {
+          "_source": "docs/design-docs/moodboard/moodboard.html :root + frontend-refresh-plan.md §3.2",
+          "color_tokens": {
+            "ink": "#16342f",
+            "muted": "#637b71",
+            "paper": "#fbfcf7",
+            "mist": "#edf5f1",
+            "surface": "#ffffff",
+            "leaf": "#1f473d",
+            "leaf_light": "#467061",
+            "gold": "#f1c567",
+            "gold_hover": "#ddb04e",
+            "line": "#d8e4da",
+            "success": "#2f855a",
+            "warning": "#dd6b20",
+            "error": "#c53030"
+          },
+          "typography_tokens": {
+            "heading_font": "Lora, serif",
+            "body_font": "Raleway, sans-serif",
+            "chinese_fallback": "PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif",
+            "page_title": "24px/700/1.2",
+            "card_title": "16px/600/1.25",
+            "body": "14px/400/1.5",
+            "label": "12px/700/1.3 letter-spacing 0.08em"
+          },
+          "spacing_tokens": {
+            "xs": "4px",
+            "sm": "8px",
+            "md": "16px",
+            "lg": "24px",
+            "xl": "32px"
+          },
+          "radius_tokens": {
+            "card": "16px",
+            "button": "12px",
+            "pill": "999px",
+            "input": "12px",
+            "sheet": "20px"
+          },
+          "shadow_tokens": {
+            "card": "0 18px 42px rgba(36,73,63,.12)",
+            "card_emphasis": "0 22px 54px rgba(31,71,61,.2)",
+            "sheet": "0 -8px 32px rgba(36,73,63,.15)"
+          },
+          "gradient_tokens": {
+            "botanical": "linear-gradient(135deg, rgba(235,246,238,.95), rgba(246,249,239,.88))",
+            "accent": "radial-gradient(circle at 82% 8%, rgba(181,212,220,.55), transparent 34%)"
+          }
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test -- --run",
+        "visual": "所有页面不应出现硬编码的蓝色(#2563EB)或橙色(#F97316)色值；grep 确认无残留。",
+        "manual": "在 iPhone 375px 宽度下打开 /login、/todo、/plants、/settings，确认视觉色系统一为叶绿色调。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/styles/tokens.css (新建)",
+          "app/src/index.css",
+          "app/src/App.css"
+        ],
+        "modules": ["frontend-refresh"],
+        "layer": "ui-foundation",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "tokens.css 包含完整的色彩、字体、间距、圆角、阴影 Token 定义。",
+        "index.css 顶部 @import tokens.css，现有硬编码色值全部替换为 var(--xxx)。",
+        "项目编译通过，所有页面视觉无 regression（允许色系变化，但布局不应破坏）。",
+        "grep -r '#2563EB\\|#F97316' app/src/ 结果为空。"
+      ]
+    },
+    {
+      "task_id": "VIS-002",
+      "description": "中文文案统一与 accessible name 清理：扫描全部认证后路由，将残留英文主文案替换为简体中文家庭语境表达，同步更新 aria-label 和 smoke 测试。",
+      "priority": "1-High",
+      "status": "completed",
+      "depends_on": ["VIS-001"],
+      "plan_path": null,
+      "contracts": {
+        "data_layer": { "schema": { "notes": "不涉及数据模型变更。" }, "queries": { "read": "N/A", "write": "N/A" }, "migration_strategy": "N/A" },
+        "api_layer": { "type": "N/A", "endpoints": [], "notes": "不涉及 API。" },
+        "component_tree": {
+          "entry_component": "AppShell 下所有路由组件",
+          "children": ["AuthPage", "ProfileBootstrapForm", "FamilyOnboardingChoicePage", "CreateFamilyPage", "JoinFamilyPage", "FamilySettingsPage", "PlantListPage", "PlantDetailPage", "TodoPage"],
+          "notes": "审计 heading、helper text、empty states、CTA label、placeholder、confirmation copy。"
+        },
+        "state_management": { "notes": "N/A" },
+        "routing": { "notes": "不变。" },
+        "auth": { "notes": "不变。" },
+        "coding_standards_ref": { "note": "中文 label 必须同步到 button 和 input 的 aria-label/accessible name。" },
+        "design_contract": {
+          "_source": "frontend-refresh-plan.md §3.3",
+          "copy_rules": [
+            "全部主路径统一简体中文",
+            "优先使用：家庭、家人、邀请码、植物看板、养护任务、你的称呼",
+            "避免：共享家庭空间、household board 等翻译腔",
+            "不引入 runtime i18n 库",
+            "标题不超两行，描述不超两行"
+          ]
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test -- --run src/test/AppRouter.smoke.test.tsx",
+        "visual": "以 iPhone 宽度打开 /login, /onboarding, /plants, /todo, /settings，确认主路径无英文主文案。",
+        "manual": "导航所有 CTA 按钮和表单字段，确认 accessible name 为中文且自然。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/auth/*.tsx",
+          "app/src/features/family/*.tsx",
+          "app/src/features/plants/*.tsx",
+          "app/src/features/tasks/*.tsx",
+          "app/src/test/AppRouter.smoke.test.tsx"
+        ],
+        "modules": ["frontend-refresh"],
+        "layer": "ui",
+        "source_issue_id": null,
+        "replaces": "UX-001"
+      },
+      "acceptance_criteria": [
+        "认证后 MVP 主路径不再出现英文主文案。",
+        "smoke 测试和 accessible name 与中文 label 同步。",
+        "不引入新的 runtime i18n 依赖。"
+      ]
+    },
+    {
+      "task_id": "VIS-003",
+      "description": "登录页视觉改造：应用植物渐变背景、压缩 Hero 高度至 160px 上限、重构表单卡片和登录/注册切换胶囊样式。",
+      "priority": "1-High",
+      "status": "completed",
+      "depends_on": ["VIS-001", "VIS-002"],
+      "plan_path": null,
+      "contracts": {
+        "data_layer": { "schema": { "notes": "不涉及。" }, "queries": { "read": "N/A", "write": "N/A" }, "migration_strategy": "N/A" },
+        "api_layer": { "type": "N/A", "endpoints": [], "notes": "不涉及。" },
+        "component_tree": {
+          "entry_component": "AuthPage",
+          "children": ["LoginForm", "RegisterForm", "TabSwitcher"],
+          "notes": "重构 AuthPage 布局结构，应用 botanical gradient，压缩 Hero 区域。"
+        },
+        "state_management": { "notes": "保留现有登录状态逻辑不变。" },
+        "routing": { "path": "/login", "guard": "unauthenticated only", "middleware": "none" },
+        "auth": { "notes": "功能不变，仅视觉调整。" },
+        "coding_standards_ref": { "note": "确保在 375px 屏幕上输入框不需要滚动即可见。" },
+        "design_contract": {
+          "_source": "frontend-refresh-plan.md §4.1",
+          "background": "var(--gradient-botanical) + var(--gradient-accent) 叠加，全 app 唯一渐变背景页",
+          "header_max_height": "160px（logo + 标题 + 一行说明）",
+          "tab_capsule": "height 36px, border-radius 999px, bg rgba(255,255,255,.76), border 1px solid var(--color-line)",
+          "form_card": "bg rgba(255,255,255,.82), border-radius 16px, shadow var(--shadow-card), padding 24px",
+          "input": "height 48px, border-radius 12px, bg var(--color-surface), border 1px solid var(--color-line), focus border var(--color-leaf)",
+          "primary_button": "height 48px, width 100%, border-radius 12px, bg var(--color-leaf), text white 14px/600"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test -- --run src/test/AppRouter.smoke.test.tsx",
+        "visual": "在 375px 宽度下，Hero 高度不超过 160px，输入框无需滚动可见，背景为植物渐变色。",
+        "manual": "登录失败时错误提示不把按钮推出视口。"
+      },
+      "metadata": {
+        "files_affected": ["app/src/features/auth/AuthPage.tsx", "app/src/features/auth/AuthPage.css"],
+        "modules": ["frontend-refresh"],
+        "layer": "ui",
+        "source_issue_id": null,
+        "replaces": "UX-005 (login part)"
+      },
+      "acceptance_criteria": [
+        "登录页使用 botanical gradient 背景。",
+        "Hero 高度 ≤ 160px。",
+        "表单卡片使用半透明毛玻璃效果。",
+        "在 375px 屏幕不需要滚动即可看到输入框和登录按钮。"
+      ]
+    },
+    {
+      "task_id": "VIS-004",
+      "description": "Onboarding 流程视觉统一：压缩 profile 页、选择页、创建家庭页、加入家庭页的 Hero 区高度，应用 quiet-form 设计语言（紧凑表单 + 单主按钮 + 简短中文文案）。",
+      "priority": "1-High",
+      "status": "completed",
+      "depends_on": ["VIS-001", "VIS-002"],
+      "plan_path": null,
+      "contracts": {
+        "data_layer": { "schema": { "notes": "不涉及数据变更。" }, "queries": { "read": "N/A", "write": "N/A" }, "migration_strategy": "N/A" },
+        "api_layer": { "type": "N/A", "endpoints": [], "notes": "不涉及。" },
+        "component_tree": {
+          "entry_component": "Onboarding 路由组",
+          "children": ["ProfileBootstrapForm", "FamilyOnboardingChoicePage", "CreateFamilyPage", "JoinFamilyPage"],
+          "notes": "每个 onboarding 页面应用统一的 quiet-form 模式：Header ≤ 120px，单卡片表单，一个主按钮。"
+        },
+        "state_management": { "notes": "保留现有表单和提交逻辑不变。" },
+        "routing": { "path": "/onboarding/*", "guard": "authenticated but no family", "middleware": "none" },
+        "auth": { "notes": "不变。" },
+        "coding_standards_ref": { "note": "创建家庭成功后，邀请码使用 monospace 大字显示，让用户优先看到码。" },
+        "design_contract": {
+          "_source": "frontend-refresh-plan.md §4.2-§4.5, visual-spec §6.2-§6.5",
+          "header_max_height": "120px（认证后页面统一）",
+          "form_card": "bg var(--color-surface), border-radius 16px, padding 16px-24px, shadow var(--shadow-card)",
+          "input": "height 48px, border-radius 12px, focus border var(--color-leaf)",
+          "primary_button": "height 48px, bg var(--color-leaf), text white, border-radius 12px",
+          "secondary_button": "border 1px solid var(--color-leaf), bg transparent, text var(--color-leaf)",
+          "invite_code_display": "SF Mono/Fira Code, 28px/700, letter-spacing 0.12em, color var(--color-leaf)",
+          "notes": "选择页两张卡片纵向排列：角标 + 标题 + 1行描述 + 按钮。去掉冗长段落。"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test -- --run src/test/AppRouter.smoke.test.tsx",
+        "visual": "四个 onboarding 页面在 375px 下 Header 不超过 120px，表单均在首屏可见。",
+        "manual": "新用户全流程：设置称呼 → 创建/加入家庭，过程紧凑无冗余文案。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/family/ProfileBootstrapForm.tsx",
+          "app/src/features/family/FamilyOnboardingChoicePage.tsx",
+          "app/src/features/family/CreateFamilyPage.tsx",
+          "app/src/features/family/JoinFamilyPage.tsx"
+        ],
+        "modules": ["frontend-refresh"],
+        "layer": "ui",
+        "source_issue_id": null,
+        "replaces": "UX-005 (onboarding part)"
+      },
+      "acceptance_criteria": [
+        "四个 onboarding 页面视觉统一为 quiet-form 风格。",
+        "Header 高度 ≤ 120px。",
+        "创建家庭成功后，邀请码为最强视觉元素。",
+        "选择页两张卡片信息简洁，一眼可做决策。"
+      ]
+    },
+    {
+      "task_id": "VIS-005",
+      "description": "App Shell 与底部导航 task-first 改造：调整默认落点为 /todo，重构 BottomNav 信息架构为 待办/植物/设置，压缩 Header 密度。",
+      "priority": "1-High",
+      "status": "completed",
+      "depends_on": ["VIS-001"],
+      "plan_path": null,
+      "contracts": {
+        "data_layer": { "schema": { "notes": "不涉及数据变更。" }, "queries": { "read": "N/A", "write": "N/A" }, "migration_strategy": "N/A" },
+        "api_layer": { "type": "N/A", "endpoints": [], "notes": "不涉及。" },
+        "component_tree": {
+          "entry_component": "AppShell",
+          "children": ["BottomNav"],
+          "notes": "修改默认 redirect 为 /todo；BottomNav 三项固定为 待办/植物/设置，icon 对应调整。"
+        },
+        "state_management": {
+          "local_state": "导航 active state 逻辑随路由变更。"
+        },
+        "routing": {
+          "path": "/todo (默认), /plants, /settings",
+          "guard": "authenticated family members",
+          "middleware": "protected shell",
+          "notes": "登录后默认 redirect 从 /plants 改为 /todo。"
+        },
+        "auth": { "notes": "不变。" },
+        "coding_standards_ref": { "note": "更新 router smoke test 的默认 redirect 断言。" },
+        "design_contract": {
+          "_source": "frontend-refresh-plan.md §3.1 + §4.6, visual-spec §5.1-§5.2",
+          "bottom_nav": {
+            "height": "56px",
+            "icon_size": "24px",
+            "label_size": "10px",
+            "items": ["待办", "植物", "设置"],
+            "active_color": "var(--color-leaf)",
+            "inactive_color": "var(--color-muted)"
+          },
+          "header": {
+            "max_height": "120px（认证后页面）",
+            "title_to_content_gap": "16px"
+          }
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test -- --run src/test/AppRouter.smoke.test.tsx",
+        "visual": "登录后默认落到 /todo；BottomNav 显示三项且 active 态正确。",
+        "manual": "确认底部导航的三项顺序、active 高亮、icon 语义正确。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/app/AppShell.tsx",
+          "app/src/components/navigation/BottomNav.tsx",
+          "app/src/test/AppRouter.smoke.test.tsx"
+        ],
+        "modules": ["frontend-refresh"],
+        "layer": "ui",
+        "source_issue_id": null,
+        "replaces": "UX-003 (shell/nav part)"
+      },
+      "acceptance_criteria": [
+        "已加入家庭的用户登录后默认落到 /todo。",
+        "BottomNav 三项为 待办/植物/设置。",
+        "导航高度 56px，active 态使用 var(--color-leaf)。",
+        "smoke 测试更新并通过。"
+      ]
+    },
+    {
+"task_id": "VIS-006",
+"description": "待办页 task-first 布局改造：首屏优先展示今日任务分组，压缩标题区，任务卡片布局改为 缩略图+任务描述+完成按钮 三栏结构。",
+"priority": "1-High",
+"status": "completed",
+      "depends_on": ["VIS-001", "VIS-005"],
+      "plan_path": null,
+      "contracts": {
+        "data_layer": { "schema": { "notes": "不涉及数据模型变更。" }, "queries": { "read": "复用现有 due inbox sections 查询。", "write": "N/A" }, "migration_strategy": "N/A" },
+        "api_layer": { "type": "N/A", "endpoints": [], "notes": "不涉及。" },
+        "component_tree": {
+          "entry_component": "TodoPage",
+          "children": ["DueTaskCard", "TaskListItem", "EmptyState"],
+          "notes": "重构 TodoPage 布局：去掉过高 Hero，标题区仅一行 24px，分组标签 12px uppercase，任务卡三栏。"
+        },
+        "state_management": { "notes": "保留现有 due inbox 查询和 completion mutation。" },
+        "routing": { "path": "/todo", "guard": "authenticated", "middleware": "protected shell" },
+        "auth": { "notes": "不变。" },
+        "coding_standards_ref": { "note": "任务卡片内布局用 flexbox 三栏，不引入新 grid 系统。" },
+        "design_contract": {
+          "_source": "frontend-refresh-plan.md §4.6",
+          "page_background": "var(--color-paper)，无渐变",
+          "title_area": "一行 24px 标题（如'今日待办'），无 Hero；标题到第一张卡片间距 16px",
+          "section_label": "12px uppercase, color var(--color-leaf-light), letter-spacing 0.08em",
+          "task_card": {
+            "bg": "var(--color-surface)",
+            "radius": "16px",
+            "padding": "16px",
+            "gap": "12px",
+            "layout": "左40px圆形缩略图 | 中植物名+任务动作 | 右36px圆形gold完成按钮"
+          },
+          "completion_button": "36px circle, bg var(--color-gold), checkmark icon 20px",
+          "overdue_pill": "var(--color-warning) text + rgba(221,107,32,.08) bg, radius 999px, padding 4px 8px",
+          "empty_state": "居中一句话 + 一个建议动作按钮，不做大面积插画"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test -- --run",
+        "visual": "375px 宽度下，首屏优先看到任务卡片而非说明文字；任务卡三栏对齐。",
+        "manual": "有逾期任务时显示 warning pill；空状态时有引导文案。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/tasks/TodoPage.tsx",
+          "app/src/features/tasks/DueTaskCard.tsx",
+          "app/src/features/tasks/TaskListItem.tsx"
+        ],
+        "modules": ["frontend-refresh"],
+        "layer": "ui",
+        "source_issue_id": null,
+        "replaces": "UX-003 (todo layout part)"
+      },
+      "acceptance_criteria": [
+        "待办页首屏以任务卡片为主，不再有过高说明文案区域。",
+        "标题区不超过一行 24px。",
+        "任务卡片遵循 缩略图+内容+完成按钮 三栏布局。",
+        "逾期 pill 使用 warning 色系。"
+      ]
+    },
+    {
+"task_id": "VIS-007",
+"description": "植物列表页 photo-led 改造：植物卡片改为图片驱动（16:10 封面 + 紧凑信息区），设计无图占位态，压缩搜索栏和标题区高度。",
+"priority": "2-Medium",
+"status": "completed",
+      "depends_on": ["VIS-001"],
+      "plan_path": null,
+      "contracts": {
+        "data_layer": { "schema": { "notes": "不涉及。" }, "queries": { "read": "复用 listPlantsWithNextDue。", "write": "N/A" }, "migration_strategy": "N/A" },
+        "api_layer": { "type": "N/A", "endpoints": [], "notes": "不涉及。" },
+        "component_tree": {
+          "entry_component": "PlantListPage",
+          "children": ["PlantCard", "StorageImage", "PlantEmptyPlaceholder"],
+          "notes": "重构 PlantCard 为图片驱动：顶部 16:10 封面 → 中部植物名+位置 → 底部养护 pill。"
+        },
+        "state_management": { "notes": "StorageImage 保留 error/fallback state。" },
+        "routing": { "path": "/plants", "guard": "authenticated", "middleware": "protected shell" },
+        "auth": { "notes": "不变。" },
+        "coding_standards_ref": { "note": "图片 fallback 需覆盖测试。" },
+        "design_contract": {
+          "_source": "frontend-refresh-plan.md §4.7",
+          "title_area": "标题(24px) + 右侧'添加植物'按钮，总高 48px，下方紧接搜索栏",
+          "search_bar": "height 40px, radius 12px, bg var(--color-mist), placeholder var(--color-muted)",
+          "plant_card": {
+            "cover": "aspect-ratio 16/10, object-fit cover, top border-radius 16px",
+            "info_padding": "12px 16px",
+            "plant_name": "16px/600, var(--color-ink)",
+            "location": "12px/400, var(--color-muted)",
+            "care_pill": "12px/700, bg var(--color-mist), color var(--color-leaf-light), radius 999px"
+          },
+          "no_image_placeholder": "bg var(--color-mist), centered 48px leaf-outline icon in var(--color-line), bottom text '轻触上传照片' 12px",
+          "card_gap": "16px"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test -- --run",
+        "visual": "植物卡片以图片为最强元素；无图时显示叶片线稿占位态。",
+        "manual": "用户从列表即可通过图片识别植物，无需进入详情。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/plants/PlantListPage.tsx",
+          "app/src/features/plants/PlantCard.tsx",
+          "app/src/components/ui/StorageImage.tsx"
+        ],
+        "modules": ["frontend-refresh"],
+        "layer": "ui",
+        "source_issue_id": null,
+        "replaces": "UX-004 (list part)"
+      },
+      "acceptance_criteria": [
+        "植物卡片封面图为最强视觉元素，aspect-ratio 16/10。",
+        "无图状态有设计过的占位块（叶片 icon + 提示文案）。",
+        "标题区高度 ≤ 48px。",
+        "搜索栏紧贴标题下方。"
+      ]
+    },
+    {
+"task_id": "VIS-008",
+"description": "植物详情页视觉重构：Hero 图改为 4:3 全宽，信息区紧贴 Hero 下方，任务区上移，底部操作栏固定。",
+"priority": "2-Medium",
+"status": "completed",
+      "depends_on": ["VIS-001", "VIS-007"],
+      "plan_path": null,
+      "contracts": {
+        "data_layer": { "schema": { "notes": "不涉及。" }, "queries": { "read": "复用 getPlantDetail。", "write": "N/A" }, "migration_strategy": "N/A" },
+        "api_layer": { "type": "N/A", "endpoints": [], "notes": "不涉及。" },
+        "component_tree": {
+          "entry_component": "PlantDetailPage",
+          "children": ["PlantHeroCard", "PlantTaskSection", "PlantActionBar"],
+          "notes": "重构页面层次：Hero 图 → 植物信息（名+位置+状态摘要）→ 养护任务列表 → 固定底部操作栏。"
+        },
+        "state_management": { "notes": "保留现有 detail 查询和 task mutation。" },
+        "routing": { "path": "/plants/:plantId", "guard": "authenticated", "middleware": "protected shell" },
+        "auth": { "notes": "不变。" },
+        "coding_standards_ref": { "note": "操作栏固定底部需考虑 safe-area-inset-bottom。" },
+        "design_contract": {
+          "_source": "frontend-refresh-plan.md §4.8",
+          "hero_image": "aspect-ratio 4/3, width 100%, object-fit cover, bottom border-radius 24px (top flush with screen)",
+          "no_image_placeholder": "bg var(--color-mist), centered 64px 花盆线稿 icon in var(--color-line), text '轻触上传植物照片' 12px",
+          "info_area": {
+            "padding": "20px 16px 12px",
+            "plant_name": "20px/700 var(--color-ink)",
+            "location": "12px/400 var(--color-muted), gap 4px below name",
+            "status_summary": "14px/500 var(--color-leaf-light), gap 8px below name"
+          },
+          "task_section": {
+            "title": "14px/600 var(--color-ink), gap 16px from info",
+            "task_card": "bg var(--color-surface), radius 12px, padding 12px 16px, gap 8px, shadow var(--shadow-card)",
+            "task_layout": "left 32px gold circle | center task-name 14px/500 + due 12px/400 muted | right kebab or nothing",
+            "overdue": "due text var(--color-warning), left circle border 2px solid var(--color-warning)"
+          },
+          "action_bar": {
+            "position": "fixed bottom safe-area",
+            "height": "56px",
+            "bg": "var(--color-surface)",
+            "border_top": "1px solid var(--color-line)",
+            "buttons": ["编辑植物: ghost, var(--color-leaf)", "添加任务: solid, var(--color-gold), text var(--color-ink)"]
+          },
+          "empty_task_state": "居中文案'还没有养护任务' 14px + '添加第一个任务' text-button var(--color-gold) 14px/600"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test -- --run",
+        "visual": "详情页 Hero 图为 4:3 全宽；任务区紧跟信息区；底部操作栏固定。",
+        "manual": "有任务时可直接完成；无任务时有空状态引导。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/plants/PlantDetailPage.tsx",
+          "app/src/features/plants/PlantHeroCard.tsx"
+        ],
+        "modules": ["frontend-refresh"],
+        "layer": "ui",
+        "source_issue_id": null,
+        "replaces": "UX-004 (detail part)"
+      },
+      "acceptance_criteria": [
+        "Hero 图 4:3 全宽，无图时有花盆占位态。",
+        "信息区紧贴 Hero，减少冗余文案。",
+        "任务区直接可见不需要大量滚动。",
+        "底部操作栏固定，编辑和添加任务入口清晰。"
+      ]
+    },
+    {
+      "task_id": "VIS-009",
+      "description": "设置页视觉重构：重新排列卡片顺序（家庭摘要→邀请码→通知→成员→退出），退出按钮独立区域化，家庭成员列表改为 56px 行高。",
+      "priority": "2-Medium",
+      "status": "completed",
+      "depends_on": ["VIS-001"],
+      "plan_path": null,
+      "contracts": {
+        "data_layer": { "schema": { "notes": "不涉及。" }, "queries": { "read": "复用家庭摘要和成员查询。", "write": "复用 sign-out mutation。" }, "migration_strategy": "N/A" },
+        "api_layer": { "type": "N/A", "endpoints": [], "notes": "不涉及。" },
+        "component_tree": {
+          "entry_component": "FamilySettingsPage",
+          "children": ["FamilySummaryCard", "InviteCodeCard", "NotificationCard", "MemberListCard", "LogoutButton"],
+          "notes": "调整卡片渲染顺序，退出按钮独立于设置卡片区域。"
+        },
+        "state_management": { "notes": "不变。" },
+        "routing": { "path": "/settings", "guard": "authenticated", "middleware": "protected shell" },
+        "auth": { "notes": "不变。" },
+        "coding_standards_ref": { "note": "退出按钮的视觉分离不应影响页面无障碍导航顺序。" },
+        "design_contract": {
+          "_source": "frontend-refresh-plan.md §4.9",
+          "card_order": ["家庭摘要", "邀请码与分享", "通知权限", "家庭成员", "退出登录"],
+          "card_style": "bg var(--color-surface), radius 16px, padding 16px, gap 12px",
+          "invite_code": "SF Mono/Fira Code, 28px/700, letter-spacing 0.12em, color var(--color-leaf), centered",
+          "copy_button": "width 100%, height 44px, bg var(--color-gold), text var(--color-ink) 14px/600, radius 12px",
+          "logout_button": "width 100%, height 44px, bg transparent, border 1px solid var(--color-error), text var(--color-error) 14px/500, radius 12px, margin-top 32px",
+          "member_row": "height 56px, left 32px avatar circle, center name 14px/500"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test -- --run",
+        "visual": "设置页卡片顺序正确；退出按钮在底部独立区域；邀请码居中大字显示。",
+        "manual": "退出登录按钮可见且不混在普通设置项中。"
+      },
+      "metadata": {
+        "files_affected": ["app/src/features/family/FamilySettingsPage.tsx"],
+        "modules": ["frontend-refresh"],
+        "layer": "ui",
+        "source_issue_id": null,
+        "replaces": "UX-005 (settings layout part)"
+      },
+      "acceptance_criteria": [
+        "设置页卡片按指定顺序排列。",
+        "退出登录按钮独立于主设置区域，有 32px 视觉间隔。",
+        "邀请码使用 monospace 大字居中显示。",
+        "成员列表行高 56px。"
+      ]
+    },
+    {
+      "task_id": "VIS-010",
+      "description": "邀请码复制修复与 Fallback 交互：实现 clipboard API 降级策略，失败后自动展示手动复制面板（可选中文本 + 使用说明）。",
+      "priority": "1-High",
+      "status": "completed",
+      "depends_on": ["VIS-009"],
+      "plan_path": null,
+      "contracts": {
+        "data_layer": { "schema": { "notes": "不涉及。" }, "queries": { "read": "读取 family inviteCode。", "write": "N/A" }, "migration_strategy": "N/A" },
+        "api_layer": { "type": "N/A", "endpoints": [], "notes": "不涉及。" },
+        "component_tree": {
+          "entry_component": "InviteCodeCard",
+          "children": ["CopyInviteButton", "ManualCopyPanel"],
+          "notes": "新增 ManualCopyPanel 组件：clipboard 失败后展示，包含可选中的邀请码文本、'长按可复制' 提示和 '你也可以直接把这串码发给家人' 说明。"
+        },
+        "state_management": {
+          "local_state": "copy_status: 'idle' | 'copied' | 'failed' | 'fallback_open'"
+        },
+        "routing": { "path": "/settings", "guard": "authenticated", "middleware": "inside app shell" },
+        "auth": { "notes": "不变。" },
+        "coding_standards_ref": { "note": "需为 clipboard 各分支写测试，mock navigator.clipboard。" },
+        "design_contract": {
+          "_source": "frontend-refresh-plan.md §4.9 + UX-002 原始合约",
+          "copy_success": "按钮变为 var(--color-success) + '已复制' 文案，1.5s 后恢复",
+          "copy_failure": "立即展示 ManualCopyPanel，不让用户停在失败状态",
+          "fallback_panel": "bg var(--color-mist), radius 12px, padding 16px, border 1px dashed var(--color-line)",
+          "fallback_content": ["邀请码本体（可选中）", "'长按可复制'", "'你也可以直接把这串码发给家人'"]
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test -- --run",
+        "visual": "复制成功 → 按钮变绿 1.5s；复制失败 → 自动弹出 fallback panel。",
+        "manual": "在禁用 clipboard 的浏览器中，用户仍能通过长按选中方式获取邀请码。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/family/FamilySettingsPage.tsx",
+          "app/src/components/ui/InputField.tsx"
+        ],
+        "modules": ["frontend-refresh"],
+        "layer": "ui",
+        "source_issue_id": null,
+        "replaces": "UX-002"
+      },
+      "acceptance_criteria": [
+        "复制按钮不再在 clipboard 失败时 dead-end。",
+        "用户始终有可见的 fallback 路径获取邀请码。",
+        "smoke 测试覆盖至少一个 copy-failure fallback 场景。"
+      ]
+    },
+    {
+      "task_id": "VIS-011",
+      "description": "任务完成即时反馈与状态动效：实现任务卡片完成时的淡出+勾选动画，统一 loading/error/empty 状态的视觉反馈模式。",
+      "priority": "2-Medium",
+      "status": "completed",
+      "depends_on": ["VIS-006", "VIS-008"],
+      "plan_path": null,
+      "contracts": {
+        "data_layer": { "schema": { "notes": "不涉及。" }, "queries": { "read": "N/A", "write": "复用 completeTask mutation。" }, "migration_strategy": "N/A" },
+        "api_layer": { "type": "N/A", "endpoints": [], "notes": "不涉及。" },
+        "component_tree": {
+          "entry_component": "DueTaskCard / PlantDetailPage task section",
+          "children": ["CompletionAnimation", "StatusFeedback"],
+          "notes": "共享完成动效组件，TodoPage 和 PlantDetailPage 的任务完成均复用。统一 loading 文案（简短中文）、error 文案（给下一步动作）、empty state。"
+        },
+        "state_management": {
+          "local_state": "completion_animation_state per card"
+        },
+        "routing": { "notes": "不涉及路由变更。" },
+        "auth": { "notes": "不变。" },
+        "coding_standards_ref": { "note": "动画使用 CSS transition/animation，不引入新动画库。prefer-reduced-motion 时跳过动画。" },
+        "design_contract": {
+          "_source": "frontend-refresh-plan.md §4.6 交互要求 + visual-spec §11.4",
+          "completion_animation": "卡片淡出(opacity 0, 300ms) + 短暂 var(--color-success) 勾选动画",
+          "loading_feedback": "简短中文，不用大段'正在为你准备...'",
+          "error_feedback": "给下一步动作，不只提示失败",
+          "empty_state": "明确告诉用户下一步做什么",
+          "accessibility": "动效 respects prefers-reduced-motion"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test -- --run",
+        "visual": "完成任务后卡片有淡出动效；loading/error 使用统一样式。",
+        "manual": "在 prefers-reduced-motion 开启时，跳过动画但功能不变。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/tasks/DueTaskCard.tsx",
+          "app/src/features/tasks/TaskListItem.tsx",
+          "app/src/features/plants/PlantDetailPage.tsx"
+        ],
+        "modules": ["frontend-refresh"],
+        "layer": "ui",
+        "source_issue_id": null,
+        "replaces": "UX-005 (state-feedback part)"
+      },
+      "acceptance_criteria": [
+        "任务完成有卡片淡出 + 勾选动效。",
+        "loading/error/empty 三种状态有统一且简洁的反馈模式。",
+        "动效遵守 prefers-reduced-motion。",
+        "TodoPage 和 PlantDetailPage 复用同一套反馈组件。"
+      ]
+    },
+    {
+      "task_id": "VIS-012",
+      "description": "通知权限卡片与权限状态可视化：优化 NotificationPromptCard 的视觉层级和状态反馈（已启用/未启用/不支持），与设置页整体风格对齐。",
+      "priority": "3-Low",
+      "status": "completed",
+      "depends_on": ["VIS-009"],
+      "plan_path": null,
+      "contracts": {
+        "data_layer": { "schema": { "notes": "不涉及。" }, "queries": { "read": "复用 notification subscription 状态查询。", "write": "N/A" }, "migration_strategy": "N/A" },
+        "api_layer": { "type": "N/A", "endpoints": [], "notes": "不涉及。" },
+        "component_tree": {
+          "entry_component": "NotificationPromptCard",
+          "children": [],
+          "notes": "卡片内容应清晰展示当前通知状态（已开启/未开启/浏览器不支持），CTA 按钮权重低于邀请码卡片。"
+        },
+        "state_management": { "notes": "复用现有 subscription 状态。" },
+        "routing": { "notes": "不涉及。" },
+        "auth": { "notes": "不变。" },
+        "coding_standards_ref": { "note": "状态文案使用中文，keyboard 和 screen reader 可达。" },
+        "design_contract": {
+          "_source": "visual-spec §6.8 + frontend-refresh-plan §4.9",
+          "card_style": "与设置页其他卡片统一：bg var(--color-surface), radius 16px, padding 16px",
+          "states": {
+            "enabled": "绿色 success badge + '已开启推送'",
+            "disabled": "中性提示 + '开启推送' CTA button (secondary style)",
+            "unsupported": "灰色提示 '当前浏览器不支持推送通知'"
+          }
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test -- --run",
+        "visual": "三种状态视觉清晰区分，与设置页整体风格一致。",
+        "manual": "切换通知权限后，状态即时更新。"
+      },
+      "metadata": {
+        "files_affected": ["app/src/features/notifications/NotificationPromptCard.tsx"],
+        "modules": ["frontend-refresh"],
+        "layer": "ui",
+        "source_issue_id": null,
+        "replaces": "UX-005 (notification part)"
+      },
+      "acceptance_criteria": [
+        "通知卡片有三种清晰可辨的视觉状态。",
+        "与设置页其他卡片风格统一。",
+        "状态反馈使用中文且 accessible。"
+      ]
+    },
+    {
+"task_id": "VIS-013",
+"description": "视觉回归验证与整体走查：对所有改造页面进行 iPhone 375px 全路径截图对比，确认色系统一、布局一致、无 regression。",
+"priority": "2-Medium",
+"status": "completed",
+      "depends_on": ["VIS-002", "VIS-003", "VIS-004", "VIS-005", "VIS-006", "VIS-007", "VIS-008", "VIS-009", "VIS-010", "VIS-011", "VIS-012"],
+      "plan_path": null,
+      "contracts": {
+        "data_layer": { "schema": { "notes": "不涉及。" }, "queries": { "read": "N/A", "write": "N/A" }, "migration_strategy": "N/A" },
+        "api_layer": { "type": "N/A", "endpoints": [], "notes": "不涉及。" },
+        "component_tree": { "notes": "全页面走查，不新增组件。" },
+        "state_management": { "notes": "N/A" },
+        "routing": { "notes": "不涉及。" },
+        "auth": { "notes": "不变。" },
+        "coding_standards_ref": { "note": "确保全部 smoke test 通过且 typecheck 无报错。" },
+        "design_contract": {
+          "_source": "frontend-refresh-plan.md §8 验收方式",
+          "checklist": [
+            "登录后第一屏优先看到待办任务",
+            "植物列表图片成为主要识别锚点",
+            "邀请码复制失败有 fallback",
+            "主要页面不残留英文主文案",
+            "四条主路径属于同一套产品语言",
+            "任务完成、图片加载、空状态、错误状态有统一反馈",
+            "所有页面使用 moodboard botanical 色系"
+          ]
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test",
+        "visual": "iPhone 375px 下截图 /login, /onboarding/*, /todo, /plants, /plants/:id, /settings 全部与 moodboard 方向一致。",
+        "manual": "完整走一遍新用户流程（注册→设置称呼→创建家庭→添加植物→完成任务→设置页退出）。"
+      },
+      "metadata": {
+        "files_affected": ["所有 frontend-refresh 涉及文件"],
+        "modules": ["frontend-refresh"],
+        "layer": "verification",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "npm run typecheck 无错误。",
+        "npm run test 全部通过。",
+        "7 项验收 checklist 全部满足。",
+        "无 moodboard botanical 色系之外的硬编码色值残留。"
+      ]
+    }
+  ]
+}

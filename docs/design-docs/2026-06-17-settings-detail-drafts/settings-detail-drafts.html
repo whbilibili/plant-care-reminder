@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Settings Detail Drafts</title>
+    <style>
+      :root {
+        --paper: #f4f8f0;
+        --surface: #fffef8;
+        --line: #d8e2d5;
+        --ink: #183b34;
+        --muted: #667a73;
+        --leaf: #145a48;
+        --leaf-soft: #e8f1e8;
+        --gold: #e8c25e;
+        --danger: #df3f3f;
+        --danger-soft: #fff1f1;
+        --blue: #4d89ca;
+        --shadow: 0 18px 40px rgba(24, 59, 52, 0.1);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #e9f2e8;
+        color: var(--ink);
+        font-family: ui-serif, "Songti SC", "Noto Serif CJK SC", Georgia, serif;
+      }
+
+      .board {
+        display: grid;
+        grid-template-columns: repeat(3, 390px);
+        gap: 28px;
+        padding: 32px;
+        align-items: start;
+      }
+
+      .phone {
+        position: relative;
+        width: 390px;
+        min-height: 844px;
+        overflow: hidden;
+        border-radius: 34px;
+        background:
+          radial-gradient(circle at 80% 0%, rgba(207, 222, 194, 0.8), transparent 30%),
+          linear-gradient(180deg, #fbfcf7 0%, var(--paper) 100%);
+        box-shadow: var(--shadow);
+      }
+
+      .phone::before {
+        content: "";
+        position: absolute;
+        inset: 0 0 auto auto;
+        width: 190px;
+        height: 170px;
+        background:
+          radial-gradient(ellipse at center, rgba(143, 166, 130, 0.22), transparent 62%),
+          repeating-linear-gradient(130deg, rgba(143, 166, 130, 0.18) 0 2px, transparent 2px 22px);
+        opacity: 0.38;
+        transform: rotate(-12deg) translate(36px, -40px);
+        pointer-events: none;
+      }
+
+      .screen {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        padding: 22px 18px 28px;
+      }
+
+      .nav {
+        display: grid;
+        grid-template-columns: 44px 1fr 44px;
+        align-items: center;
+        min-height: 48px;
+      }
+
+      .icon-button {
+        width: 44px;
+        height: 44px;
+        border: none;
+        border-radius: 18px;
+        background: transparent;
+        color: var(--leaf);
+        font-size: 28px;
+        line-height: 1;
+      }
+
+      .nav-title {
+        margin: 0;
+        text-align: center;
+        font-size: 20px;
+        font-weight: 800;
+        letter-spacing: 0;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 34px;
+        line-height: 1.12;
+        font-weight: 900;
+        letter-spacing: 0;
+      }
+
+      h2 {
+        margin: 0;
+        font-size: 18px;
+        line-height: 1.3;
+        font-weight: 800;
+      }
+
+      p {
+        margin: 0;
+      }
+
+      .sub {
+        margin-top: 6px;
+        color: var(--muted);
+        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .surface {
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        background: rgba(255, 254, 248, 0.92);
+        box-shadow: 0 10px 24px rgba(24, 59, 52, 0.05);
+        overflow: hidden;
+      }
+
+      .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 18px 18px 8px;
+      }
+
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        min-height: 76px;
+        padding: 14px 18px;
+        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      }
+
+      .row + .row,
+      .divider {
+        border-top: 1px solid var(--line);
+      }
+
+      .row-main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .row-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 17px;
+        font-weight: 800;
+        color: var(--ink);
+      }
+
+      .row-desc {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .avatar {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: 68px;
+        height: 68px;
+        flex: 0 0 auto;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #dce8d9, #f8fbf4);
+        border: 2px solid rgba(20, 90, 72, 0.16);
+        overflow: hidden;
+        font-size: 28px;
+        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+        font-weight: 800;
+      }
+
+      .avatar.small {
+        width: 48px;
+        height: 48px;
+        font-size: 18px;
+      }
+
+      .avatar .edit-dot {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        display: grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--leaf);
+        color: white;
+        border: 2px solid var(--surface);
+        font-size: 12px;
+      }
+
+      .input {
+        width: 100%;
+        height: 54px;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.76);
+        padding: 0 16px;
+        color: var(--ink);
+        font-size: 17px;
+        font-weight: 650;
+        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      }
+
+      .field {
+        display: grid;
+        gap: 9px;
+        padding: 16px 18px;
+        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      }
+
+      .label {
+        color: var(--ink);
+        font-size: 14px;
+        font-weight: 750;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 52px;
+        border-radius: 18px;
+        border: 1px solid transparent;
+        padding: 0 18px;
+        color: white;
+        background: linear-gradient(135deg, #0f4c3d, #1d6957);
+        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+        font-size: 16px;
+        font-weight: 800;
+      }
+
+      .button.secondary {
+        color: var(--leaf);
+        background: transparent;
+        border-color: var(--line);
+      }
+
+      .button.danger {
+        color: white;
+        background: var(--danger);
+      }
+
+      .actions {
+        display: grid;
+        gap: 10px;
+        padding: 18px;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        border-radius: 999px;
+        padding: 0 9px;
+        background: var(--leaf-soft);
+        color: var(--leaf);
+        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+        font-size: 12px;
+        font-weight: 750;
+        white-space: nowrap;
+      }
+
+      .pill.warn {
+        background: var(--danger-soft);
+        color: var(--danger);
+      }
+
+      .chev {
+        color: var(--muted);
+        font-size: 24px;
+      }
+
+      .status-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        border-radius: 20px;
+        background: rgba(232, 241, 232, 0.78);
+        margin: 0 18px 18px;
+        padding: 14px;
+        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      }
+
+      .mark {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        flex: 0 0 auto;
+        border-radius: 50%;
+        background: var(--surface);
+        color: var(--leaf);
+        font-size: 18px;
+      }
+
+      .member-actions {
+        display: grid;
+        gap: 12px;
+        padding: 0 18px 18px;
+      }
+
+      .sheet {
+        position: absolute;
+        inset: auto 0 0;
+        z-index: 5;
+        border-radius: 28px 28px 0 0;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        box-shadow: 0 -18px 40px rgba(24, 59, 52, 0.16);
+        padding: 16px 18px 26px;
+        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      }
+
+      .sheet-handle {
+        width: 44px;
+        height: 4px;
+        margin: 0 auto 18px;
+        border-radius: 999px;
+        background: #cad8c9;
+      }
+
+      .sheet-title {
+        font-size: 20px;
+        font-weight: 850;
+      }
+
+      .sheet-copy {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.55;
+      }
+
+      .invite-box {
+        margin: 0 18px 18px;
+        border: 1px dashed #acc1a8;
+        border-radius: 22px;
+        padding: 16px;
+        background: rgba(255, 254, 248, 0.72);
+        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      }
+
+      .code {
+        margin: 7px 0;
+        color: var(--leaf);
+        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+        font-size: 34px;
+        font-weight: 900;
+        letter-spacing: 0;
+      }
+
+      .link-line {
+        display: block;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .toggle {
+        width: 58px;
+        height: 34px;
+        border-radius: 999px;
+        background: var(--leaf);
+        padding: 3px;
+      }
+
+      .toggle::after {
+        content: "";
+        display: block;
+        width: 28px;
+        height: 28px;
+        margin-left: auto;
+        border-radius: 50%;
+        background: var(--surface);
+        box-shadow: 0 3px 8px rgba(24, 59, 52, 0.22);
+      }
+
+      .bottom-nav {
+        position: absolute;
+        inset: auto 0 0;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        height: 76px;
+        border-top: 1px solid var(--line);
+        background: rgba(255, 254, 248, 0.86);
+        backdrop-filter: blur(16px);
+        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      }
+
+      .bottom-nav div {
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 750;
+      }
+
+      .bottom-nav .active {
+        color: var(--leaf);
+      }
+
+      .screen.with-tabs {
+        padding-bottom: 96px;
+      }
+
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        letter-spacing: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="board">
+      <section class="phone" data-frame="01-profile-edit">
+        <div class="screen">
+          <nav class="nav">
+            <button class="icon-button">‹</button>
+            <h2 class="nav-title">个人资料</h2>
+            <span></span>
+          </nav>
+          <header>
+            <h1>编辑自己</h1>
+            <p class="sub">头像和称呼会展示给同一个家庭里的成员。</p>
+          </header>
+          <section class="surface">
+            <div class="row">
+              <div class="avatar">
+                王
+                <span class="edit-dot">✎</span>
+              </div>
+              <div class="row-main">
+                <div class="row-title">我的头像</div>
+                <p class="row-desc">点击更换照片，支持 iPhone HEIC 自动转换</p>
+              </div>
+              <span class="chev">›</span>
+            </div>
+            <div class="status-card">
+              <span class="mark">✓</span>
+              <div>
+                <div class="row-title" style="font-size: 15px">头像已保存</div>
+                <p class="row-desc">家庭成员列表会同步显示新的头像。</p>
+              </div>
+            </div>
+          </section>
+          <section class="surface">
+            <div class="field">
+              <label class="label">家庭内显示名称</label>
+              <input class="input" value="王小" />
+              <p class="row-desc">最多 20 个字，建议使用家人熟悉的称呼。</p>
+            </div>
+          </section>
+          <div class="actions">
+            <button class="button">保存个人资料</button>
+            <button class="button secondary">取消</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="phone" data-frame="02-members-manage">
+        <div class="screen">
+          <nav class="nav">
+            <button class="icon-button">‹</button>
+            <h2 class="nav-title">管理成员</h2>
+            <span></span>
+          </nav>
+          <header>
+            <h1>家庭成员</h1>
+            <p class="sub">管理员可以查看成员状态，并移除不再参与养护的人。</p>
+          </header>
+          <section class="surface">
+            <div class="section-head">
+              <h2>阳台植物小组</h2>
+              <span class="pill">3 位成员</span>
+            </div>
+            <div class="row">
+              <div class="avatar small">王</div>
+              <div class="row-main">
+                <div class="row-title">王小 <span class="pill">管理员</span><span class="pill">你</span></div>
+                <p class="row-desc">最后活跃 昨天 21:30</p>
+              </div>
+              <span class="chev">›</span>
+            </div>
+            <div class="row">
+              <div class="avatar small">李</div>
+              <div class="row-main">
+                <div class="row-title">李云 <span class="pill">成员</span></div>
+                <p class="row-desc">最后活跃 前天 18:20</p>
+              </div>
+              <span class="chev">›</span>
+            </div>
+            <div class="row">
+              <div class="avatar small">满</div>
+              <div class="row-main">
+                <div class="row-title">小满 <span class="pill">成员</span></div>
+                <p class="row-desc">最后活跃 3 天前</p>
+              </div>
+              <span class="chev">›</span>
+            </div>
+          </section>
+          <section class="surface">
+            <div class="row">
+              <div class="row-main">
+                <div class="row-title">邀请更多家人</div>
+                <p class="row-desc">复制邀请链接或邀请码，让家人加入同一个看板。</p>
+              </div>
+              <span class="chev">›</span>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="phone" data-frame="03-member-detail">
+        <div class="screen">
+          <nav class="nav">
+            <button class="icon-button">‹</button>
+            <h2 class="nav-title">成员资料</h2>
+            <span></span>
+          </nav>
+          <header>
+            <div class="avatar" style="width: 84px; height: 84px">李</div>
+            <h1 style="margin-top: 14px">李云</h1>
+            <p class="sub">家庭成员 · 最后活跃 前天 18:20</p>
+          </header>
+          <section class="surface">
+            <div class="row">
+              <div class="row-main">
+                <div class="row-title">角色</div>
+                <p class="row-desc">可以查看和完成家庭植物任务</p>
+              </div>
+              <span class="pill">成员</span>
+            </div>
+            <div class="row">
+              <div class="row-main">
+                <div class="row-title">加入时间</div>
+                <p class="row-desc">2024 年 6 月 20 日加入</p>
+              </div>
+            </div>
+          </section>
+          <section class="surface">
+            <div class="row">
+              <div class="row-main">
+                <div class="row-title">近期养护</div>
+                <p class="row-desc">最近完成 4 次浇水，2 次喷雾。</p>
+              </div>
+            </div>
+          </section>
+          <div class="member-actions">
+            <button class="button secondary">复制邀请给这位家人</button>
+            <button class="button danger">移除该成员</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="phone" data-frame="04-remove-member-confirm">
+        <div class="screen">
+          <nav class="nav">
+            <button class="icon-button">‹</button>
+            <h2 class="nav-title">成员资料</h2>
+            <span></span>
+          </nav>
+          <header>
+            <div class="avatar" style="width: 84px; height: 84px">李</div>
+            <h1 style="margin-top: 14px">李云</h1>
+            <p class="sub">家庭成员 · 最后活跃 前天 18:20</p>
+          </header>
+          <section class="surface">
+            <div class="row">
+              <div class="row-main">
+                <div class="row-title">角色</div>
+                <p class="row-desc">可以查看和完成家庭植物任务</p>
+              </div>
+              <span class="pill">成员</span>
+            </div>
+          </section>
+        </div>
+        <div class="sheet">
+          <div class="sheet-handle"></div>
+          <div class="sheet-title">移除李云？</div>
+          <p class="sheet-copy">
+            移除后，李云将无法继续查看「阳台植物小组」的植物和养护任务。既有养护记录会保留在家庭历史中。
+          </p>
+          <div class="actions" style="padding-left: 0; padding-right: 0">
+            <button class="button danger">确认移除成员</button>
+            <button class="button secondary">取消</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="phone" data-frame="05-invite-share-fallback">
+        <div class="screen">
+          <nav class="nav">
+            <button class="icon-button">‹</button>
+            <h2 class="nav-title">邀请家人</h2>
+            <span></span>
+          </nav>
+          <header>
+            <h1>分享家庭邀请</h1>
+            <p class="sub">复制链接最方便；如果复制失败，也可以让家人手动输入邀请码。</p>
+          </header>
+          <section class="surface">
+            <div class="section-head">
+              <h2>邀请码</h2>
+              <span class="pill">家庭管理员可见</span>
+            </div>
+            <div class="invite-box">
+              <span class="label">邀请码</span>
+              <div class="code">A8K29Q</div>
+              <span class="link-line">https://plant-care.app/join/A8K29Q</span>
+            </div>
+            <div class="actions">
+              <button class="button">复制邀请链接</button>
+              <button class="button secondary">复制邀请码</button>
+            </div>
+          </section>
+          <div class="status-card">
+            <span class="mark">!</span>
+            <div>
+              <div class="row-title" style="font-size: 15px">复制失败</div>
+              <p class="row-desc">当前浏览器限制了剪贴板。请长按上方链接，或手动发送邀请码 A8K29Q。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="phone" data-frame="06-notification-detail">
+        <div class="screen with-tabs">
+          <nav class="nav">
+            <button class="icon-button">‹</button>
+            <h2 class="nav-title">提醒通知</h2>
+            <span></span>
+          </nav>
+          <header>
+            <h1>养护提醒</h1>
+            <p class="sub">这里解释当前提醒能力，避免把未接后端的开关误认为已持久生效。</p>
+          </header>
+          <section class="surface">
+            <div class="row">
+              <div class="row-main">
+                <div class="row-title">接收到期提醒</div>
+                <p class="row-desc">每天提醒需要浇水、喷雾、施肥的任务。</p>
+              </div>
+              <div class="toggle"></div>
+            </div>
+            <div class="status-card">
+              <span class="mark">i</span>
+              <div>
+                <div class="row-title" style="font-size: 15px">当前只保存到本机</div>
+                <p class="row-desc">后续接入推送订阅后，会同步到你的账号设置。</p>
+              </div>
+            </div>
+          </section>
+          <section class="surface">
+            <div class="section-head"><h2>收不到提醒？</h2></div>
+            <div class="row">
+              <div class="row-main">
+                <div class="row-title">检查浏览器通知权限</div>
+                <p class="row-desc">如果系统关闭通知，即使应用开启也不会收到。</p>
+              </div>
+              <span class="chev">›</span>
+            </div>
+            <div class="row">
+              <div class="row-main">
+                <div class="row-title">添加到主屏幕</div>
+                <p class="row-desc">作为 PWA 使用时，提醒更稳定。</p>
+              </div>
+              <span class="chev">›</span>
+            </div>
+          </section>
+        </div>
+        <nav class="bottom-nav">
+          <div>待办</div>
+          <div>植物</div>
+          <div class="active">设置</div>
+        </nav>
+      </section>
+    </main>
+  </body>
+</html>

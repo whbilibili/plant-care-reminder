@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200">
+  <rect width="900" height="1200" fill="#f7faf4"/>
+  <g transform="translate(142 70)">
+    <rect width="616" height="1060" rx="44" fill="#fffdf7"/>
+    <text x="54" y="94" font-family="Arial, sans-serif" font-size="42" font-weight="700" fill="#183c34">植物</text>
+    <text x="54" y="130" font-family="Arial, sans-serif" font-size="18" fill="#6e8379">12 株 · 4 项今日到期</text>
+    <g transform="translate(54 180)">
+      <rect width="508" height="168" rx="8" fill="#edf4ef" stroke="#d8e4d9"/>
+      <rect x="18" y="18" width="132" height="132" rx="6" fill="#c8e0d3"/>
+      <path d="M82 136c-48-59-30-122 21-146 60 40 59 111-21 146Z" fill="#377d61"/>
+      <text x="174" y="54" font-family="Arial, sans-serif" font-size="25" font-weight="700" fill="#183c34">龟背竹</text>
+      <text x="174" y="88" font-family="Arial, sans-serif" font-size="17" fill="#6e8379">客厅西窗</text>
+      <rect x="174" y="112" width="108" height="30" rx="15" fill="#f1c567"/>
+      <text x="196" y="133" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#17342f">浇水到期</text>
+    </g>
+    <g transform="translate(54 374)">
+      <rect width="508" height="168" rx="8" fill="#f2f4ea" stroke="#d8e4d9"/>
+      <rect x="18" y="18" width="132" height="132" rx="6" fill="#dce8c7"/>
+      <path d="M66 136c10-84 53-122 129-114 8 85-34 124-129 114Z" fill="#779b58"/>
+      <text x="174" y="54" font-family="Arial, sans-serif" font-size="25" font-weight="700" fill="#183c34">琴叶榕</text>
+      <text x="174" y="88" font-family="Arial, sans-serif" font-size="17" fill="#6e8379">阳台</text>
+      <rect x="174" y="112" width="96" height="30" rx="15" fill="#e4eee6"/>
+      <text x="195" y="133" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#3f6d58">3 天后</text>
+    </g>
+    <g transform="translate(54 568)">
+      <rect width="508" height="168" rx="8" fill="#edf4ef" stroke="#d8e4d9"/>
+      <rect x="18" y="18" width="132" height="132" rx="6" fill="#d8e5df"/>
+      <path d="M42 128c55-69 119-84 191-44-42 79-105 94-191 44Z" fill="#4f9274"/>
+      <text x="174" y="54" font-family="Arial, sans-serif" font-size="25" font-weight="700" fill="#183c34">白掌</text>
+      <text x="174" y="88" font-family="Arial, sans-serif" font-size="17" fill="#6e8379">书房</text>
+      <rect x="174" y="112" width="112" height="30" rx="15" fill="#e9b46b"/>
+      <text x="193" y="133" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#17342f">喷雾逾期</text>
+    </g>
+    <rect x="476" y="908" width="86" height="86" rx="28" fill="#1e473d"/>
+    <text x="519" y="966" text-anchor="middle" font-family="Arial, sans-serif" font-size="44" fill="#fffaf2">+</text>
+  </g>
+</svg>

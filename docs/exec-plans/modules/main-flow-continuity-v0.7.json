@@ -1,0 +1,797 @@
+{
+  "project": "plant-care-reminder",
+  "prd": "docs/design-docs/2026-06-17-main-flow-continuity-plan.md",
+  "created_at": "2026-06-17",
+  "module": "main-flow-continuity-v0.7",
+  "description": "主页面 UI 改造后的流程连续性补全：围绕登录注册、忘记密码、邀请加入、onboarding、待办、植物看板、植物详情、安静表单、设置协作和跨页面状态，拆分缺失功能与页面流转修复任务。",
+  "design_references": [
+    "docs/design-docs/2026-06-17-main-flow-continuity-plan.md",
+    "docs/design-docs/2026-06-16-system-ui-implementation-plan.md",
+    "docs/design-docs/2026-06-16-system-ui-drafts/README.md"
+  ],
+  "tasks": [
+    {
+      "task_id": "FLOW-001",
+      "description": "建立主流程路由与状态审计表：逐页核对当前实现中的进入路径、返回路径、成功跳转、失败兜底、加载态、空态和丢失功能，形成修复清单与截图证据。",
+      "priority": "0-Critical",
+      "status": "pending",
+      "depends_on": [
+        "system-ui-refresh-v0.6"
+      ],
+      "plan_path": "docs/design-docs/2026-06-17-main-flow-continuity-plan.md",
+      "contracts": {
+        "routing": {
+          "paths": [
+            "/login",
+            "/join/:code",
+            "/onboarding",
+            "/onboarding/create-family",
+            "/onboarding/join-family",
+            "/todo",
+            "/plants",
+            "/plants/:plantId",
+            "/plants/new",
+            "/plants/:plantId/edit",
+            "/plants/:plantId/tasks/new",
+            "/plants/:plantId/tasks/:taskId/edit",
+            "/settings"
+          ],
+          "notes": "审计 normalizePath、RouteGate、页面内 navigate、history.back 使用点。"
+        },
+        "state_management": {
+          "states_required": [
+            "loading",
+            "empty",
+            "error",
+            "success",
+            "submitting",
+            "unauthorized_or_missing"
+          ]
+        },
+        "design_contract": {
+          "acceptance": "输出一张路由/状态矩阵，标注每个页面已完成、缺失、需设计补稿、需功能实现四类状态。"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "visual": "采集 375px 主流程截图，至少覆盖登录、onboarding、todo、plants、plant detail、settings。",
+        "manual": "手动走通新用户、已有用户、邀请链接、无植物、有植物、归档植物六条路径。"
+      },
+      "metadata": {
+        "files_affected": [
+          "docs/design-docs/2026-06-17-main-flow-continuity-plan.md",
+          "docs/exec-plans/modules/main-flow-continuity-v0.7.json"
+        ],
+        "layer": "planning"
+      },
+      "acceptance_criteria": [
+        "审计表覆盖全部主路径和二级表单路径。",
+        "每个缺口都能映射到 FLOW-002 至 FLOW-014 中的具体任务。",
+        "保留截图或文字证据，避免只凭印象修。"
+      ]
+    },
+    {
+      "task_id": "FLOW-002",
+      "description": "补齐登录/注册入口连续性：保留同页双模式，确认登录、注册、邀请上下文、错误提示、提交中状态和成功后 RouteGate 跳转稳定。",
+      "priority": "1-High",
+      "status": "pending",
+      "depends_on": [
+        "FLOW-001",
+        "UI-SYS-002"
+      ],
+      "contracts": {
+        "component_tree": {
+          "entry_component": "AuthPage",
+          "children": [
+            "EmailLoginForm"
+          ]
+        },
+        "routing": {
+          "path": "/login",
+          "success_targets": [
+            "/onboarding/profile",
+            "/onboarding",
+            "/todo"
+          ]
+        },
+        "auth": {
+          "flows": [
+            "signIn",
+            "signUp"
+          ]
+        },
+        "design_contract": {
+          "states": [
+            "default",
+            "signIn",
+            "signUp",
+            "submitting",
+            "invalid_credentials",
+            "invite_hint"
+          ]
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run test -- EmailLoginForm.test.tsx AppRouter.smoke.test.tsx",
+        "visual": "375px /login 截图覆盖登录和注册模式。",
+        "manual": "登录与注册模式切换不改变路由，错误提示不撑爆卡片。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/auth/AuthPage.tsx",
+          "app/src/features/auth/EmailLoginForm.tsx",
+          "app/src/test/AppRouter.smoke.test.tsx"
+        ],
+        "layer": "frontend"
+      },
+      "acceptance_criteria": [
+        "/login 不拆注册路由。",
+        "登录/注册成功后按用户资料和家庭状态进入正确下一页。",
+        "从邀请链接进入的提示不丢失。",
+        "错误、提交中、成功状态都有可读反馈。"
+      ]
+    },
+    {
+      "task_id": "FLOW-003",
+      "description": "正式化忘记密码流程：补齐请求验证码、验证码验证、新密码设置、返回登录、重新发送、错误翻译和成功回填邮箱。",
+      "priority": "1-High",
+      "status": "pending",
+      "depends_on": [
+        "FLOW-002"
+      ],
+      "contracts": {
+        "component_tree": {
+          "entry_component": "ForgotPasswordForm",
+          "children": [
+            "request step",
+            "verify step"
+          ]
+        },
+        "auth": {
+          "flows": [
+            "reset",
+            "reset-verification"
+          ],
+          "notes": "确认 Convex Auth password reset provider 已配置，Resend/OTP 邮件链路可用。"
+        },
+        "state_management": {
+          "local_state": [
+            "request",
+            "verify",
+            "submitting",
+            "sent",
+            "success",
+            "error"
+          ]
+        },
+        "design_contract": {
+          "acceptance": "忘记密码作为登录页内子流程，不跳出当前视觉框架。"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test -- EmailLoginForm.test.tsx",
+        "visual": "补 375px request/verify/success/error 四态截图。",
+        "manual": "未注册邮箱、错误验证码、验证码过期、重新发送均有可理解提示。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/auth/ForgotPasswordForm.tsx",
+          "app/convex/auth.ts",
+          "app/convex/ResendOTPPasswordReset.ts"
+        ],
+        "layer": "frontend-auth"
+      },
+      "acceptance_criteria": [
+        "请求验证码和验证步骤都可独立失败并恢复。",
+        "成功后回到登录表单，不留在 verify 步。",
+        "返回登录不丢页面布局。",
+        "相关 auth provider 配置有测试或手动验证记录。"
+      ]
+    },
+    {
+      "task_id": "FLOW-004",
+      "description": "补齐邀请落地页与 pending invite 链路：/join/:code 对匿名、已登录无家庭、已登录已有家庭三种状态给出明确引导，并确保登录/注册后自动加入或安全失败。",
+      "priority": "0-Critical",
+      "status": "pending",
+      "depends_on": [
+        "FLOW-001",
+        "settings-page-v0.3"
+      ],
+      "contracts": {
+        "component_tree": {
+          "entry_component": "JoinFamilyPage",
+          "children": [
+            "JoinFamilyForm",
+            "pending invite banner",
+            "already in family fallback"
+          ]
+        },
+        "routing": {
+          "paths": [
+            "/join/:code",
+            "/login",
+            "/onboarding",
+            "/todo"
+          ]
+        },
+        "state_management": {
+          "storage": "pending invite code in sessionStorage/local helper",
+          "states": [
+            "anonymous",
+            "authenticated_without_family",
+            "authenticated_with_family",
+            "joining",
+            "failed",
+            "success"
+          ]
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run test -- AppRouter.smoke.test.tsx",
+        "visual": "截图覆盖 /join/:code 未登录态、加入中、失败态。",
+        "manual": "无效邀请码不会导致重复自动加入；已有家庭用户不被静默切换家庭。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/family/JoinFamilyPage.tsx",
+          "app/src/features/family/JoinFamilyForm.tsx",
+          "app/src/features/family/usePendingInvite.ts",
+          "app/src/features/family/FamilyOnboardingChoicePage.tsx",
+          "app/src/app/RouteGate.tsx"
+        ],
+        "layer": "frontend-routing"
+      },
+      "acceptance_criteria": [
+        "/join/:code 公开可达且不会被 RouteGate 错误拦截。",
+        "匿名用户登录或注册后能继续使用暂存邀请码。",
+        "自动加入失败后清除暂存码并给出手动输入入口。",
+        "已有家庭用户看到明确说明，不自动加入第二个家庭。"
+      ]
+    },
+    {
+      "task_id": "FLOW-005",
+      "description": "补齐 onboarding 创建/加入家庭的成功、返回、失败和 RouteGate 放行：避免表单成功后停留或被重定向到错误页面。",
+      "priority": "1-High",
+      "status": "pending",
+      "depends_on": [
+        "FLOW-004",
+        "UI-SYS-003"
+      ],
+      "contracts": {
+        "component_tree": {
+          "entry_components": [
+            "FamilyOnboardingChoicePage",
+            "CreateFamilyPage",
+            "JoinFamilyPage"
+          ]
+        },
+        "routing": {
+          "success_target": "/todo",
+          "back_targets": {
+            "/onboarding/create-family": "/onboarding",
+            "/onboarding/join-family": "/onboarding"
+          }
+        },
+        "design_contract": {
+          "states": [
+            "normal choice",
+            "auto joining",
+            "auto join failed",
+            "create submitting",
+            "join submitting",
+            "success redirect"
+          ]
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run test -- AppRouter.smoke.test.tsx",
+        "visual": "375px 截 onboarding、create-family、join-family 三页主要状态。",
+        "manual": "创建家庭和加入家庭完成后均进入 /todo。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/family/FamilyOnboardingChoicePage.tsx",
+          "app/src/features/family/CreateFamilyPage.tsx",
+          "app/src/features/family/CreateFamilyForm.tsx",
+          "app/src/features/family/JoinFamilyPage.tsx",
+          "app/src/app/RouteGate.tsx"
+        ],
+        "layer": "frontend-routing"
+      },
+      "acceptance_criteria": [
+        "两个 onboarding 子页面都有明确返回。",
+        "成功后不再停留在表单提交中状态。",
+        "错误提示不覆盖主要按钮。",
+        "RouteGate 对 createFamilySuccessFlag 的例外仍正确。"
+      ]
+    },
+    {
+      "task_id": "FLOW-006",
+      "description": "补齐待办首页任务操作连续性：完成、撤销、进入植物详情、展开即将到期、空态和加载态都按新版 UI 稳定展示。",
+      "priority": "0-Critical",
+      "status": "pending",
+      "depends_on": [
+        "FLOW-001",
+        "UI-SYS-004",
+        "care-reminders"
+      ],
+      "contracts": {
+        "component_tree": {
+          "entry_component": "TodoPage",
+          "children": [
+            "GroupedSurface",
+            "TaskRow",
+            "CompleteTaskButton",
+            "UndoToast",
+            "EmptyState"
+          ]
+        },
+        "data_layer": {
+          "queries": [
+            "tasks.listDueTasks",
+            "plants.listPlantsWithNextDue"
+          ],
+          "mutations": [
+            "tasks.completePlantTask",
+            "tasks.undoCompletePlantTask"
+          ]
+        },
+        "routing": {
+          "task_row_target": "/plants/:plantId",
+          "empty_no_plants_target": "/plants/new or /plants",
+          "bottom_nav_targets": [
+            "/todo",
+            "/plants",
+            "/settings"
+          ]
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run test -- AppRouter.smoke.test.tsx",
+        "visual": "截图覆盖 loading、no plants、no tasks、overdue/today/upcoming、undo toast。",
+        "manual": "完成任务后可撤销；点击行进入植物详情；展开按钮不改变页面宽度。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/tasks/TodoPage.tsx",
+          "app/src/features/tasks/CompleteTaskButton.tsx",
+          "app/src/features/tasks/UndoToast.tsx"
+        ],
+        "layer": "frontend"
+      },
+      "acceptance_criteria": [
+        "待办页 loading 不再是突兀纯文本。",
+        "无植物和无待办两个空态文案与 CTA 不混淆。",
+        "任务完成和撤销后列表状态正确。",
+        "底部导航只在主页面显示且 active 态正确。"
+      ]
+    },
+    {
+      "task_id": "FLOW-007",
+      "description": "补齐植物看板入口能力：添加第一株植物 CTA、搜索无结果、整卡进入详情、归档折叠、无图/坏图占位和主导航 active 态。",
+      "priority": "1-High",
+      "status": "pending",
+      "depends_on": [
+        "FLOW-006",
+        "UI-SYS-005",
+        "plant-list-v2"
+      ],
+      "contracts": {
+        "component_tree": {
+          "entry_component": "PlantListPage",
+          "children": [
+            "PlantImage",
+            "ArchivedSection",
+            "EmptyState"
+          ]
+        },
+        "data_layer": {
+          "queries": [
+            "plants.listPlantsWithNextDue"
+          ]
+        },
+        "routing": {
+          "add_target": "/plants/new",
+          "card_target": "/plants/:plantId",
+          "bottom_nav_targets": [
+            "/todo",
+            "/plants",
+            "/settings"
+          ]
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test",
+        "visual": "截图覆盖空列表、搜索无结果、普通列表、归档折叠。",
+        "manual": "键盘 Enter/Space 可进入植物详情；无图占位不撑开卡片。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/plants/PlantListPage.tsx",
+          "app/src/features/plants/ArchivedSection.tsx",
+          "app/src/features/plants/PlantImage.tsx"
+        ],
+        "layer": "frontend"
+      },
+      "acceptance_criteria": [
+        "无植物时有明确添加 CTA。",
+        "搜索无结果和空家庭不是同一种文案。",
+        "整卡点击和键盘访问都进入详情。",
+        "归档区默认不打断主列表。"
+      ]
+    },
+    {
+      "task_id": "FLOW-008",
+      "description": "补齐植物详情操作闭环：需要处理、养护计划、添加/编辑任务、图片预览、归档/恢复/删除、缺失植物和返回路径全部稳定。",
+      "priority": "0-Critical",
+      "status": "pending",
+      "depends_on": [
+        "FLOW-007",
+        "UI-SYS-006",
+        "plant-detail-v2"
+      ],
+      "contracts": {
+        "component_tree": {
+          "entry_component": "PlantDetailPage",
+          "children": [
+            "ScreenNav",
+            "ObjectSummaryBand",
+            "GroupedSurface",
+            "TaskActionRow",
+            "PlantManagementSection",
+            "ImagePreviewOverlay",
+            "UndoToast"
+          ]
+        },
+        "data_layer": {
+          "queries": [
+            "plants.getPlantDetail"
+          ],
+          "mutations": [
+            "tasks.completePlantTask",
+            "tasks.undoCompletePlantTask"
+          ]
+        },
+        "routing": {
+          "back_target": "/plants",
+          "edit_plant_target": "/plants/:plantId/edit",
+          "new_task_target": "/plants/:plantId/tasks/new",
+          "edit_task_target": "/plants/:plantId/tasks/:taskId/edit"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run test -- AppRouter.smoke.test.tsx",
+        "visual": "截图覆盖有待办、无待办、有计划、无计划、归档、找不到植物。",
+        "manual": "完成任务、撤销、添加计划、编辑计划、删除植物后返回路径正确。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/plants/PlantDetailPage.tsx",
+          "app/src/features/plants/PlantManagementSection.tsx",
+          "app/src/features/plants/ImagePreviewOverlay.tsx"
+        ],
+        "layer": "frontend"
+      },
+      "acceptance_criteria": [
+        "ScreenNav 返回不依赖 history.back。",
+        "归档植物不展示待处理任务。",
+        "养护计划可添加、可编辑、可展开。",
+        "找不到植物时可返回植物列表。",
+        "图片预览只在有效图片上触发。"
+      ]
+    },
+    {
+      "task_id": "FLOW-009",
+      "description": "统一添加/编辑植物 quiet form 流程：保存、取消、返回、脏数据确认、校验错误、图片上传失败和危险操作分离。",
+      "priority": "1-High",
+      "status": "pending",
+      "depends_on": [
+        "FLOW-008",
+        "UI-SYS-007",
+        "plant-registry"
+      ],
+      "contracts": {
+        "component_tree": {
+          "entry_components": [
+            "CreatePlantPage",
+            "EditPlantPage"
+          ]
+        },
+        "routing": {
+          "create_success_target": "/plants/:plantId",
+          "edit_success_target": "/plants/:plantId",
+          "cancel_targets": [
+            "/plants",
+            "/plants/:plantId"
+          ]
+        },
+        "state_management": {
+          "states": [
+            "clean",
+            "dirty",
+            "validating",
+            "uploading",
+            "submitting",
+            "error",
+            "success"
+          ]
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test",
+        "visual": "截图覆盖新建、编辑、校验错误、提交中、脏数据离开确认。",
+        "manual": "保存后进入详情；取消不误删；图片上传失败可继续编辑。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/plants/CreatePlantPage.tsx",
+          "app/src/features/plants/EditPlantPage.tsx",
+          "app/src/features/plants/PlantEditorForm.tsx"
+        ],
+        "layer": "frontend-form"
+      },
+      "acceptance_criteria": [
+        "添加植物成功后可直接进入新植物详情。",
+        "编辑植物成功后回到同一植物详情。",
+        "脏数据返回有确认，不误丢输入。",
+        "危险操作不和保存按钮并列混淆。"
+      ]
+    },
+    {
+      "task_id": "FLOW-010",
+      "description": "统一添加/编辑养护计划 quiet form 流程：植物上下文摘要、保存后回详情、取消确认、删除任务确认、频率/类型/名称校验和下一次提醒重算说明。",
+      "priority": "1-High",
+      "status": "pending",
+      "depends_on": [
+        "FLOW-008",
+        "UI-SYS-007",
+        "care-reminders"
+      ],
+      "contracts": {
+        "component_tree": {
+          "entry_components": [
+            "CreateTaskPage",
+            "EditTaskPage"
+          ]
+        },
+        "routing": {
+          "success_target": "/plants/:plantId",
+          "cancel_target": "/plants/:plantId"
+        },
+        "data_layer": {
+          "queries": [
+            "plants.getPlantDetail"
+          ],
+          "mutations": [
+            "tasks.createPlantTask",
+            "tasks.updatePlantTask",
+            "tasks.deletePlantTask"
+          ]
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test",
+        "visual": "截图覆盖添加任务、编辑任务、删除确认、校验错误。",
+        "manual": "保存后详情页计划区刷新；删除后详情页不再显示该计划。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/tasks/CreateTaskPage.tsx",
+          "app/src/features/tasks/EditTaskPage.tsx",
+          "app/src/features/tasks/TaskEditorForm.tsx"
+        ],
+        "layer": "frontend-form"
+      },
+      "acceptance_criteria": [
+        "添加/编辑任务都有植物上下文摘要。",
+        "保存成功回植物详情并能看到变化。",
+        "删除任务必须二次确认。",
+        "修改频率后说明下一次提醒会重新计算。"
+      ]
+    },
+    {
+      "task_id": "FLOW-011",
+      "description": "补齐设置页协作功能连续性：复制邀请链接/邀请码、复制失败 fallback、家庭改名刷新、成员管理占位、通知开关真实状态说明、退出家庭/退出登录确认。",
+      "priority": "1-High",
+      "status": "pending",
+      "depends_on": [
+        "FLOW-004",
+        "UI-SYS-008",
+        "settings-page-v0.3"
+      ],
+      "contracts": {
+        "component_tree": {
+          "entry_component": "FamilySettingsPage",
+          "children": [
+            "InviteCard",
+            "FamilyNameEditSheet",
+            "ConfirmSheet",
+            "MemberAvatar"
+          ]
+        },
+        "data_layer": {
+          "queries": [
+            "families.getFamilySettingsSummary"
+          ],
+          "mutations": [
+            "families.leaveFamily",
+            "families.updateFamilyName"
+          ]
+        },
+        "design_contract": {
+          "states": [
+            "admin",
+            "member",
+            "copy_success",
+            "copy_failed",
+            "leaving",
+            "leave_blocked",
+            "signing_out"
+          ]
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test",
+        "visual": "截图覆盖管理员/成员、复制成功/失败、退出家庭确认。",
+        "manual": "复制链接和邀请码均有反馈；非管理员不会看到不可用主按钮。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/family/FamilySettingsPage.tsx",
+          "app/src/components/ui/InviteCard.tsx",
+          "app/src/features/family/FamilyNameEditSheet.tsx"
+        ],
+        "layer": "frontend"
+      },
+      "acceptance_criteria": [
+        "复制邀请链接和复制邀请码都是独立可用操作。",
+        "clipboard 失败时展示手动复制内容。",
+        "通知开关如果未持久化，必须显式标记待接后端或调整为排障入口。",
+        "退出家庭和退出登录不会共用同一确认文案。"
+      ]
+    },
+    {
+      "task_id": "FLOW-012",
+      "description": "抽象并应用跨页面状态组件：LoadingSurface、ErrorSurface、SuccessToast 或等价封装，统一主路径 loading/empty/error/success/submitting 表达。",
+      "priority": "2-Medium",
+      "status": "pending",
+      "depends_on": [
+        "FLOW-006",
+        "FLOW-007",
+        "FLOW-008",
+        "FLOW-011"
+      ],
+      "contracts": {
+        "component_tree": {
+          "entry_component": "components/ui/state",
+          "children": [
+            "LoadingSurface",
+            "ErrorSurface",
+            "EmptyState reuse",
+            "SuccessFeedback"
+          ],
+          "notes": "如果现有 EmptyState/Button/FormError 足够，可只做规范化组合，不强行新增组件。"
+        },
+        "design_contract": {
+          "tokens_new": [],
+          "acceptance": "不新增视觉语言，只统一主路径状态密度和文案结构。"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test",
+        "visual": "抽查 todo/plants/detail/settings 的 loading/error/empty 态。",
+        "manual": "屏幕阅读器能读到 role=status 或错误提示。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/components/ui/*",
+          "app/src/features/*"
+        ],
+        "layer": "ui-foundation"
+      },
+      "acceptance_criteria": [
+        "主路径不再使用突兀纯文本 loading。",
+        "错误态至少提供重试或返回。",
+        "状态组件不造成卡片套卡片。",
+        "所有状态文案都说明下一步。"
+      ]
+    },
+    {
+      "task_id": "FLOW-013",
+      "description": "补齐主路径 E2E smoke：新用户注册、创建家庭、添加植物、添加任务、完成任务、撤销、编辑植物、编辑任务、设置页复制邀请、退出登录。",
+      "priority": "1-High",
+      "status": "pending",
+      "depends_on": [
+        "FLOW-002",
+        "FLOW-005",
+        "FLOW-006",
+        "FLOW-007",
+        "FLOW-008",
+        "FLOW-009",
+        "FLOW-010",
+        "FLOW-011"
+      ],
+      "contracts": {
+        "test_layer": {
+          "targets": [
+            "AppRouter.smoke.test.tsx",
+            "feature-level component tests",
+            "optional Playwright visual smoke"
+          ]
+        },
+        "routing": {
+          "coverage": "全部主路径和二级表单路径至少有一个成功流转测试。"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test",
+        "visual": "Playwright 采集 375px 关键路径截图。",
+        "manual": "按测试清单手动复核一次真实浏览器路径。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/test/AppRouter.smoke.test.tsx",
+          "app/src/features/**/*.test.tsx"
+        ],
+        "layer": "testing"
+      },
+      "acceptance_criteria": [
+        "主路径 smoke 覆盖用户从登录到完成任务的闭环。",
+        "邀请加入至少覆盖匿名进入和登录后加入。",
+        "表单保存后返回正确页面。",
+        "测试失败能定位到具体页面或流转点。"
+      ]
+    },
+    {
+      "task_id": "FLOW-014",
+      "description": "主流程视觉与交互回归：对 v0.7 修复后的核心路径做 375/390/430px 截图验收，修正导航层级、按钮溢出、文本遮挡、底部导航出现范围和 95% 设计还原偏差。",
+      "priority": "1-High",
+      "status": "pending",
+      "depends_on": [
+        "FLOW-012",
+        "FLOW-013"
+      ],
+      "contracts": {
+        "visual_qa": {
+          "viewports": [
+            375,
+            390,
+            430
+          ],
+          "screens": [
+            "login",
+            "forgot password",
+            "join invite",
+            "onboarding",
+            "todo",
+            "plants",
+            "plant detail",
+            "quiet forms",
+            "settings"
+          ]
+        },
+        "design_contract": {
+          "acceptance": "继续满足 v0.6 的 95% 还原，同时 v0.7 新增状态不破坏主视觉系统。"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test",
+        "visual": "保存截图并逐项标注通过/待修。",
+        "manual": "触摸目标、键盘焦点、长文本、弱网 loading、重复点击提交按钮。"
+      },
+      "metadata": {
+        "files_affected": [
+          "docs/design-docs/2026-06-17-main-flow-continuity-plan.md",
+          "app/src/**/*.tsx"
+        ],
+        "layer": "qa"
+      },
+      "acceptance_criteria": [
+        "375px / 390px / 430px 无明显遮挡或横向溢出。",
+        "主页面底部导航和二级 ScreenNav 的使用范围一致。",
+        "状态页、确认弹层、toast 和表单错误与主视觉系统一致。",
+        "v0.7 验收截图和问题清单归档。"
+      ]
+    }
+  ]
+}

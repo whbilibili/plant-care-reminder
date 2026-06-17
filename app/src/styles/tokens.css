@@ -1,0 +1,222 @@
+/**
+ * Design Tokens — moodboard botanical 视觉方向
+ * 来源：docs/design-docs/moodboard/moodboard.html :root
+ *      + docs/design-docs/2026-06-09-frontend-refresh-plan.md §3.2
+ *
+ * 命名规范：
+ *   --color-{semantic}  色彩
+ *   --font-{role}       字体
+ *   --space-{size}      间距
+ *   --radius-{size}     圆角
+ *   --shadow-{level}    阴影
+ *   --gradient-{role}   渐变
+ *
+ * 所有页面与组件的色值、间距、圆角、阴影一律引用本文件中的变量，
+ * 禁止再硬编码 #hex 色值（焦点/链接/按钮等）。
+ */
+:root {
+  /* ---- 色彩 ---- */
+  --color-ink: #16342f;
+  --color-muted: #637b71;
+  --color-paper: #fbfcf7;
+  --color-mist: #edf5f1;
+  --color-surface: #ffffff;
+  --color-leaf: #1f473d;
+  --color-leaf-light: #467061;
+  --color-gold: #f1c567;
+  --color-gold-hover: #ddb04e;
+  --color-line: #d8e4da;
+  --color-success: #2f855a;
+  --color-warning: #dd6b20;
+  --color-error: #c53030;
+  --color-overlay-scrim: rgba(22, 52, 47, 0.85);
+
+  /* ---- 任务类型识别色（待办页色条/图标，双编码 emoji + 色） ---- */
+  --color-task-watering: #3b82c4; /* 水蓝，冷色区别于主绿 */
+  --color-task-fertilizing: #a06a3c; /* 暖棕/土色 */
+  --color-task-misting: #2f9c8a; /* 青绿 */
+  --color-task-repotting: #d2773b; /* 陶土橙 */
+  --color-task-pruning: #5c8a3a; /* 叶绿 */
+  --color-task-custom: #8a9690; /* 中性灰 */
+
+  /* ---- 字体 ---- */
+  --font-heading: Lora, serif;
+  --font-body: Raleway, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SF Mono", "Fira Code", "JetBrains Mono", monospace;
+
+  /* ---- 间距 ---- */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  /* ---- 圆角 ---- */
+  --radius-card: 16px;
+  --radius-button: 12px;
+  --radius-pill: 999px;
+  --radius-input: 12px;
+  --radius-sheet: 20px;
+
+  /* ---- 阴影 ---- */
+  --shadow-card: 0 18px 42px rgba(36, 73, 63, 0.12);
+  --shadow-card-emphasis: 0 22px 54px rgba(31, 71, 61, 0.2);
+  --shadow-sheet: 0 -8px 32px rgba(36, 73, 63, 0.15);
+
+  /* ---- 渐变 ---- */
+  --gradient-botanical: linear-gradient(
+    135deg,
+    rgba(235, 246, 238, 0.95),
+    rgba(246, 249, 239, 0.88)
+  );
+  --gradient-accent: radial-gradient(
+    circle at 82% 8%,
+    rgba(181, 212, 220, 0.55),
+    transparent 34%
+  );
+}
+
+/* 完成任务时小确幸 emoji 从按钮中心上浮并淡出（TODO2-008）。 */
+@keyframes complete-fx-rise {
+  0% {
+    transform: translate(-50%, -50%) scale(0.6);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -170%) scale(1.1);
+    opacity: 0;
+  }
+}
+
+/* 完成按钮 pending 态加载图标旋转（ICON-005）。reduced-motion 下由全局兜底压制为近 0 时长。 */
+@keyframes complete-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.complete-spin {
+  animation: complete-spin 800ms linear infinite;
+}
+
+/* 情感反馈区株数变化时的轻量淡入（TODO2-008）。 */
+@keyframes greeting-count-fade {
+  0% {
+    transform: translateY(4px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ---- 底部确认 sheet 弹层动效（推迟确认等） ---- */
+/* 遮罩淡入。 */
+@keyframes sheet-overlay-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* 遮罩淡出。 */
+@keyframes sheet-overlay-out {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* sheet 从底部滑入，带轻微回弹（spring 感）。 */
+@keyframes sheet-rise-in {
+  0% {
+    transform: translateY(110%);
+    opacity: 0;
+  }
+  70% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* sheet 向下滑出并淡出。 */
+@keyframes sheet-sink-out {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110%);
+    opacity: 0;
+  }
+}
+
+/* 全屏图片预览遮罩淡入（PDETAIL2-007）。 */
+@keyframes preview-overlay-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* 全屏图片预览图片缩放入场（PDETAIL2-007）。 */
+@keyframes preview-image-in {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* 溢出菜单展开动效（PDETAIL2-001）。 */
+@keyframes menu-appear {
+  0% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* 页面进入动效（PDETAIL2-008）。 */
+@keyframes page-enter {
+  0% {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* 尊重用户减少动画偏好 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
