@@ -2,7 +2,7 @@ import { useMutation, useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { useAuthActions } from "@convex-dev/auth/react";
-import { Bell, ChevronRight, DoorOpen, Home, LogOut, Pencil, Users } from "lucide-react";
+import { Bell, ChevronRight, DoorOpen, Home, LogOut, Pencil, Trash2, Users } from "lucide-react";
 
 import { api } from "../../../convex/_generated/api";
 import { ConfirmSheet } from "../../components/ui/ConfirmSheet";
@@ -11,9 +11,10 @@ import { Icon } from "../../components/ui/Icon";
 import { InviteCard } from "../../components/ui/InviteCard";
 import { FamilyNameEditSheet } from "./FamilyNameEditSheet";
 import { MemberAvatar } from "./MemberAvatar";
+import { OwnerLeaveGuideSheet } from "./OwnerLeaveGuideSheet";
+import { RoleBadge } from "./RoleBadge";
 import { navigate } from "../../app/router";
 import { normalizeSubscription } from "../notifications/normalizeSubscription";
-import type { FamilyRole } from "../../types/domain";
 
 /* ── Web Push 辅助函数（与 NotificationPromptCard 共用逻辑） ── */
 
@@ -61,10 +62,6 @@ function buildInviteLink(inviteCode: string): string {
   return `${origin}/join/${encodeURIComponent(inviteCode)}`;
 }
 
-function formatRole(role: FamilyRole): string {
-  return role === "admin" ? "管理员" : "成员";
-}
-
 function formatRelativeTime(timestamp: number): string {
   const now = Date.now();
   const diff = now - timestamp;
@@ -82,12 +79,17 @@ export function FamilySettingsPage() {
   const { signOut } = useAuthActions();
   const summary = useQuery(api.families.getFamilySettingsSummary, {});
   const leaveFamily = useMutation(api.families.leaveFamily);
+  const deleteFamilyMutation = useMutation(api.families.deleteFamily);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [familyNameSheetOpen, setFamilyNameSheetOpen] = useState(false);
   const [signOutSheetOpen, setSignOutSheetOpen] = useState(false);
   const [leaveSheetOpen, setLeaveSheetOpen] = useState(false);
+  const [ownerLeaveGuideOpen, setOwnerLeaveGuideOpen] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
   const [leaveError, setLeaveError] = useState<string | null>(null);
+  const [deleteFamilySheetOpen, setDeleteFamilySheetOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const hasSubscription = useQuery(api.notifications.hasActiveSubscription, {});
   const savePushSubscription = useMutation(api.notifications.savePushSubscription);
   const removeMySubscriptions = useMutation(api.notifications.removeMySubscriptions);
@@ -174,6 +176,28 @@ export function FamilySettingsPage() {
     setLeaveError(null);
   }
 
+  async function handleDeleteFamily() {
+    setDeleteError(null);
+    setIsDeleting(true);
+    try {
+      await deleteFamilyMutation({});
+      // 成功后 familyId→null，RouteGate 响应式重定向到 onboarding
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      setDeleteError(
+        message.toLowerCase().includes("owner")
+          ? "只有家庭所有者可以删除家庭。"
+          : "删除家庭失败，请稍后再试。",
+      );
+      setIsDeleting(false);
+    }
+  }
+
+  function closeDeleteFamilySheet() {
+    setDeleteFamilySheetOpen(false);
+    setDeleteError(null);
+  }
+
   async function handleToggleNotifications() {
     if (isTogglingNotif) return;
     setIsTogglingNotif(true);
@@ -248,7 +272,8 @@ export function FamilySettingsPage() {
 
   const currentMember = summary.members.find((member) => member.isCurrentUser);
   const myDisplayName = currentMember?.displayName ?? "我";
-  const isAdmin = summary.currentUserRole === "admin";
+  const isOwner = summary.currentUserRole === "owner";
+  const isAdmin = isOwner || summary.currentUserRole === "admin";
 
   const isLastMember = summary.memberCount <= 1;
   const leaveTitle = isLastMember
@@ -265,7 +290,7 @@ export function FamilySettingsPage() {
         <div style={headerTextStyle}>
           <h1 style={pageTitleStyle}>设置</h1>
           <p style={subtitleStyle}>
-            {myDisplayName} · {isAdmin ? "家庭管理员" : "家庭成员"}
+            {myDisplayName} · {isOwner ? "家庭所有者" : isAdmin ? "家庭管理员" : "家庭成员"}
           </p>
         </div>
         <button
@@ -292,7 +317,7 @@ export function FamilySettingsPage() {
             <div style={familySummaryNameLineStyle}>
               <span style={familySummaryNameStyle}>{summary.familyName}</span>
               <span style={adminBadgeStyle}>
-                {isAdmin ? "家庭管理员" : "成员"}
+                {isOwner ? "家庭所有者" : isAdmin ? "家庭管理员" : "成员"}
               </span>
             </div>
             <p style={familySummaryMetaStyle}>
@@ -376,20 +401,10 @@ export function FamilySettingsPage() {
                 <div style={memberInfoStyle}>
                   <div style={memberNameLineStyle}>
                     <span style={memberNameStyle}>{label}</span>
-                    {member.isCurrentUser ? (
-                      <span style={selfPillStyle}>你</span>
-                    ) : null}
-                    <span
-                      style={
-                        member.role === "admin"
-                          ? roleBadgeAdminStyle
-                          : roleBadgeMemberStyle
-                      }
-                    >
-                      {formatRole(member.role)}
-                    </span>
+                    <RoleBadge role={member.role} />
                   </div>
                   <span style={memberLastActiveStyle}>
+                    {member.isCurrentUser ? "你 · " : ""}
                     最后活跃 {formatRelativeTime(member.joinedAt)}
                   </span>
                 </div>
@@ -402,7 +417,11 @@ export function FamilySettingsPage() {
       {/* Danger actions */}
       <div style={dangerSectionStyle}>
         <button
-          onClick={() => setLeaveSheetOpen(true)}
+          onClick={() =>
+            isOwner
+              ? setOwnerLeaveGuideOpen(true)
+              : setLeaveSheetOpen(true)
+          }
           style={dangerRowStyle}
           type="button"
         >
@@ -415,6 +434,28 @@ export function FamilySettingsPage() {
           </div>
           <Icon icon={ChevronRight} size={16} colorVar="--color-muted" />
         </button>
+
+        {isOwner ? (
+          <>
+            <div style={dangerDividerStyle} />
+            <button
+              onClick={() => setDeleteFamilySheetOpen(true)}
+              style={dangerRowStyle}
+              type="button"
+            >
+              <div style={dangerIconErrorStyle}>
+                <Icon icon={Trash2} size={20} colorVar="--color-error" />
+              </div>
+              <div style={dangerTextStyle}>
+                <span style={dangerLabelErrorStyle}>删除家庭</span>
+                <span style={dangerDescStyle}>
+                  永久删除家庭及所有数据
+                </span>
+              </div>
+              <Icon icon={ChevronRight} size={16} colorVar="--color-muted" />
+            </button>
+          </>
+        ) : null}
 
         <div style={dangerDividerStyle} />
 
@@ -453,6 +494,28 @@ export function FamilySettingsPage() {
           onCancel={closeLeaveSheet}
           onConfirm={() => void handleLeaveFamily()}
           title={leaveTitle}
+          variant="danger-solid"
+        />
+      ) : null}
+
+      {ownerLeaveGuideOpen ? (
+        <OwnerLeaveGuideSheet
+          onClose={() => setOwnerLeaveGuideOpen(false)}
+        />
+      ) : null}
+
+      {deleteFamilySheetOpen ? (
+        <ConfirmSheet
+          ariaLabel="确认删除家庭"
+          confirmLabel={isDeleting ? "删除中…" : "删除家庭"}
+          description={
+            deleteError ??
+            `删除后「${summary.familyName}」的所有植物、养护记录、成员关系将永久丢失且无法恢复。`
+          }
+          isSubmitting={isDeleting}
+          onCancel={closeDeleteFamilySheet}
+          onConfirm={() => void handleDeleteFamily()}
+          title="确认删除这个家庭吗？"
           variant="danger-solid"
         />
       ) : null}
@@ -717,39 +780,6 @@ const memberNameStyle: CSSProperties = {
   whiteSpace: "nowrap",
 };
 
-const selfPillStyle: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  padding: "1px 6px",
-  borderRadius: "var(--radius-pill)",
-  background: "var(--color-mist)",
-  color: "var(--color-leaf)",
-  fontSize: "11px",
-  fontWeight: 700,
-};
-
-const roleBadgeAdminStyle: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  padding: "1px 6px",
-  borderRadius: "var(--radius-pill)",
-  background: "var(--color-leaf)",
-  color: "var(--color-paper)",
-  fontSize: "11px",
-  fontWeight: 700,
-};
-
-const roleBadgeMemberStyle: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  padding: "1px 6px",
-  borderRadius: "var(--radius-pill)",
-  background: "var(--color-mist)",
-  color: "var(--color-muted)",
-  border: "1px solid var(--color-line)",
-  fontSize: "11px",
-  fontWeight: 700,
-};
 
 const memberLastActiveStyle: CSSProperties = {
   fontSize: "12px",

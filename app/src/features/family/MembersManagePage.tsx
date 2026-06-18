@@ -1,20 +1,17 @@
-import { useMutation, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import { useState } from "react";
 import type { CSSProperties } from "react";
-import { ChevronRight, Home, Link, UserMinus } from "lucide-react";
+import { ChevronRight, Home, Link } from "lucide-react";
 
 import { api } from "../../../convex/_generated/api";
-import { ConfirmSheet } from "../../components/ui/ConfirmSheet";
 import { GroupedSurface, GroupedSurfaceDivider } from "../../components/ui/GroupedSurface";
 import { Icon } from "../../components/ui/Icon";
 import { ScreenNav } from "../../components/ui/ScreenNav";
 import { navigate } from "../../app/router";
+import { MemberActionSheet } from "./MemberActionSheet";
 import { MemberAvatar } from "./MemberAvatar";
+import { RoleBadge } from "./RoleBadge";
 import type { FamilyRole } from "../../types/domain";
-
-function formatRole(role: FamilyRole): string {
-  return role === "admin" ? "管理员" : "成员";
-}
 
 function formatRelativeTime(timestamp: number): string {
   const now = Date.now();
@@ -29,63 +26,42 @@ function formatRelativeTime(timestamp: number): string {
   return new Date(timestamp).toLocaleDateString("zh-CN");
 }
 
-function translateRemoveError(error: unknown): string {
-  const message = error instanceof Error ? error.message : "";
-  if (message.toLowerCase().includes("creator")) {
-    return "无法移除家庭创建者。";
-  }
-  if (message.toLowerCase().includes("admin")) {
-    return "只有管理员才能移除成员。";
-  }
-  return "移除成员失败，请稍后再试。";
-}
-
 /**
  * MembersManagePage — 管理成员（二级页面）。
  *
  * 入口：设置页「管理成员 >」。
- * 功能：查看成员列表、管理员可移除非自己/非创建者的成员。
- * 简化设计：不做独立成员详情页，直接在列表中操作移除（通过 ConfirmSheet 确认）。
+ * 功能：查看成员列表；owner/admin 点击成员行弹出 MemberActionSheet 进行角色管理。
  */
 export function MembersManagePage() {
   const summary = useQuery(api.families.getFamilySettingsSummary, {});
-  const removeMember = useMutation(api.families.removeMember);
 
-  const [removingMember, setRemovingMember] = useState<{
+  const [actionTarget, setActionTarget] = useState<{
     userId: string;
     displayName: string;
+    role: FamilyRole;
   } | null>(null);
-  const [isRemoving, setIsRemoving] = useState(false);
-  const [removeError, setRemoveError] = useState<string | null>(null);
 
-  const isAdmin = summary?.currentUserRole === "admin";
+  const isAdmin =
+    summary?.currentUserRole === "owner" ||
+    summary?.currentUserRole === "admin";  // 用于描述文案
 
   function handleBack() {
     navigate("/settings");
   }
 
-  function openRemoveSheet(userId: string, displayName: string) {
-    setRemoveError(null);
-    setRemovingMember({ userId, displayName });
-  }
-
-  function closeRemoveSheet() {
-    setRemovingMember(null);
-    setRemoveError(null);
-    setIsRemoving(false);
-  }
-
-  async function handleRemove() {
-    if (!removingMember) return;
-    setRemoveError(null);
-    setIsRemoving(true);
-    try {
-      await removeMember({ targetUserId: removingMember.userId as never });
-      closeRemoveSheet();
-    } catch (error) {
-      setRemoveError(translateRemoveError(error));
-      setIsRemoving(false);
-    }
+  /**
+   * 判断是否应该为目标成员弹出操作菜单。
+   * member 角色不弹；点自己不弹；点 owner 不弹（admin 视角）。
+   */
+  function shouldShowActions(
+    currentRole: FamilyRole,
+    targetRole: FamilyRole,
+    isCurrentUser: boolean,
+  ): boolean {
+    if (currentRole === "member") return false;
+    if (isCurrentUser) return false;
+    if (targetRole === "owner" && currentRole !== "owner") return false;
+    return true;
   }
 
   if (summary === undefined) {
@@ -130,13 +106,22 @@ export function MembersManagePage() {
           {summary.members.map((member, index) => {
             const label =
               member.displayName?.trim() || member.email || "家庭成员";
-            const canRemove =
-              isAdmin && !member.isCurrentUser && !member.isCreator;
+            const currentRole = summary.currentUserRole as FamilyRole | null;
+            const canAct = currentRole != null && shouldShowActions(
+              currentRole,
+              member.role as FamilyRole,
+              member.isCurrentUser,
+            );
 
             return (
               <div key={member.id}>
                 {index > 0 ? <GroupedSurfaceDivider /> : null}
-                <div style={memberRowStyle}>
+                <div
+                  onClick={canAct ? () => setActionTarget({ userId: member.userId, displayName: label, role: member.role as FamilyRole }) : undefined}
+                  role={canAct ? "button" : undefined}
+                  style={canAct ? memberRowClickableStyle : memberRowStyle}
+                  tabIndex={canAct ? 0 : undefined}
+                >
                   <MemberAvatar
                     name={member.displayName ?? member.email}
                     imageStorageId={member.imageStorageId ?? null}
@@ -144,32 +129,15 @@ export function MembersManagePage() {
                   <div style={memberInfoStyle}>
                     <div style={memberNameLineStyle}>
                       <span style={memberNameStyle}>{label}</span>
-                      {member.isCurrentUser ? (
-                        <span style={selfPillStyle}>你</span>
-                      ) : null}
-                      <span
-                        style={
-                          member.role === "admin"
-                            ? roleBadgeAdminStyle
-                            : roleBadgeMemberStyle
-                        }
-                      >
-                        {formatRole(member.role)}
-                      </span>
+                      <RoleBadge role={member.role} />
                     </div>
                     <span style={memberMetaStyle}>
+                      {member.isCurrentUser ? "你 · " : ""}
                       最后活跃 {formatRelativeTime(member.joinedAt)}
                     </span>
                   </div>
-                  {canRemove ? (
-                    <button
-                      onClick={() => openRemoveSheet(member.userId, label)}
-                      style={removeButtonStyle}
-                      type="button"
-                      aria-label={`移除 ${label}`}
-                    >
-                      <Icon icon={UserMinus} size={16} colorVar="--color-error" />
-                    </button>
+                  {canAct ? (
+                    <Icon icon={ChevronRight} size={14} colorVar="--color-muted" />
                   ) : null}
                 </div>
               </div>
@@ -198,20 +166,13 @@ export function MembersManagePage() {
         </GroupedSurface>
       </div>
 
-      {/* 移除成员确认 */}
-      {removingMember ? (
-        <ConfirmSheet
-          ariaLabel="移除成员确认"
-          confirmLabel={isRemoving ? "移除中…" : "确认移除成员"}
-          description={
-            removeError ??
-            `移除后，${removingMember.displayName}将无法继续查看「${summary.familyName}」的植物和养护任务。既有养护记录会保留在家庭历史中。`
-          }
-          isSubmitting={isRemoving}
-          onCancel={closeRemoveSheet}
-          onConfirm={() => void handleRemove()}
-          title={`移除${removingMember.displayName}？`}
-          variant="danger-solid"
+      {/* 成员操作 Sheet */}
+      {actionTarget && summary.currentUserRole ? (
+        <MemberActionSheet
+          target={actionTarget}
+          currentUserRole={summary.currentUserRole as FamilyRole}
+          familyName={summary.familyName}
+          onClose={() => setActionTarget(null)}
         />
       ) : null}
     </section>
@@ -327,39 +288,7 @@ const memberNameStyle: CSSProperties = {
   whiteSpace: "nowrap",
 };
 
-const selfPillStyle: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  padding: "1px 6px",
-  borderRadius: "var(--radius-pill)",
-  background: "var(--color-mist)",
-  color: "var(--color-leaf)",
-  fontSize: "11px",
-  fontWeight: 700,
-};
 
-const roleBadgeAdminStyle: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  padding: "1px 6px",
-  borderRadius: "var(--radius-pill)",
-  background: "var(--color-leaf)",
-  color: "var(--color-paper)",
-  fontSize: "11px",
-  fontWeight: 700,
-};
-
-const roleBadgeMemberStyle: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  padding: "1px 6px",
-  borderRadius: "var(--radius-pill)",
-  background: "var(--color-mist)",
-  color: "var(--color-muted)",
-  border: "1px solid var(--color-line)",
-  fontSize: "11px",
-  fontWeight: 700,
-};
 
 const memberMetaStyle: CSSProperties = {
   fontSize: "12px",
@@ -367,19 +296,9 @@ const memberMetaStyle: CSSProperties = {
   lineHeight: 1.4,
 };
 
-const removeButtonStyle: CSSProperties = {
-  appearance: "none",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  width: "36px",
-  height: "36px",
-  padding: 0,
-  border: "1px solid color-mix(in srgb, var(--color-error) 30%, transparent)",
-  borderRadius: "var(--radius-pill)",
-  background: "color-mix(in srgb, var(--color-error) 8%, transparent)",
+const memberRowClickableStyle: CSSProperties = {
+  ...memberRowStyle,
   cursor: "pointer",
-  flexShrink: 0,
 };
 
 /* Invite row */

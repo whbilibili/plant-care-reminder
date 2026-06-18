@@ -27,6 +27,7 @@ interface MembersListProps {
 }
 
 function formatRole(role: FamilyRole) {
+  if (role === "owner") return "所有者";
   return role === "admin" ? "管理员" : "成员";
 }
 
@@ -68,7 +69,6 @@ export function MembersList({ members, isAdmin }: MembersListProps) {
             <div style={identityStyle}>
               <div style={nameLineStyle}>
                 <span style={nameStyle}>{label}</span>
-                {member.isCurrentUser ? <span style={selfPillStyle}>我</span> : null}
                 <span
                   style={
                     member.role === "admin"
@@ -79,9 +79,10 @@ export function MembersList({ members, isAdmin }: MembersListProps) {
                   {formatRole(member.role)}
                 </span>
               </div>
-              {member.email && member.email !== label ? (
-                <p style={emailStyle}>{member.email}</p>
-              ) : null}
+              <p style={emailStyle}>
+                {member.isCurrentUser ? "你 · " : ""}
+                {member.email && member.email !== label ? member.email : ""}
+              </p>
             </div>
             {canRemove ? (
               <button
@@ -163,17 +164,6 @@ const emailStyle: CSSProperties = {
   whiteSpace: "nowrap",
 };
 
-const selfPillStyle: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  minHeight: "20px",
-  padding: "0 var(--space-xs)",
-  borderRadius: "var(--radius-pill)",
-  background: "var(--color-mist)",
-  color: "var(--color-leaf)",
-  fontSize: "11px",
-  fontWeight: 700,
-};
 
 const adminBadgeStyle: CSSProperties = {
   display: "inline-flex",

@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { careTaskTypeValues } from "../../src/features/tasks/taskTypes";
 
-export const familyRoleValues = ["admin", "member"] as const;
+export const familyRoleValues = ["owner", "admin", "member"] as const;
 export const plantTaskTypeValues = careTaskTypeValues;
 
 /**

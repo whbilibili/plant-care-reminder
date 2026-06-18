@@ -1,6 +1,6 @@
 import { careTaskTypeValues } from "../features/tasks/taskTypes";
 
-export const familyRoleValues = ["admin", "member"] as const;
+export const familyRoleValues = ["owner", "admin", "member"] as const;
 export type FamilyRole = (typeof familyRoleValues)[number];
 
 export const plantTaskTypeValues = careTaskTypeValues;

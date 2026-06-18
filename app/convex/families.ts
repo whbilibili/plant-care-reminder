@@ -4,6 +4,7 @@ import { mutation, query } from "./_generated/server";
 import type { MutationCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { getCurrentUserContext as loadCurrentUserContext } from "./lib/auth";
+import { isAtLeastAdmin } from "./lib/roleHelpers";
 
 const INVITE_CODE_LENGTH = 6;
 const INVITE_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -74,7 +75,7 @@ export const createFamily = mutation({
     await ctx.db.insert("familyMembers", {
       familyId,
       userId: currentUserContext.userId,
-      role: "admin",
+      role: "owner",
       joinedAt: createdAt,
     });
 
@@ -172,13 +173,18 @@ export const getFamilySettingsSummary = query({
           imageStorageId: user?.imageStorageId ?? null,
           isCurrentUser: membership.userId === currentUserContext.userId,
           isCreator: membership.userId === family.createdBy,
+          isOwner: membership.role === "owner",
         };
       }),
     );
 
+    const rolePriority: Record<string, number> = { owner: -2, admin: -1, member: 0 };
+
     members.sort((left, right) => {
-      if (left.role !== right.role) {
-        return left.role === "admin" ? -1 : 1;
+      const leftPriority = rolePriority[left.role] ?? 0;
+      const rightPriority = rolePriority[right.role] ?? 0;
+      if (leftPriority !== rightPriority) {
+        return leftPriority - rightPriority;
       }
 
       if (left.isCurrentUser !== right.isCurrentUser) {
@@ -223,21 +229,12 @@ export const removeMember = mutation({
       )
       .unique();
 
-    if (!currentMembership || currentMembership.role !== "admin") {
+    if (!currentMembership || !isAtLeastAdmin(currentMembership.role)) {
       throw new Error("Only a family admin can remove members.");
     }
 
     if (args.targetUserId === currentUserContext.userId) {
       throw new Error("You cannot remove yourself from the family.");
-    }
-
-    const family = await ctx.db.get(familyId);
-    if (!family) {
-      throw new Error("Family record not found.");
-    }
-
-    if (args.targetUserId === family.createdBy) {
-      throw new Error("The family creator cannot be removed.");
     }
 
     const targetMembership = await ctx.db
@@ -249,6 +246,10 @@ export const removeMember = mutation({
 
     if (!targetMembership) {
       throw new Error("That member is not part of this family.");
+    }
+
+    if (targetMembership.role === "owner") {
+      throw new Error("The family owner cannot be removed.");
     }
 
     // Cascade delete the target user's push subscriptions for this family.
@@ -288,7 +289,7 @@ export const resetInviteCode = mutation({
       )
       .unique();
 
-    if (!currentMembership || currentMembership.role !== "admin") {
+    if (!currentMembership || !isAtLeastAdmin(currentMembership.role)) {
       throw new Error("Only a family admin can reset the invite code.");
     }
 
@@ -320,7 +321,7 @@ export const renameFamily = mutation({
       )
       .unique();
 
-    if (!currentMembership || currentMembership.role !== "admin") {
+    if (!currentMembership || !isAtLeastAdmin(currentMembership.role)) {
       throw new Error("Only a family admin can rename the family.");
     }
 
@@ -334,6 +335,103 @@ export const renameFamily = mutation({
     }
 
     await ctx.db.patch(familyId, { name });
+
+    return { ok: true as const };
+  },
+});
+
+export const updateMemberRole = mutation({
+  args: {
+    targetUserId: v.id("users"),
+    newRole: v.union(v.literal("admin"), v.literal("member")),
+  },
+  handler: async (ctx, args) => {
+    const currentUserContext = await loadCurrentUserContext(ctx);
+
+    if (!currentUserContext.userId || !currentUserContext.familyId) {
+      throw new Error("You must belong to a family to manage roles.");
+    }
+
+    const familyId = currentUserContext.familyId;
+
+    const currentMembership = await ctx.db
+      .query("familyMembers")
+      .withIndex("by_familyId_and_userId", (q) =>
+        q.eq("familyId", familyId).eq("userId", currentUserContext.userId!),
+      )
+      .unique();
+
+    if (!currentMembership || !isAtLeastAdmin(currentMembership.role)) {
+      throw new Error("Only an admin or owner can change member roles.");
+    }
+
+    if (args.targetUserId === currentUserContext.userId) {
+      throw new Error("You cannot change your own role.");
+    }
+
+    const targetMembership = await ctx.db
+      .query("familyMembers")
+      .withIndex("by_familyId_and_userId", (q) =>
+        q.eq("familyId", familyId).eq("userId", args.targetUserId),
+      )
+      .unique();
+
+    if (!targetMembership) {
+      throw new Error("That member is not part of this family.");
+    }
+
+    if (targetMembership.role === "owner") {
+      throw new Error("The owner role cannot be changed. Use transfer ownership instead.");
+    }
+
+    await ctx.db.patch(targetMembership._id, { role: args.newRole });
+
+    return { ok: true as const };
+  },
+});
+
+export const transferOwnership = mutation({
+  args: {
+    targetUserId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const currentUserContext = await loadCurrentUserContext(ctx);
+
+    if (!currentUserContext.userId || !currentUserContext.familyId) {
+      throw new Error("You must belong to a family to transfer ownership.");
+    }
+
+    const familyId = currentUserContext.familyId;
+
+    const currentMembership = await ctx.db
+      .query("familyMembers")
+      .withIndex("by_familyId_and_userId", (q) =>
+        q.eq("familyId", familyId).eq("userId", currentUserContext.userId!),
+      )
+      .unique();
+
+    if (!currentMembership || currentMembership.role !== "owner") {
+      throw new Error("Only the family owner can transfer ownership.");
+    }
+
+    if (args.targetUserId === currentUserContext.userId) {
+      throw new Error("You cannot transfer ownership to yourself.");
+    }
+
+    const targetMembership = await ctx.db
+      .query("familyMembers")
+      .withIndex("by_familyId_and_userId", (q) =>
+        q.eq("familyId", familyId).eq("userId", args.targetUserId),
+      )
+      .unique();
+
+    if (!targetMembership) {
+      throw new Error("That member is not part of this family.");
+    }
+
+    // Atomic: demote current owner to admin, promote target to owner.
+    await ctx.db.patch(currentMembership._id, { role: "admin" });
+    await ctx.db.patch(targetMembership._id, { role: "owner" });
 
     return { ok: true as const };
   },
@@ -392,6 +490,34 @@ async function deleteEntireFamily(
   await ctx.db.delete(familyId);
 }
 
+export const deleteFamily = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const currentUserContext = await loadCurrentUserContext(ctx);
+
+    if (!currentUserContext.userId || !currentUserContext.familyId) {
+      throw new Error("You must belong to a family to delete it.");
+    }
+
+    const familyId = currentUserContext.familyId;
+
+    const currentMembership = await ctx.db
+      .query("familyMembers")
+      .withIndex("by_familyId_and_userId", (q) =>
+        q.eq("familyId", familyId).eq("userId", currentUserContext.userId!),
+      )
+      .unique();
+
+    if (!currentMembership || currentMembership.role !== "owner") {
+      throw new Error("Only the family owner can delete the family.");
+    }
+
+    await deleteEntireFamily(ctx, familyId);
+
+    return { ok: true as const };
+  },
+});
+
 export const leaveFamily = mutation({
   args: {},
   handler: async (ctx) => {
@@ -404,43 +530,23 @@ export const leaveFamily = mutation({
     const userId = currentUserContext.userId;
     const familyId = currentUserContext.familyId;
 
-    const memberships = await ctx.db
+    const currentMembership = await ctx.db
       .query("familyMembers")
-      .withIndex("by_familyId", (q) => q.eq("familyId", familyId))
-      .collect();
-
-    const currentMembership = memberships.find(
-      (membership) => membership.userId === userId,
-    );
+      .withIndex("by_familyId_and_userId", (q) =>
+        q.eq("familyId", familyId).eq("userId", userId),
+      )
+      .unique();
 
     if (!currentMembership) {
       throw new Error("You are not part of this family.");
     }
 
-    const adminCount = memberships.filter(
-      (membership) => membership.role === "admin",
-    ).length;
-
-    // 分支 1：当前用户是唯一管理员，且家庭内还有其他成员 → 暂不允许直接退出。
-    // 退出会导致家庭失去管理员（无主），管理员转让能力推迟到 v0.4。
-    if (
-      currentMembership.role === "admin" &&
-      adminCount === 1 &&
-      memberships.length > 1
-    ) {
-      throw new Error(
-        "You are the only admin. Transfer the admin role to another member before leaving.",
-      );
+    // Owner 不可直接退出，须先转让所有者身份。
+    if (currentMembership.role === "owner") {
+      throw new Error("Transfer ownership before leaving.");
     }
 
-    // 分支 2：最后一人退出（家庭仅剩当前用户）→ 删除整个家庭的全部数据，无残留。
-    if (memberships.length === 1) {
-      await deleteEntireFamily(ctx, familyId);
-      return { leftFamily: true as const, deletedFamily: true as const };
-    }
-
-    // 分支 3：普通成员 / 非唯一管理员退出 → 删自身 membership + 级联删本家庭自己的
-    // pushSubscriptions（照搬 removeMember），保留 taskCompletionLogs（家庭养护历史）。
+    // Admin / member 自由退出：级联删自身 pushSubscriptions，保留 taskCompletionLogs。
     const ownPushSubscriptions = await ctx.db
       .query("pushSubscriptions")
       .withIndex("by_familyId_and_userId", (q) =>
@@ -453,6 +559,6 @@ export const leaveFamily = mutation({
 
     await ctx.db.delete(currentMembership._id);
 
-    return { leftFamily: true as const, deletedFamily: false as const };
+    return { ok: true as const };
   },
 });
