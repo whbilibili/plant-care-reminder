@@ -6,6 +6,7 @@ import {
   PLANT_NAME_MAX_LENGTH,
   PLANT_NOTE_MAX_LENGTH,
 } from "../../lib/constants";
+import { LocationAutocomplete } from "./LocationAutocomplete";
 import { PlantImageField } from "./PlantImageField";
 import type { PlantFormController } from "./usePlantForm";
 
@@ -13,6 +14,8 @@ interface PlantFormProps {
   form: PlantFormController;
   /** 内部提交按钮的文案（供测试和无 ScreenNav 场景使用）。 */
   submitLabel: string;
+  /** 家庭内已有的位置建议列表（去重、按频率降序）。 */
+  locationSuggestions?: string[];
 }
 
 /**
@@ -24,7 +27,7 @@ interface PlantFormProps {
  * - 字段直接平铺在 paper 底色上
  * - 提交按钮保留在表单底部（测试兼容 + 无障碍 fallback）
  */
-export function PlantForm({ form, submitLabel }: PlantFormProps) {
+export function PlantForm({ form, submitLabel, locationSuggestions }: PlantFormProps) {
   return (
     <form noValidate style={formStyle} onSubmit={form.handleSubmit}>
       <InputField
@@ -58,16 +61,25 @@ export function PlantForm({ form, submitLabel }: PlantFormProps) {
         rows={3}
         value={form.values.note}
       />
-      <InputField
-        autoComplete="off"
-        errorMessage={form.errors.location}
-        hint="选填。方便家人快速找到这盆植物。"
-        label="摆放位置"
-        maxLength={PLANT_LOCATION_MAX_LENGTH}
-        onChange={(event) => form.setFieldValue("location", event.target.value)}
-        placeholder="它放在哪里？"
-        value={form.values.location}
-      />
+      {locationSuggestions && locationSuggestions.length > 0 ? (
+        <LocationAutocomplete
+          suggestions={locationSuggestions}
+          value={form.values.location}
+          onChange={(val) => form.setFieldValue("location", val)}
+          errorMessage={form.errors.location}
+        />
+      ) : (
+        <InputField
+          autoComplete="off"
+          errorMessage={form.errors.location}
+          hint="选填。方便家人快速找到这盆植物。"
+          label="摆放位置"
+          maxLength={PLANT_LOCATION_MAX_LENGTH}
+          onChange={(event) => form.setFieldValue("location", event.target.value)}
+          placeholder="它放在哪里？"
+          value={form.values.location}
+        />
+      )}
       <PlantImageField
         onChange={form.setImageValue}
         value={form.values.image}

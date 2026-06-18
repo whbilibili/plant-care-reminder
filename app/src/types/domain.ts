@@ -95,6 +95,29 @@ export interface PushSubscriptionRecord {
   createdAt: TimestampMs;
 }
 
+// ─── 植物分组与房间筛选（GRP-002）─────────────────────────────
+
+/** 按位置分组后的植物组。 */
+export interface PlantGroup {
+  /** 位置名称；null 表示"未分组"。 */
+  location: string | null;
+  /** 该组内的植物列表。 */
+  plants: PlantListItem[];
+}
+
+/** 植物列表页单项数据（PlantGroupView / PlantListPage 消费）。 */
+export interface PlantListItem {
+  id: PlantId;
+  name: string;
+  location: string | null;
+  imageUrl: string | null;
+  nextDueTask: {
+    taskType: string;
+    customLabel: string | null;
+    nextDueAt: number;
+  } | null;
+}
+
 // ─── 养护历史时间线（CARE-HIST-002）─────────────────────────────
 
 /** 单条植物养护完成日志（listPlantCompletionLogs 返回值单项）。 */

@@ -1,5 +1,5 @@
-import { useMutation } from "convex/react";
-import { useState } from "react";
+import { useMutation, useQuery } from "convex/react";
+import { useMemo, useState } from "react";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -12,7 +12,22 @@ import { usePlantForm } from "./usePlantForm";
 
 export function CreatePlantPage() {
   const createPlant = useMutation(api.plants.createPlant);
+  const plantsData = useQuery(api.plants.listPlantsWithNextDue, {});
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  /** 从已有植物中提取去重位置建议（按频率降序）。 */
+  const locationSuggestions = useMemo(() => {
+    if (!plantsData?.plants) return [];
+    const freq = new Map<string, number>();
+    for (const p of plantsData.plants) {
+      if (p.location) {
+        freq.set(p.location, (freq.get(p.location) ?? 0) + 1);
+      }
+    }
+    return [...freq.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([loc]) => loc);
+  }, [plantsData]);
   const form = usePlantForm({
     onSubmit: async (payload) => {
       setErrorMessage(null);
@@ -52,7 +67,7 @@ export function CreatePlantPage() {
           </button>
         }
       />
-      <PlantForm form={form} submitLabel="保存植物" />
+      <PlantForm form={form} submitLabel="保存植物" locationSuggestions={locationSuggestions} />
       <div style={bottomErrorStyle}>
         <FormError message={errorMessage} />
       </div>

@@ -258,6 +258,7 @@ export const listDueTasks = query({
             plantId: plant._id,
             plantName: plant.name,
             plantImageUrl: imageUrl,
+            plantLocation: plant.location ?? null,
           },
         ] as const;
       }),
@@ -280,6 +281,7 @@ export const listDueTasks = query({
           plantId: plantSummary.plantId,
           plantName: plantSummary.plantName,
           plantImageUrl: plantSummary.plantImageUrl,
+          plantLocation: plantSummary.plantLocation,
           taskType: task.taskType,
           customLabel: task.customLabel ?? null,
           intervalDays: task.intervalDays,

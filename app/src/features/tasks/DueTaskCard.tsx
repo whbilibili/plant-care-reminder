@@ -17,6 +17,7 @@ export interface DueTaskCardData {
   nextDueAt: number;
   plantId: string;
   plantImageUrl: string | null;
+  plantLocation: string | null;
   plantName: string;
   taskId: string;
   taskType: "watering" | "fertilizing" | "misting" | "repotting" | "pruning" | "custom";

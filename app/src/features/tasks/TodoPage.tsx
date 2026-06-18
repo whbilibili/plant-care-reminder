@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "convex/react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Check,
   ChevronDown,
@@ -18,6 +18,7 @@ import { Button } from "../../components/ui/Button";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { CompleteTaskButton } from "./CompleteTaskButton";
 import { FamilyRecentActivity } from "./FamilyRecentActivity";
+import { RoomFilterChips } from "./RoomFilterChips";
 import { UndoToast } from "./UndoToast";
 import { formatTaskTypeLabel } from "./taskTypes";
 import type { DueTaskCardData } from "./DueTaskCard";
@@ -109,6 +110,28 @@ export function TodoPage() {
   const undoComplete = useMutation(api.tasks.undoCompletePlantTask);
   const [undoPayload, setUndoPayload] = useState<ActiveUndo | null>(null);
   const [showAllUpcoming, setShowAllUpcoming] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
+
+  /** 从所有任务中提取去重位置列表（按出现频率降序）。 */
+  const roomLocations = useMemo(() => {
+    if (!result) return [];
+    const allTasks = [...result.overdue, ...result.today, ...result.upcoming];
+    const freq = new Map<string, number>();
+    for (const t of allTasks) {
+      if (t.plantLocation) {
+        freq.set(t.plantLocation, (freq.get(t.plantLocation) ?? 0) + 1);
+      }
+    }
+    return [...freq.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([loc]) => loc);
+  }, [result]);
+
+  /** 按选中房间过滤任务列表。 */
+  function filterByRoom(tasks: DueTaskCardData[]): DueTaskCardData[] {
+    if (selectedRoom === null) return tasks;
+    return tasks.filter((t) => t.plantLocation === selectedRoom);
+  }
 
   async function undoOne(item: CompletionUndoPayload) {
     await undoComplete({
@@ -164,6 +187,15 @@ export function TodoPage() {
         </div>
         </header>
 
+      {/* Room Filter Chips */}
+      {roomLocations.length > 0 && (
+        <RoomFilterChips
+          locations={roomLocations}
+          selected={selectedRoom}
+          onChange={setSelectedRoom}
+        />
+      )}
+
       {/* Status Band */}
       <div style={statusBandStyle}>
         <div style={statusLeftStyle}>
@@ -216,11 +248,11 @@ export function TodoPage() {
       ) : (
         <div style={groupsContainerStyle}>
           {/* Overdue Group */}
-          {result.overdue.length > 0 && (
+          {filterByRoom(result.overdue).length > 0 && (
             <div style={groupBlockStyle}>
-              <h2 style={groupTitleOverdueStyle}><span style={groupTitleBarOverdueStyle} />逾期（{result.overdue.length}）</h2>
+              <h2 style={groupTitleOverdueStyle}><span style={groupTitleBarOverdueStyle} />逾期（{filterByRoom(result.overdue).length}）</h2>
               <GroupedSurface style={overdueGroupStyle}>
-                {result.overdue.map((task, index) => (
+                {filterByRoom(result.overdue).map((task, index) => (
                   <div key={task.taskId}>
                     {index > 0 && <GroupedSurfaceDivider />}
                     <TaskRow
@@ -236,11 +268,11 @@ export function TodoPage() {
           )}
 
           {/* Today Group */}
-          {result.today.length > 0 && (
+          {filterByRoom(result.today).length > 0 && (
             <div style={groupBlockStyle}>
-              <h2 style={groupTitleDefaultStyle}><span style={groupTitleBarDefaultStyle} />今天（{result.today.length}）</h2>
+              <h2 style={groupTitleDefaultStyle}><span style={groupTitleBarDefaultStyle} />今天（{filterByRoom(result.today).length}）</h2>
               <GroupedSurface style={todayGroupStyle}>
-                {result.today.map((task, index) => (
+                {filterByRoom(result.today).map((task, index) => (
                   <div key={task.taskId}>
                     {index > 0 && <GroupedSurfaceDivider />}
                     <TaskRow
@@ -256,11 +288,11 @@ export function TodoPage() {
           )}
 
           {/* Upcoming Group */}
-          {result.upcoming.length > 0 && (
+          {filterByRoom(result.upcoming).length > 0 && (
             <div style={groupBlockStyle}>
-              <h2 style={groupTitleDefaultStyle}><span style={groupTitleBarDefaultStyle} />即将到期（{result.upcoming.length}）</h2>
+              <h2 style={groupTitleDefaultStyle}><span style={groupTitleBarDefaultStyle} />即将到期（{filterByRoom(result.upcoming).length}）</h2>
               <GroupedSurface>
-              {(showAllUpcoming ? result.upcoming : result.upcoming.slice(0, 3)).map(
+              {(showAllUpcoming ? filterByRoom(result.upcoming) : filterByRoom(result.upcoming).slice(0, 3)).map(
                 (task, index) => (
                   <div key={task.taskId}>
                     {index > 0 && <GroupedSurfaceDivider />}
@@ -273,7 +305,7 @@ export function TodoPage() {
                   </div>
                 ),
               )}
-              {result.upcoming.length > 3 && (
+              {filterByRoom(result.upcoming).length > 3 && (
                 <>
                   <GroupedSurfaceDivider />
                   <button

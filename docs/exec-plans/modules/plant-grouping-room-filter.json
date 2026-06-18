@@ -1,0 +1,647 @@
+{
+  "project": "plant-care-reminder",
+  "prd": "docs/product-specs/2026-06-17-plant-grouping-room-filter-spec.md",
+  "task_breakdown": "docs/product-specs/2026-06-17-plant-grouping-room-filter-task-breakdown.md",
+  "created_at": "2026-06-18",
+  "module_intent": "植物分组与房间筛选：利用已有 location 字段，在植物列表页引入按房间分组视图（SegmentedControl 切换 + GroupHeader 折叠/展开），在待办页引入房间筛选标签栏（RoomFilterChips 前端过滤），在植物编辑页引入位置自动补全（LocationAutocomplete）。后端唯一改动为 listDueTasks 补充 plantLocation 字段。每个 Task 同时承载功能开发契约（data/api）与 UI 美化契约（design_contract），二者结合交付。",
+  "design_baseline": {
+    "token_source": "app/src/styles/tokens.css",
+    "hard_rule": "禁止硬编码 #hex；所有色值/间距/圆角/阴影一律引用 token 变量；本次迭代不新增 token（现有 token 已覆盖全部需求）。",
+    "reduced_motion": "所有动效在 prefers-reduced-motion: reduce 下退化为即时状态切换（tokens.css 已有全局兜底）。"
+  },
+  "tasks": [
+    {
+      "task_id": "GRP-001",
+      "description": "后端微调：listDueTasks 植物 join 补充 plantLocation 字段，使待办页任务数据包含关联植物的位置信息。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": ["plants", "plantTasks"],
+            "key_fields": {
+              "plants": "_id, familyId, location",
+              "plantTasks": "_id, plantId, familyId, nextDueAt"
+            },
+            "indexes": ["plantTasks.by_familyId_and_nextDueAt（已有）"],
+            "relations": "plantTasks N:1 plants（通过 plantId）；join 时取 plant.location。",
+            "notes": "无 schema 变更。仅在 listDueTasks 的植物 join 逻辑中多取一个字段。"
+          },
+          "queries": {
+            "read": "listDueTasks：返回对象增加 plantLocation: string | null 字段。",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change. Query return shape only — new field, backward compatible."
+        },
+        "api_layer": {
+          "type": "convex-query",
+          "endpoints": ["tasks.listDueTasks"],
+          "notes": "返回类型新增 plantLocation 字段（plant.location ?? null）。前端需同步类型定义。"
+        },
+        "component_tree": {
+          "entry_component": "N/A",
+          "children": [],
+          "notes": "纯后端改动，前端类型同步在 GRP-002。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "useQuery(api.tasks.listDueTasks) 返回数据新增 plantLocation",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "N/A",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "familyId scope（已有）"
+        },
+        "design_contract": {
+          "ui_spec_ref": "N/A",
+          "intent": "为待办页房间筛选提供数据基础。",
+          "tokens_new": [],
+          "tokens_reuse": [],
+          "visual_change": "无直接视觉变化。",
+          "acceptance": "listDueTasks 返回的每个任务对象包含 plantLocation 字段，值为关联植物的 location 或 null。"
+        }
+      }
+    },
+    {
+      "task_id": "GRP-002",
+      "description": "前端类型定义补充：domain.ts 新增 PlantGroup 接口，DueTask 类型补充 plantLocation 字段。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "纯前端类型定义，不触碰后端。"
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "none",
+          "endpoints": [],
+          "notes": "类型定义与 GRP-001 后端返回对齐。"
+        },
+        "component_tree": {
+          "entry_component": "N/A",
+          "children": [],
+          "notes": "类型文件变更，供后续组件消费。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "N/A",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        },
+        "design_contract": {
+          "ui_spec_ref": "N/A",
+          "intent": "为分组视图和筛选组件提供类型安全基础。",
+          "tokens_new": [],
+          "tokens_reuse": [],
+          "visual_change": "无。",
+          "acceptance": "TypeScript 编译通过；PlantGroup 接口可被 PlantGroupView 消费；DueTask 类型含 plantLocation。"
+        }
+      }
+    },
+    {
+      "task_id": "GRP-003",
+      "description": "通用 SegmentedControl 组件：两选项分段控制器，选中指示器 200ms 滑动动画，全宽布局，复用 --color-leaf 选中态。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "纯前端 UI 组件，不触碰后端。"
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "none",
+          "endpoints": [],
+          "notes": "N/A"
+        },
+        "component_tree": {
+          "entry_component": "SegmentedControl",
+          "children": [],
+          "notes": "通用 UI 组件，放置于 src/components/ui/SegmentedControl.tsx。Props: options: {label, value}[], selected: string, onChange: (value: string) => void。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "N/A（受控组件，状态由父级管理）"
+        },
+        "routing": {
+          "path": "N/A",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        },
+        "design_contract": {
+          "ui_spec_ref": "plant-grouping-room-filter-task-breakdown §6.1",
+          "intent": "紧凑的视图切换器，视觉上属于页面工具栏而非主内容。",
+          "tokens_new": [],
+          "tokens_reuse": ["--color-leaf", "--color-ink", "--color-surface-secondary", "--radius-md", "--font-body-sm"],
+          "spec": {
+            "height": "36px",
+            "width": "100% of content area",
+            "border_radius": "--radius-md (8px)",
+            "selected_bg": "--color-leaf",
+            "selected_text": "white",
+            "unselected_bg": "transparent",
+            "unselected_text": "--color-ink",
+            "animation": "选中指示器 200ms ease 滑动",
+            "container_bg": "--color-surface-secondary"
+          },
+          "acceptance": "两个选项可切换；选中态有 --color-leaf 背景滑动动画；200ms ease 过渡；尊重 reduced-motion。"
+        }
+      }
+    },
+    {
+      "task_id": "GRP-004",
+      "description": "GroupHeader 分组头组件：显示位置名称 + 数量，可折叠/展开，ChevronDown/Up 箭头，40px 高度，surface-secondary 背景。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "纯前端 UI 组件。"
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "none",
+          "endpoints": [],
+          "notes": "N/A"
+        },
+        "component_tree": {
+          "entry_component": "GroupHeader",
+          "children": [],
+          "notes": "放置于 src/features/plants/GroupHeader.tsx。Props: title: string, count: number, isExpanded: boolean, onToggle: () => void。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "N/A（受控组件）"
+        },
+        "routing": {
+          "path": "N/A",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        },
+        "design_contract": {
+          "ui_spec_ref": "plant-grouping-room-filter-task-breakdown §6.2",
+          "intent": "分组头是视觉分隔器，让用户一眼看到每个房间有多少植物。",
+          "tokens_new": [],
+          "tokens_reuse": ["--color-surface-secondary", "--color-ink", "--color-muted", "--font-body-sm"],
+          "spec": {
+            "height": "40px",
+            "background": "--color-surface-secondary",
+            "title_font": "--font-body-sm, font-weight: 600",
+            "title_color": "--color-ink",
+            "count_color": "--color-muted",
+            "count_format": "（N）",
+            "arrow_icon": "ChevronDown/ChevronUp, 16px, --color-muted",
+            "click_area": "整行可点击",
+            "collapse_animation": "组内内容 200ms ease-out 高度收缩",
+            "text_overflow": "ellipsis, max-width = 行宽 - 数量区 - 箭头区"
+          },
+          "acceptance": "分组头显示位置名+数量；点击整行触发折叠/展开；箭头方向随状态变化；超长文本截断。"
+        }
+      }
+    },
+    {
+      "task_id": "GRP-005",
+      "description": "PlantGroupView 分组视图组件：接收分组数据，渲染 GroupHeader + 组内 PlantCard 列表，含分组算法（按数量降序，未分组在最后）和折叠状态管理。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "纯前端组件。分组算法为纯函数 groupPlantsByLocation。"
+          },
+          "queries": {
+            "read": "N/A（消费 listPlantsWithNextDue 返回数据）",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "none",
+          "endpoints": [],
+          "notes": "复用 listPlantsWithNextDue 已返回的 location 字段。"
+        },
+        "component_tree": {
+          "entry_component": "PlantGroupView",
+          "children": ["GroupHeader", "PlantCard"],
+          "notes": "放置于 src/features/plants/PlantGroupView.tsx。Props: groups: PlantGroup[], onPlantPress: (id: string) => void。内含 groupPlantsByLocation 纯函数（可抽为 hook 或 util）。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "expandedGroups: Map<string | null, boolean>（折叠状态，默认全部展开）"
+        },
+        "routing": {
+          "path": "/plants",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        },
+        "design_contract": {
+          "ui_spec_ref": "plant-grouping-room-filter-spec §3.2 + task-breakdown §1.1",
+          "intent": "按房间分组展示植物，让多植物用户快速定位目标房间。",
+          "tokens_new": [],
+          "tokens_reuse": ["--space-sm"],
+          "grouping_algorithm": {
+            "rule": "按 location 字段值分组；null/undefined 归入'未分组'",
+            "sort": "分组按数量降序；'未分组'永远在最后",
+            "inner_sort": "组内排序与全部视图一致（nextDueAt 升序）"
+          },
+          "empty_state": {
+            "all_ungrouped": "引导文案'给植物设置位置，按房间管理更方便'，--color-muted",
+            "no_plants": "复用全部视图空状态"
+          },
+          "acceptance": "分组按数量降序排列；未分组在最后；每组可独立折叠/展开；空 location 时展示引导文案。"
+        }
+      }
+    },
+    {
+      "task_id": "GRP-006",
+      "description": "PlantListPage 集成视图切换：搜索栏下方插入 SegmentedControl，根据选中视图渲染平铺列表或 PlantGroupView，视图选择持久化到 localStorage。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "纯前端集成，不触碰后端。"
+          },
+          "queries": {
+            "read": "N/A（消费已有 listPlantsWithNextDue）",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "none",
+          "endpoints": [],
+          "notes": "N/A"
+        },
+        "component_tree": {
+          "entry_component": "PlantListPage",
+          "children": ["SegmentedControl", "PlantGroupView", "PlantCard (flat list)"],
+          "notes": "PlantListPage 在搜索栏下方新增 SegmentedControl；根据 viewMode 条件渲染平铺列表或 PlantGroupView。分组视图下搜索仍生效（组内过滤，空组隐藏）。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "useQuery(api.plants.listPlantsWithNextDue)",
+          "local_state": "viewMode: 'all' | 'by-room'（初始值从 localStorage 读取，变更时写入）"
+        },
+        "routing": {
+          "path": "/plants",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "familyId scope（已有）"
+        },
+        "design_contract": {
+          "ui_spec_ref": "plant-grouping-room-filter-spec §3.1 + §5.1",
+          "intent": "默认全部视图不打扰少植物用户；多植物用户可切换到分组视图提升定位效率。",
+          "tokens_new": [],
+          "tokens_reuse": ["--space-sm"],
+          "localStorage_key": "plant-care:plant-list-view-mode",
+          "localStorage_values": ["all", "by-room"],
+          "search_in_group_view": "搜索结果仍按分组展示，空组隐藏",
+          "transition": "视图切换 200ms fade 过渡",
+          "acceptance": "搜索栏下方有 SegmentedControl；切换视图有 200ms 过渡；视图选择刷新后保持；分组视图下搜索正常工作。"
+        }
+      }
+    },
+    {
+      "task_id": "GRP-007",
+      "description": "RoomFilterChips 房间筛选标签组件：横向滚动 pill chips，第一个永远是'全部'，选中态 --color-leaf 背景，支持超长文本截断。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "纯前端 UI 组件。"
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "none",
+          "endpoints": [],
+          "notes": "N/A"
+        },
+        "component_tree": {
+          "entry_component": "RoomFilterChips",
+          "children": [],
+          "notes": "放置于 src/features/tasks/RoomFilterChips.tsx。Props: locations: string[], selected: string | null, onChange: (location: string | null) => void。null 表示'全部'。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "N/A（受控组件）"
+        },
+        "routing": {
+          "path": "N/A",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        },
+        "design_contract": {
+          "ui_spec_ref": "plant-grouping-room-filter-spec §5.3 + task-breakdown §6.3",
+          "intent": "让用户一键聚焦某个房间的待办任务，减少视觉噪音。",
+          "tokens_new": [],
+          "tokens_reuse": ["--color-leaf", "--color-surface-secondary", "--color-ink", "--space-md"],
+          "spec": {
+            "container": "overflow-x: auto, hide scrollbar, padding-x: --space-md (16px)",
+            "chip_height": "32px",
+            "chip_border_radius": "16px (pill)",
+            "chip_padding_x": "12px",
+            "chip_gap": "8px",
+            "chip_max_width": "120px (text-overflow: ellipsis)",
+            "selected_bg": "--color-leaf",
+            "selected_text": "white",
+            "unselected_bg": "--color-surface-secondary",
+            "unselected_text": "--color-ink",
+            "first_chip": "永远是'全部'"
+          },
+          "acceptance": "横向滚动不换行；选中态为 --color-leaf 背景白色文字；超长文本截断；第一个 chip 永远是'全部'。"
+        }
+      }
+    },
+    {
+      "task_id": "GRP-008",
+      "description": "TodoPage 集成房间筛选：情感反馈区下方插入 RoomFilterChips，从 listDueTasks 返回数据提取可用 locations，选中后前端过滤三个区段（逾期/今天/即将）。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "消费 GRP-001 补充的 plantLocation 字段。"
+          },
+          "queries": {
+            "read": "useQuery(api.tasks.listDueTasks)（含 plantLocation）",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "none",
+          "endpoints": [],
+          "notes": "纯前端过滤，不新增后端接口。"
+        },
+        "component_tree": {
+          "entry_component": "TodoPage",
+          "children": ["RoomFilterChips"],
+          "notes": "在情感反馈区（Greeting）与任务列表之间插入 RoomFilterChips。新增 extractAvailableLocations 和 filterTasksByLocation 工具函数。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "useQuery(api.tasks.listDueTasks)",
+          "local_state": "selectedLocation: string | null（默认 null = '全部'）"
+        },
+        "routing": {
+          "path": "/todo",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "familyId scope（已有）"
+        },
+        "design_contract": {
+          "ui_spec_ref": "plant-grouping-room-filter-spec §3.3",
+          "intent": "按房间聚焦待办任务，周末集中打理某个区域时不被其他房间干扰。",
+          "tokens_new": [],
+          "tokens_reuse": [],
+          "filter_logic": {
+            "extract": "从 overdue+today+upcoming 所有任务中提取非 null 的 plantLocation，按频率降序",
+            "filter": "selectedLocation 非 null 时，三个区段均按 plantLocation === selectedLocation 过滤",
+            "hide_bar": "只有'全部'一个选项时（所有任务植物都无 location），隐藏整个标签栏",
+            "chip_disappear": "筛选后某 location 无剩余任务时，该 chip 自动消失"
+          },
+          "acceptance": "情感反馈区下方展示筛选栏；只展示有任务的 location；选中后三区段均过滤；筛选不影响完成/推迟操作；全无 location 时标签栏不渲染。"
+        }
+      }
+    },
+    {
+      "task_id": "GRP-009",
+      "description": "LocationAutocomplete 位置自动补全组件：基于 InputField 扩展，输入时实时过滤建议列表，下拉面板绝对定位，支持自由输入新值。",
+      "priority": "2-Medium",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "纯前端 UI 组件。"
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "none",
+          "endpoints": [],
+          "notes": "N/A"
+        },
+        "component_tree": {
+          "entry_component": "LocationAutocomplete",
+          "children": [],
+          "notes": "放置于 src/features/plants/LocationAutocomplete.tsx。Props: value: string, onChange: (v: string) => void, suggestions: string[], maxLength: number。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "isOpen: boolean（下拉展开状态）, filteredSuggestions: string[]（实时过滤结果）"
+        },
+        "routing": {
+          "path": "N/A",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        },
+        "design_contract": {
+          "ui_spec_ref": "plant-grouping-room-filter-task-breakdown §6.4",
+          "intent": "引导用户复用已有位置名称，减少同义不同名问题。",
+          "tokens_new": [],
+          "tokens_reuse": ["--color-surface", "--shadow-card", "--radius-md"],
+          "spec": {
+            "input": "基于现有 InputField 样式，保留 maxLength 30",
+            "dropdown_position": "绝对定位于输入框下方",
+            "dropdown_bg": "--color-surface",
+            "dropdown_shadow": "--shadow-card",
+            "dropdown_radius": "--radius-md",
+            "item_height": "40px",
+            "max_visible_items": "8（超出可滚动）",
+            "filter_logic": "不区分大小写的 includes 匹配",
+            "focus_behavior": "获得焦点且有 suggestions 时，展示完整列表",
+            "close_triggers": "点击外部 / 选择建议项"
+          },
+          "acceptance": "输入时实时过滤建议；点击建议项填入并关闭；可自由输入新值；焦点时展示全部建议；点击外部关闭。"
+        }
+      }
+    },
+    {
+      "task_id": "GRP-010",
+      "description": "PlantForm 集成 autocomplete：location 字段从 InputField 替换为 LocationAutocomplete，suggestions 从 listPlantsWithNextDue 数据中提取去重。",
+      "priority": "2-Medium",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "纯前端集成。suggestions 从已有 query 数据中提取。"
+          },
+          "queries": {
+            "read": "useQuery(api.plants.listPlantsWithNextDue)（提取 location 去重）",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "none",
+          "endpoints": [],
+          "notes": "复用已有 query，无需新增接口。"
+        },
+        "component_tree": {
+          "entry_component": "PlantForm",
+          "children": ["LocationAutocomplete"],
+          "notes": "PlantForm.tsx 中 location 字段的 InputField 替换为 LocationAutocomplete。suggestions 通过 [...new Set(plants.map(p => p.location).filter(Boolean))] 从 listPlantsWithNextDue 数据中提取。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "useQuery(api.plants.listPlantsWithNextDue) 提供 suggestions 数据源",
+          "local_state": "isDropdownOpen: boolean, filteredSuggestions: string[]"
+        },
+        "routing": {
+          "path": "/plants/:id/edit 和 /plants/new",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "familyId scope"
+        },
+        "design_contract": {
+          "ui_spec_ref": "plant-grouping-room-filter-task-breakdown §6.4",
+          "intent": "减少同义不同名问题，引导用户复用已有位置名称，同时保留自由输入能力。",
+          "tokens_new": [],
+          "tokens_reuse": ["--color-surface", "--shadow-card", "--radius-md", "--color-ink", "--color-mist"],
+          "dropdown_spec": {
+            "position": "绝对定位于输入框下方",
+            "background": "--color-surface",
+            "shadow": "--shadow-card",
+            "border_radius": "--radius-md",
+            "item_height": "40px",
+            "max_visible_items": 8,
+            "match_mode": "不区分大小写 includes",
+            "trigger": "聚焦即展示全部建议；输入时实时过滤",
+            "dismiss": "点击外部或选择建议项"
+          },
+          "acceptance": "输入框聚焦后展示已有位置列表；输入时实时过滤；选择建议项后填入并关闭下拉；可自由输入新值。"
+        }
+      }
+    }
+  ]
+}

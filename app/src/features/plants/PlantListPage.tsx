@@ -5,11 +5,13 @@ import { useMemo, useRef, useState } from "react";
 import { api } from "../../../convex/_generated/api";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { Icon } from "../../components/ui/Icon";
+import { SegmentedControl } from "../../components/ui/SegmentedControl";
 import { navigate } from "../../app/router";
 import { formatDueDate, formatTaskTypeLabel } from "../../lib/formatters";
 import { getTaskTypeIcon, type CareTaskType } from "../tasks/taskTypes";
 import { taskTypeColorVar } from "../tasks/TaskTypeBadge";
 import { ArchivedSection } from "./ArchivedSection";
+import { PlantGroupView } from "./PlantGroupView";
 import { PlantImage } from "./PlantImage";
 
 interface PlantListCardData {
@@ -33,8 +35,25 @@ interface PlantListResponse {
   plants: PlantListCardData[];
 }
 
+const VIEW_MODE_KEY = "plant-care:plant-list-view-mode";
+type ViewMode = "all" | "by-room";
+
+const VIEW_OPTIONS = [
+  { label: "全部", value: "all" },
+  { label: "按房间", value: "by-room" },
+] as const;
+
+function getInitialViewMode(): ViewMode {
+  try {
+    const stored = localStorage.getItem(VIEW_MODE_KEY);
+    if (stored === "all" || stored === "by-room") return stored;
+  } catch { /* ignore */ }
+  return "all";
+}
+
 export function PlantListPage() {
   const [searchText, setSearchText] = useState("");
+  const [viewMode, setViewMode] = useState<ViewMode>(getInitialViewMode);
   const result = useQuery(api.plants.listPlantsWithNextDue, {}) as PlantListResponse | undefined;
   const hasAnimatedRef = useRef(false);
 
@@ -84,6 +103,100 @@ export function PlantListPage() {
     return `上次养护 ${daysAgo} 天前`;
   }
 
+  function renderPlantCard(plant: PlantListCardData, index: number, animate: boolean) {
+    const nextDueTitle = plant.nextDueTask
+      ? formatTaskTypeLabel(plant.nextDueTask.taskType, plant.nextDueTask.customLabel)
+      : null;
+    const nextDueCopy = plant.nextDueTask
+      ? formatDueDate(plant.nextDueTask.nextDueAt)
+      : null;
+    const taskType = plant.nextDueTask?.taskType ?? null;
+    const isOverdue = plant.nextDueTask
+      ? plant.nextDueTask.nextDueAt < Date.now()
+      : false;
+    const lastCare = getLastCareDaysAgo(plant);
+
+    return (
+      <article
+        key={plant.id}
+        className="plant-card"
+        onClick={() => navigate(`/plants/${plant.id}`)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            navigate(`/plants/${plant.id}`);
+          }
+        }}
+        aria-label={`查看${plant.name}详情`}
+        style={{
+          ...cardStyle,
+          ...(animate ? getStaggerStyle(index) : undefined),
+        }}
+      >
+        {/* Large photo */}
+        <div style={photoSlotStyle}>
+          <PlantImage
+            alt={`${plant.name}封面图`}
+            imageUrl={plant.imageUrl}
+            plantName={plant.name}
+            slotSize={120}
+          />
+        </div>
+
+        {/* Content right side */}
+        <div style={cardContentStyle}>
+          {/* Name row */}
+          <div style={nameRowStyle}>
+            <h2 style={cardNameStyle}>{plant.name}</h2>
+            <span style={chevronStyle} aria-hidden="true">
+              <Icon icon={ChevronRight} size={18} colorVar="--color-muted" />
+            </span>
+          </div>
+
+          {/* Location */}
+          {plant.location?.trim() ? (
+            <p style={locationStyle}>
+              <span style={locationIconStyle}>
+                <Icon icon={MapPin} size={13} colorVar="--color-muted" />
+              </span>
+              {plant.location.trim()}
+            </p>
+          ) : null}
+
+          {/* Next task pill */}
+          {nextDueTitle ? (
+            <span
+              style={{
+                ...pillStyle,
+                background: isOverdue
+                  ? "rgba(235, 87, 87, 0.08)"
+                  : "rgba(45, 140, 100, 0.08)",
+                color: isOverdue ? "var(--color-warning)" : "var(--color-leaf)",
+              }}
+            >
+              {taskType ? (
+                <span style={{ display: "inline-flex", alignItems: "center", color: isOverdue ? "var(--color-warning)" : taskTypeColorVar(taskType) }}>
+                  <Icon icon={getTaskTypeIcon(taskType)} size={14} />
+                </span>
+              ) : null}
+              <span>{nextDueCopy ? `${nextDueCopy} ${nextDueTitle}` : nextDueTitle}</span>
+              <span style={{ display: "inline-flex", alignItems: "center", marginLeft: "2px" }}>
+                <Icon icon={ChevronRight} size={13} />
+              </span>
+            </span>
+          ) : (
+            <span style={noCareStyle}>还没有养护任务</span>
+          )}
+
+          {/* Last care hint */}
+          {lastCare ? <p style={lastCareStyle}>{lastCare}</p> : null}
+        </div>
+      </article>
+    );
+  }
+
   return (
     <section style={pageStyle}>
       {/* Header */}
@@ -116,6 +229,19 @@ export function PlantListPage() {
         />
       </div>
 
+      {/* View mode toggle */}
+      {activePlants.length > 0 && (
+        <SegmentedControl
+          onChange={(v) => {
+            const mode = v as ViewMode;
+            setViewMode(mode);
+            try { localStorage.setItem(VIEW_MODE_KEY, mode); } catch { /* ignore */ }
+          }}
+          options={[...VIEW_OPTIONS]}
+          selected={viewMode}
+        />
+      )}
+
       {/* Plant list */}
       {activePlants.length === 0 ? (
         <EmptyState
@@ -131,101 +257,15 @@ export function PlantListPage() {
           description="试试输入植物名称，或者它所在的位置。"
           minHeight="200px"
         />
+      ) : viewMode === "by-room" ? (
+        <PlantGroupView
+          filteredPlants={filteredPlants}
+          plants={activePlants}
+          renderPlant={(plant, index) => renderPlantCard(plant, index, shouldAnimate)}
+        />
       ) : (
         <div style={listStyle}>
-          {filteredPlants.map((plant, index) => {
-            const nextDueTitle = plant.nextDueTask
-              ? formatTaskTypeLabel(plant.nextDueTask.taskType, plant.nextDueTask.customLabel)
-              : null;
-            const nextDueCopy = plant.nextDueTask
-              ? formatDueDate(plant.nextDueTask.nextDueAt)
-              : null;
-            const taskType = plant.nextDueTask?.taskType ?? null;
-            const isOverdue = plant.nextDueTask
-              ? plant.nextDueTask.nextDueAt < Date.now()
-              : false;
-            const lastCare = getLastCareDaysAgo(plant);
-
-            return (
-              <article
-                key={plant.id}
-                className="plant-card"
-                onClick={() => navigate(`/plants/${plant.id}`)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    navigate(`/plants/${plant.id}`);
-                  }
-                }}
-                aria-label={`查看${plant.name}详情`}
-                style={{
-                  ...cardStyle,
-                  ...(shouldAnimate ? getStaggerStyle(index) : undefined),
-                }}
-              >
-                {/* Large photo */}
-                <div style={photoSlotStyle}>
-                  <PlantImage
-                    alt={`${plant.name}封面图`}
-                    imageUrl={plant.imageUrl}
-                    plantName={plant.name}
-                    slotSize={120}
-                  />
-                </div>
-
-                {/* Content right side */}
-                <div style={cardContentStyle}>
-                  {/* Name row */}
-                  <div style={nameRowStyle}>
-                    <h2 style={cardNameStyle}>{plant.name}</h2>
-                    <span style={chevronStyle} aria-hidden="true">
-                      <Icon icon={ChevronRight} size={18} colorVar="--color-muted" />
-                    </span>
-                  </div>
-
-                  {/* Location */}
-                  {plant.location?.trim() ? (
-                    <p style={locationStyle}>
-                      <span style={locationIconStyle}>
-                        <Icon icon={MapPin} size={13} colorVar="--color-muted" />
-                      </span>
-                      {plant.location.trim()}
-                    </p>
-                  ) : null}
-
-                  {/* Next task pill */}
-                  {nextDueTitle ? (
-                    <span
-                      style={{
-                        ...pillStyle,
-                        background: isOverdue
-                          ? "rgba(235, 87, 87, 0.08)"
-                          : "rgba(45, 140, 100, 0.08)",
-                        color: isOverdue ? "var(--color-warning)" : "var(--color-leaf)",
-                      }}
-                    >
-                      {taskType ? (
-                        <span style={{ display: "inline-flex", alignItems: "center", color: isOverdue ? "var(--color-warning)" : taskTypeColorVar(taskType) }}>
-                          <Icon icon={getTaskTypeIcon(taskType)} size={14} />
-                        </span>
-                      ) : null}
-                      <span>{nextDueCopy ? `${nextDueCopy} ${nextDueTitle}` : nextDueTitle}</span>
-                      <span style={{ display: "inline-flex", alignItems: "center", marginLeft: "2px" }}>
-                        <Icon icon={ChevronRight} size={13} />
-                      </span>
-                    </span>
-                  ) : (
-                    <span style={noCareStyle}>还没有养护任务</span>
-                  )}
-
-                  {/* Last care hint */}
-                  {lastCare ? <p style={lastCareStyle}>{lastCare}</p> : null}
-                </div>
-              </article>
-            );
-          })}
+          {filteredPlants.map((plant, index) => renderPlantCard(plant, index, shouldAnimate))}
         </div>
       )}
 
