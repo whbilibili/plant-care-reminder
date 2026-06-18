@@ -149,7 +149,7 @@ export function PlantListPage() {
             alt={`${plant.name}封面图`}
             imageUrl={plant.imageUrl}
             plantName={plant.name}
-            slotSize={72}
+            slotSize={64}
           />
         </div>
 
@@ -340,14 +340,14 @@ const searchIconStyle: React.CSSProperties = {
 };
 
 const searchInputStyle: React.CSSProperties = {
-  height: "44px",
+  height: "42px",
   width: "100%",
   boxSizing: "border-box",
   padding: "0 var(--space-md) 0 38px",
   borderRadius: "var(--radius-pill)",
-  border: "none",
+  border: "1px solid rgba(45,140,100,0.08)",
   outline: "none",
-  background: "var(--color-mist)",
+  background: "rgba(45,140,100,0.03)",
   color: "var(--color-ink)",
   fontFamily: "var(--font-body)",
   fontSize: "14px",
@@ -358,18 +358,18 @@ const searchInputStyle: React.CSSProperties = {
 const listStyle: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  gap: "var(--space-sm)",
+  gap: "10px",
   minWidth: 0,
 };
 
 const cardStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
-  padding: "12px",
-  borderRadius: "var(--radius-card)",
-  border: "1px solid var(--color-line)",
+  padding: "14px",
+  borderRadius: "16px",
+  border: "1px solid rgba(45,140,100,0.06)",
   background: "var(--color-surface)",
-  boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+  boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 4px 14px rgba(45,140,100,0.06)",
   cursor: "pointer",
   gap: "12px",
   overflow: "hidden",
@@ -377,11 +377,13 @@ const cardStyle: React.CSSProperties = {
 
 const photoSlotStyle: React.CSSProperties = {
   flexShrink: 0,
-  width: "72px",
-  height: "72px",
-  borderRadius: "12px",
+  width: "64px",
+  height: "64px",
+  borderRadius: "14px",
   overflow: "hidden",
   background: "var(--color-mist)",
+  boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+  border: "2px solid #fff",
 };
 
 const cardContentStyle: React.CSSProperties = {
@@ -449,6 +451,7 @@ const pillStyle: React.CSSProperties = {
   fontSize: "13px",
   fontWeight: 600,
   lineHeight: 1.3,
+  borderLeft: "3px solid currentColor",
 };
 
 const noCareStyle: React.CSSProperties = {
