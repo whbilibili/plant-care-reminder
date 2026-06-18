@@ -1,7 +1,7 @@
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 
-import type { Doc } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import { type MutationCtx, mutation, query } from "./_generated/server";
 import { getCurrentUserContext as loadCurrentUserContext } from "./lib/auth";
 import { plantTaskTypeValidator } from "./lib/validators";
@@ -520,43 +520,36 @@ export const listPlantCompletionLogs = query({
 
     // 批量去重 join users 表
     const userIds = [...new Set(paginatedLogs.page.map((log) => log.completedBy))];
-    const usersMap = new Map<string, { displayName: string; imageStorageId: string | null }>();
+    const usersMap = new Map<Id<"users">, { displayName: string; imageStorageId: string | null }>();
     await Promise.all(
       userIds.map(async (userId) => {
         const user = await ctx.db.get(userId);
-        usersMap.set(userId as string, {
+        usersMap.set(userId, {
           displayName: user?.displayName ?? user?.name ?? "未知成员",
           imageStorageId: (user?.imageStorageId as string | undefined) ?? null,
         });
       }),
     );
 
-    // 计算 totalCount（该植物总完成次数）
-    const allLogs = await ctx.db
-      .query("taskCompletionLogs")
-      .withIndex("by_plantId_and_completedAt", (q) => q.eq("plantId", args.plantId))
-      .collect();
-    const totalCount = allLogs.length;
-
     // 批量去重 join plantTasks 表以获取 customLabel（日志表不存 customLabel）
     const taskIds = [...new Set(paginatedLogs.page.map((log) => log.taskId))];
-    const tasksMap = new Map<string, string | null>();
+    const tasksMap = new Map<Id<"plantTasks">, string | null>();
     await Promise.all(
       taskIds.map(async (taskId) => {
         const taskDoc = await ctx.db.get(taskId);
-        tasksMap.set(taskId as string, taskDoc?.customLabel ?? null);
+        tasksMap.set(taskId, taskDoc?.customLabel ?? null);
       }),
     );
 
     const page = paginatedLogs.page.map((log) => {
-      const userInfo = usersMap.get(log.completedBy as string) ?? {
+      const userInfo = usersMap.get(log.completedBy) ?? {
         displayName: "未知成员",
         imageStorageId: null,
       };
       return {
         logId: log._id,
         taskType: log.taskType,
-        customLabel: tasksMap.get(log.taskId as string) ?? null,
+        customLabel: tasksMap.get(log.taskId) ?? null,
         completedByName: userInfo.displayName,
         completedByImageStorageId: userInfo.imageStorageId,
         completedAt: log.completedAt,
@@ -565,7 +558,6 @@ export const listPlantCompletionLogs = query({
 
     return {
       page,
-      totalCount,
       isDone: paginatedLogs.isDone,
       continueCursor: paginatedLogs.continueCursor,
     };
@@ -597,11 +589,11 @@ export const listFamilyRecentActivity = query({
 
     // 批量去重 join users 表
     const userIds = [...new Set(recentLogs.map((log) => log.completedBy))];
-    const usersMap = new Map<string, { displayName: string; imageStorageId: string | null }>();
+    const usersMap = new Map<Id<"users">, { displayName: string; imageStorageId: string | null }>();
     await Promise.all(
       userIds.map(async (userId) => {
         const user = await ctx.db.get(userId);
-        usersMap.set(userId as string, {
+        usersMap.set(userId, {
           displayName: user?.displayName ?? user?.name ?? "未知成员",
           imageStorageId: (user?.imageStorageId as string | undefined) ?? null,
         });
@@ -610,36 +602,36 @@ export const listFamilyRecentActivity = query({
 
     // 批量去重 join plants 表
     const plantIds = [...new Set(recentLogs.map((log) => log.plantId))];
-    const plantsMap = new Map<string, string>();
+    const plantsMap = new Map<Id<"plants">, string>();
     await Promise.all(
       plantIds.map(async (plantId) => {
         const plantDoc = await ctx.db.get(plantId);
-        plantsMap.set(plantId as string, plantDoc?.name ?? "已删除的植物");
+        plantsMap.set(plantId, plantDoc?.name ?? "已删除的植物");
       }),
     );
 
     // 批量去重 join plantTasks 表获取 customLabel
     const taskIds = [...new Set(recentLogs.map((log) => log.taskId))];
-    const tasksMap = new Map<string, string | null>();
+    const tasksMap = new Map<Id<"plantTasks">, string | null>();
     await Promise.all(
       taskIds.map(async (taskId) => {
         const taskDoc = await ctx.db.get(taskId);
-        tasksMap.set(taskId as string, taskDoc?.customLabel ?? null);
+        tasksMap.set(taskId, taskDoc?.customLabel ?? null);
       }),
     );
 
     return recentLogs.map((log) => {
-      const userInfo = usersMap.get(log.completedBy as string) ?? {
+      const userInfo = usersMap.get(log.completedBy) ?? {
         displayName: "未知成员",
         imageStorageId: null,
       };
       return {
         logId: log._id,
         taskType: log.taskType,
-        customLabel: tasksMap.get(log.taskId as string) ?? null,
+        customLabel: tasksMap.get(log.taskId) ?? null,
         completedByName: userInfo.displayName,
         completedByImageStorageId: userInfo.imageStorageId,
-        plantName: plantsMap.get(log.plantId as string) ?? "已删除的植物",
+        plantName: plantsMap.get(log.plantId) ?? "已删除的植物",
         plantId: log.plantId,
         completedAt: log.completedAt,
       };

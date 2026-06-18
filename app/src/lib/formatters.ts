@@ -57,8 +57,8 @@ const relativeFullDateFormatter = new Intl.DateTimeFormat("zh-CN", {
 /**
  * 将时间戳格式化为相对时间文案（四档）。
  * - ≤60s → 「刚刚」
- * - ≤60min → 「N 分钟前」
- * - ≤24h → 「N 小时前」
+ * - <60min → 「N 分钟前」（1–59）
+ * - <24h → 「N 小时前」（1–23）
  * - 同年 → 「M月D日」
  * - 跨年 → 「YYYY年M月D日」
  *
@@ -81,12 +81,12 @@ export function formatRelativeTime(
   }
 
   const diffMinutes = Math.floor(diffMs / (1000 * 60));
-  if (diffMinutes <= 60) {
+  if (diffMinutes < 60) {
     return `${diffMinutes} 分钟前`;
   }
 
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  if (diffHours <= 24) {
+  if (diffHours < 24) {
     return `${diffHours} 小时前`;
   }
 

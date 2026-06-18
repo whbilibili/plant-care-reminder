@@ -45,12 +45,11 @@ export function CompletionLogRow({
       </span>
 
       {/* 成员头像（24×24） */}
-      <span style={avatarWrapStyle}>
-        <MemberAvatar
-          name={completedByName}
-          imageStorageId={completedByImageStorageId}
-        />
-      </span>
+      <MemberAvatar
+        name={completedByName}
+        imageStorageId={completedByImageStorageId}
+        size={24}
+      />
 
       {/* 文案内容 */}
       <span style={textStyle}>
@@ -86,19 +85,6 @@ const iconWrapStyle: CSSProperties = {
   justifyContent: "center",
   width: "20px",
   height: "20px",
-};
-
-const avatarWrapStyle: CSSProperties = {
-  flexShrink: 0,
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  /** 覆盖 MemberAvatar 默认 36px 为 24×24。 */
-  width: "24px",
-  height: "24px",
-  fontSize: "11px",
-  transform: "scale(0.667)",
-  transformOrigin: "center",
 };
 
 const textStyle: CSSProperties = {

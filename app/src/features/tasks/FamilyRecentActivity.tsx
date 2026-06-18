@@ -70,7 +70,7 @@ const groupTitleStyle: CSSProperties = {
   lineHeight: 1.3,
   display: "flex",
   alignItems: "center",
-  gap: "8px",
+  gap: "var(--space-sm)",
   color: "var(--color-leaf)",
 };
 

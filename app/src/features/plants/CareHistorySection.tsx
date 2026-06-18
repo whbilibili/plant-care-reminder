@@ -14,7 +14,7 @@ import type { CareTaskType } from "../tasks/taskTypes";
 const PAGE_SIZE = 20;
 
 interface CareHistorySectionProps {
-  plantId: string;
+  plantId: Id<"plants">;
 }
 
 /**
@@ -37,7 +37,7 @@ export function CareHistorySection({ plantId }: CareHistorySectionProps) {
 
   // 轻量 summary query：始终订阅，提供折叠态概览数据
   const summary = useQuery(api.tasks.getPlantCareHistorySummary, {
-    plantId: plantId as Id<"plants">,
+    plantId,
   });
 
   const totalCount = summary?.totalCount ?? 0;
@@ -80,13 +80,13 @@ export function CareHistorySection({ plantId }: CareHistorySectionProps) {
 // ─── 展开后的记录面板 ──────────────────────────────────────────
 
 interface CareHistoryPanelProps {
-  plantId: string;
+  plantId: Id<"plants">;
 }
 
 function CareHistoryPanel({ plantId }: CareHistoryPanelProps) {
   const { results, status, loadMore, isLoading } = usePaginatedQuery(
     api.tasks.listPlantCompletionLogs,
-    { plantId: plantId as Id<"plants"> },
+    { plantId },
     { initialNumItems: PAGE_SIZE },
   );
 

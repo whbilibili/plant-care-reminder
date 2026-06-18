@@ -432,7 +432,7 @@ export function PlantDetailPage({ plantId }: PlantDetailPageProps) {
 
       {/* 养护记录折叠区（CARE-HIST-003 / CARE-HIST-005：L3.5 位置） */}
       <div style={sectionSpacingStyle}>
-        <CareHistorySection plantId={plant.id} />
+        <CareHistorySection plantId={plant.id as Id<"plants">} />
       </div>
 
       {/* 植物档案 section */}
