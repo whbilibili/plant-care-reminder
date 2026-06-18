@@ -30,6 +30,22 @@
   - 迭代 v0.3 PRD：设置页四项能力补齐（个人头像上传、家庭改名、邀请链接、退出家庭），含数据一致性与单一家庭红线约束（D1~D6 已拍板决策）
 - [2026-06-15-settings-page-v0.3-task-breakdown.md](./2026-06-15-settings-page-v0.3-task-breakdown.md)
   - 迭代 v0.3 功能规格：基于 v0.3 PRD 的可执行任务清单（SET3-001~016），功能任务（BE/FE）与 UI 美化任务逐能力配对，含 D5 数据一致性边界用例、依赖拓扑与落地节奏（对应 Agent 清单 modules/settings-page-v0.3.json）
+- [2026-06-10-todo-page-feature-list.md](./2026-06-10-todo-page-feature-list.md)
+  - 待办页 v0.2 功能清单：功能开发 × UI 美化对照表（8 个垂直切片 TODO2-001~008），含数据层 schema 扩展、Convex Functions 增量、UI 组件清单与依赖执行顺序
+- [2026-06-15-plant-navigation-discoverability-spec.md](./2026-06-15-plant-navigation-discoverability-spec.md)
+  - 迭代 v0.3 PRD：植物导航与可发现性专项——一卡一意图收敛入口、详情页管理操作分层显性化、真删除实现、统一编辑语义、表单页返回出口、删除二次确认重设计、无图卡片兜底（Q1~Q9 已拍板决策，T1~T11 改动范围）
+- [2026-06-15-plant-navigation-ui-design.md](./2026-06-15-plant-navigation-ui-design.md)
+  - 迭代 v0.3 UI 设计规格：植物导航重设计视觉规格——列表卡去铅笔加 chevron、Hero 编辑入口、管理区归档/删除分层、danger ConfirmSheet 统一、FormNavBar 表单返回栏、PlantAvatar 默认头像组件（与导航 PRD 配套）
+- [2026-06-17-role-permission-management-spec.md](./2026-06-17-role-permission-management-spec.md)
+  - 迭代 v0.4 PRD：角色与权限管理——引入 owner/admin/member 三级角色体系，替代 v0.3 D5 临时方案，含权限矩阵、owner 转让、删除家庭、数据迁移方案与验收标准
+- [2026-06-17-care-history-timeline-spec.md](./2026-06-17-care-history-timeline-spec.md)
+  - P0 PRD：养护历史时间线——基于已有 taskCompletionLogs 构建植物级时间线 + 家庭动态流，让完成记录可见可回溯，含索引方案、分页策略与验收标准
+- [2026-06-17-push-notification-enhancement-spec.md](./2026-06-17-push-notification-enhancement-spec.md)
+  - P0 PRD：推送通知体验增强——通知深链跳转（点击直达植物详情）、推送时间偏好（每天几点提醒）、到期任务聚合推送，从"能推"到"推得准"
+- [2026-06-17-plant-grouping-room-filter-spec.md](./2026-06-17-plant-grouping-room-filter-spec.md)
+  - P0 PRD：植物分组与房间筛选——利用已有 location 字段构建按房间分组视图 + 待办页房间筛选标签 + 位置自动补全，纯前端实现
+- [2026-06-17-iteration-backlog-outline.md](./2026-06-17-iteration-backlog-outline.md)
+  - 迭代需求储备大纲：P1（多图上传/任务灵活性/数据导出）和 P2（植物知识卡片/季节性建议/协作增强）六个方向的初步方案记录
 
 ## 约定
 

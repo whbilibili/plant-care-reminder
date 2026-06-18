@@ -1,0 +1,641 @@
+{
+  "project": "plant-care-reminder",
+  "prd": "docs/product-specs/2026-06-17-role-permission-management-spec.md",
+  "created_at": "2026-06-17",
+  "module_intent": "角色与权限管理 v0.4 迭代：引入三级角色体系（owner / admin / member），替代 v0.3 D5 的临时方案。核心能力：(1) 数据模型扩展 familyRoleValues 新增 owner；(2) createFamily 创建者 role→owner；(3) 现有接口权限校验从 role!=='admin' 改为 role==='member'（owner/admin 统一放行）；(4) 新增 updateMemberRole（admin↔member 互换，不可操作 owner）；(5) 新增 transferOwnership（原子操作，原 owner→admin + 目标→owner）；(6) 新增 deleteFamily（owner-only 显式解散）；(7) leaveFamily 改造（owner 禁退，删除最后一人隐式删除逻辑）；(8) removeMember 改造（不可移除 owner，admin 可互移）；(9) 前端成员列表角色标签+操作 sheet（动态权限菜单）；(10) 数据迁移（现有创建者 admin→owner）。落地节奏：P0=数据模型+权限校验改造+核心 mutation，P1=前端交互+数据迁移。",
+  "design_baseline": {
+    "token_source": "app/src/styles/tokens.css",
+    "hard_rule": "禁止硬编码 #hex；所有色值/间距/圆角/阴影一律引用 token 变量；本次迭代不新增 token（角色标签色沿用既有 --color-primary / --color-text-tertiary）。",
+    "color_discipline": "owner 标签用 --color-primary（品牌绿）；admin 标签用 --color-text-tertiary（次级灰）；破坏性确认（转让/删除家庭）走 ConfirmSheet danger-solid。"
+  },
+  "reuse_inventory": {
+    "resetInviteCode_admin_pattern": "app/convex/families.ts — admin 权限校验范本（改为 isAtLeastAdmin helper）",
+    "removeMember_cascade_pattern": "app/convex/families.ts — 级联删 pushSubscriptions / 保留 taskCompletionLogs 范本",
+    "deleteEntireFamily": "app/convex/families.ts — 已有整库删除函数，deleteFamily 直接复用",
+    "ConfirmSheet": "app/src/components/ui/ConfirmSheet.tsx — 转让确认 + 删除家庭确认（danger-solid）",
+    "MemberAvatar": "app/src/features/family/MemberAvatar.tsx — 成员列表复用",
+    "getFamilySettingsSummary": "app/convex/families.ts — 已返回 role / isCreator，需扩展排序逻辑"
+  },
+  "tasks": [
+    {
+      "task_id": "ROLE-001",
+      "description": "数据模型扩展：familyRoleValues 新增 'owner'，familyRoleValidator 自动跟随。createFamily 中创建者 membership role 从 'admin' 改为 'owner'。新增 isAtLeastAdmin(role) helper 函数供后续权限校验统一使用。",
+      "priority": "0-Critical",
+      "status": "completed",
+      "completion_note": "validators.ts familyRoleValues=[owner,admin,member]; families.ts createFamily role→owner; 新建 lib/roleHelpers.ts 导出 FamilyRole type + isAtLeastAdmin(role); 前端 domain.ts 同步三值; FamilySettingsPage/MembersManagePage/MembersList formatRole 补 owner→所有者; convex --once typecheck + tsc -b 均通过。",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": ["familyMembers"],
+            "key_fields": {"familyMembers": "role — 新增 'owner' 字面量"},
+            "indexes": [],
+            "relations": "familyMembers.role 从 union('admin','member') 扩展为 union('owner','admin','member')",
+            "notes": "schema.ts 无需改动（familyMemberFields.role 已引用 familyRoleValidator，只需改 validators.ts）。createFamily mutation 中 role:'admin' → role:'owner'。"
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "createFamily mutation：创建者 membership 的 role 改为 'owner'"
+          },
+          "migration_strategy": "Convex schema push（widen：新增 union 成员是向后兼容的，不需要数据迁移即可部署）"
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [],
+          "notes": "本 Task 只改数据模型和 helper，不新增接口。新增 lib/roleHelpers.ts：export function isAtLeastAdmin(role: string): boolean { return role === 'owner' || role === 'admin'; }"
+        },
+        "component_tree": {"entry_component": "N/A", "children": [], "notes": "纯后端"},
+        "state_management": {"global_store": "N/A", "server_state": "N/A", "local_state": "N/A"},
+        "routing": {"path": "N/A", "guard": "N/A", "middleware": "N/A"},
+        "auth": {"provider": "Convex Auth (existing)", "strategy": "N/A", "rls_or_rbac": "三级角色体系的数据基础"},
+        "design_contract": {"ui_spec_ref": "N/A", "intent": "纯数据层变更", "tokens_new": [], "tokens_reuse": [], "visual_spec": {}, "accessibility": "N/A", "acceptance": "Convex typecheck 通过；createFamily 创建者 role 为 owner。"}
+      },
+      "verification": {
+        "auto": "cd app && npx convex dev --once --typecheck enable",
+        "data": "createFamily 后 familyMembers 记录 role === 'owner'",
+        "visual": "N/A",
+        "manual": "npm run typecheck 无 error"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/convex/lib/validators.ts (modify: familyRoleValues 新增 'owner')",
+          "app/convex/families.ts (modify: createFamily role 改为 'owner')",
+          "app/convex/lib/roleHelpers.ts (new: isAtLeastAdmin helper)"
+        ],
+        "modules": ["role-permission-v0.4"],
+        "layer": "backend",
+        "epic": "E1 数据模型与权限基础"
+      },
+      "acceptance_criteria": [
+        "familyRoleValues 为 ['owner', 'admin', 'member']",
+        "createFamily 创建者 membership role === 'owner'",
+        "isAtLeastAdmin('owner') === true, isAtLeastAdmin('admin') === true, isAtLeastAdmin('member') === false",
+        "Convex typecheck 通过"
+      ]
+    },
+    {
+      "task_id": "ROLE-002",
+      "description": "现有接口权限校验改造：renameFamily / resetInviteCode / removeMember 中的 role !== 'admin' 改为使用 isAtLeastAdmin(role) 校验（owner 和 admin 统一放行）。removeMember 中 'targetUserId === family.createdBy' 保护改为 'targetMembership.role === owner' 保护，并允许 admin 互移（删除 admin 不可移除其他 admin 的隐式限制）。",
+      "priority": "0-Critical",
+      "status": "completed",
+      "completion_note": "families.ts 三处权限校验改为 isAtLeastAdmin(role)：renameFamily(L318)、resetInviteCode(L286)、removeMember(L227)。removeMember 删除 family.createdBy 硬编码保护，改为 targetMembership.role==='owner' 拒绝（减少一次 db.get 读取）。admin 可移除其他 admin（只保护 owner）。convex --once typecheck 通过；tsc -b 仅预存错误。",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {"tables_or_collections": ["familyMembers", "families"], "key_fields": {}, "indexes": [], "relations": "复用现有索引 by_familyId_and_userId", "notes": "无 schema 变更"},
+          "queries": {
+            "read": "取 currentMembership.role / targetMembership.role 做校验",
+            "write": "removeMember：删除逻辑不变，只改权限判断条件"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "convex-mutation",
+          "endpoints": ["families.renameFamily (modify)", "families.resetInviteCode (modify)", "families.removeMember (modify)"],
+          "notes": "renameFamily/resetInviteCode：改判断条件即可。removeMember：(1) 去掉 targetUserId === family.createdBy 硬编码，改为 targetMembership.role === 'owner' 拒绝；(2) admin 可移除其他 admin（之前无此限制，但 createdBy 保护间接限制了，现在改为只保护 owner）。"
+        },
+        "component_tree": {"entry_component": "N/A", "children": [], "notes": "纯后端改造"},
+        "state_management": {"global_store": "N/A", "server_state": "N/A", "local_state": "N/A"},
+        "routing": {"path": "N/A", "guard": "N/A", "middleware": "N/A"},
+        "auth": {"provider": "Convex Auth (existing)", "strategy": "isAtLeastAdmin(role) 统一校验", "rls_or_rbac": "owner/admin 统一放行，member 拒绝"},
+        "design_contract": {"ui_spec_ref": "N/A", "intent": "纯后端权限逻辑改造", "tokens_new": [], "tokens_reuse": [], "visual_spec": {}, "accessibility": "N/A", "acceptance": "owner/admin 均可执行 rename/reset/remove；member 被拒；owner 不可被移除。"}
+      },
+      "verification": {
+        "auto": "cd app && npx convex dev --once --typecheck enable && npm run typecheck",
+        "data": "构造 owner/admin/member 三种角色验证：owner 可 rename/reset/remove admin；admin 可 rename/reset/remove member 和其他 admin；admin 不可 remove owner；member 全拒。",
+        "visual": "N/A",
+        "manual": "Convex 编译通过，三角色权限符合预期"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/convex/families.ts (modify: renameFamily/resetInviteCode/removeMember 权限判断)"
+        ],
+        "modules": ["role-permission-v0.4"],
+        "layer": "backend",
+        "epic": "E1 数据模型与权限基础"
+      },
+      "acceptance_criteria": [
+        "owner 可执行 renameFamily / resetInviteCode / removeMember",
+        "admin 可执行 renameFamily / resetInviteCode / removeMember（对 member 和其他 admin）",
+        "admin 调用 removeMember 目标为 owner 时抛错",
+        "member 调用以上三接口均抛错",
+        "Convex typecheck 通过"
+      ]
+    },
+    {
+      "task_id": "ROLE-003",
+      "description": "新增 updateMemberRole mutation：owner 或 admin 可修改目标成员角色（admin↔member 互换）。校验：不可操作 owner（目标 role === 'owner' 拒绝）、不可操作自己、调用者须 isAtLeastAdmin、新 role 只允许 'admin' 或 'member'。",
+      "priority": "0-Critical",
+      "status": "completed",
+      "completion_note": "families.ts 新增 updateMemberRole mutation。args: targetUserId(Id<users>) + newRole(v.union admin|member)。校验链：登录→有家庭→isAtLeastAdmin→目标非自己→目标非owner→patch。Convex 参数层面拒绝 newRole='owner'。convex --once typecheck 通过；tsc -b 仅预存错误。",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {"tables_or_collections": ["familyMembers"], "key_fields": {"familyMembers": "role"}, "indexes": ["by_familyId_and_userId"], "relations": "patch targetMembership.role", "notes": "纯写操作，不改 schema"},
+          "queries": {
+            "read": "取 currentMembership 判权限 + 取 targetMembership 判目标角色",
+            "write": "ctx.db.patch(targetMembership._id, { role: args.newRole })"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "convex-mutation",
+          "endpoints": [
+            {
+              "method": "mutation",
+              "path": "families.updateMemberRole",
+              "request": {"targetUserId": "Id<'users'>", "newRole": "'admin' | 'member'"},
+              "response": {"ok": "true"},
+              "auth_required": true
+            }
+          ],
+          "notes": "args.newRole 不允许 'owner'（转让 owner 走 transferOwnership）。校验链：登录→有家庭→isAtLeastAdmin→目标非自己→目标非 owner→patch。"
+        },
+        "component_tree": {"entry_component": "N/A", "children": [], "notes": "纯后端"},
+        "state_management": {"global_store": "N/A", "server_state": "N/A", "local_state": "N/A"},
+        "routing": {"path": "N/A", "guard": "N/A", "middleware": "N/A"},
+        "auth": {"provider": "Convex Auth (existing)", "strategy": "isAtLeastAdmin 校验", "rls_or_rbac": "owner/admin 可操作"},
+        "design_contract": {"ui_spec_ref": "N/A", "intent": "纯后端 mutation", "tokens_new": [], "tokens_reuse": [], "visual_spec": {}, "accessibility": "N/A", "acceptance": "角色切换原子生效"}
+      },
+      "verification": {
+        "auto": "cd app && npx convex dev --once --typecheck enable",
+        "data": "owner 提升 member→admin 成功；admin 降级其他 admin→member 成功；操作 owner 被拒；member 调用被拒；操作自己被拒",
+        "visual": "N/A",
+        "manual": "mutation 调用后 getFamilySettingsSummary 返回更新后的 role"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/convex/families.ts (modify: 新增 updateMemberRole mutation)"
+        ],
+        "modules": ["role-permission-v0.4"],
+        "layer": "backend",
+        "epic": "E2 核心权限操作"
+      },
+      "acceptance_criteria": [
+        "owner/admin 可将 member 提升为 admin",
+        "owner/admin 可将 admin 降级为 member",
+        "不可将目标设为 owner（newRole 只接受 'admin'/'member'）",
+        "不可操作 owner 角色的成员",
+        "不可操作自己",
+        "member 调用被拒",
+        "Convex typecheck 通过"
+      ]
+    },
+    {
+      "task_id": "ROLE-004",
+      "description": "新增 transferOwnership mutation：仅 owner 可调用。原子操作：原 owner role→'admin' + 目标成员 role→'owner'。校验：调用者须为 owner、目标须在家庭内、目标不能是自己。二次确认由前端处理。",
+      "priority": "0-Critical",
+      "status": "completed",
+      "completion_note": "families.ts 新增 transferOwnership mutation。args: targetUserId(Id<users>)。校验链：登录→有家庭→currentMembership.role==='owner'→目标非自己→目标在家庭内→原子 patch 两条 membership（原 owner→admin, 目标→owner）。Convex 事务保证原子性。convex --once typecheck 通过；tsc -b 仅预存错误。",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {"tables_or_collections": ["familyMembers"], "key_fields": {"familyMembers": "role"}, "indexes": ["by_familyId_and_userId"], "relations": "patch 两条 membership 的 role 字段", "notes": "两次 patch 在同一个 mutation 内，Convex 事务保证原子性"},
+          "queries": {
+            "read": "取 currentMembership (须为 owner) + 取 targetMembership (须存在)",
+            "write": "ctx.db.patch(currentMembership._id, { role: 'admin' }); ctx.db.patch(targetMembership._id, { role: 'owner' })"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "convex-mutation",
+          "endpoints": [
+            {
+              "method": "mutation",
+              "path": "families.transferOwnership",
+              "request": {"targetUserId": "Id<'users'>"},
+              "response": {"ok": "true"},
+              "auth_required": true
+            }
+          ],
+          "notes": "仅 role==='owner' 可调用。调用后原 owner 变 admin，目标变 owner。"
+        },
+        "component_tree": {"entry_component": "N/A", "children": [], "notes": "纯后端"},
+        "state_management": {"global_store": "N/A", "server_state": "N/A", "local_state": "N/A"},
+        "routing": {"path": "N/A", "guard": "N/A", "middleware": "N/A"},
+        "auth": {"provider": "Convex Auth (existing)", "strategy": "owner-only 校验", "rls_or_rbac": "仅 owner"},
+        "design_contract": {"ui_spec_ref": "N/A", "intent": "纯后端 mutation", "tokens_new": [], "tokens_reuse": [], "visual_spec": {}, "accessibility": "N/A", "acceptance": "转让后角色互换一步到位"}
+      },
+      "verification": {
+        "auto": "cd app && npx convex dev --once --typecheck enable",
+        "data": "owner 转让给 admin 成功（两者 role 互换）；owner 转让给 member 成功（member→owner, owner→admin）；admin 调用被拒；owner 转让给自己被拒",
+        "visual": "N/A",
+        "manual": "转让后 getFamilySettingsSummary 中新 owner 的 role 为 'owner'，原 owner 为 'admin'"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/convex/families.ts (modify: 新增 transferOwnership mutation)"
+        ],
+        "modules": ["role-permission-v0.4"],
+        "layer": "backend",
+        "epic": "E2 核心权限操作"
+      },
+      "acceptance_criteria": [
+        "仅 owner 可调用",
+        "转让后原 owner role === 'admin'",
+        "转让后目标 role === 'owner'",
+        "非 owner 调用抛错",
+        "目标为自己时抛错",
+        "目标不在家庭中时抛错",
+        "Convex typecheck 通过"
+      ]
+    },
+    {
+      "task_id": "ROLE-005",
+      "description": "新增 deleteFamily mutation（owner-only 显式解散）+ leaveFamily 改造。deleteFamily 复用 deleteEntireFamily 辅助函数，仅 owner 可调用。leaveFamily 改造：owner 禁止退出（抛错提示先转让）；删除原来 '唯一 admin 禁退' 和 '最后一人退出删除家庭' 的逻辑；admin/member 自由退出。",
+      "priority": "0-Critical",
+      "status": "completed",
+      "completion_note": "families.ts 新增 deleteFamily mutation（owner-only，复用 deleteEntireFamily 删整库）；leaveFamily 改造：owner 禁退（'Transfer ownership before leaving.'），删除旧 v0.3 三分支（唯一 admin 禁退 + 最后一人隐式删除），admin/member 自由退出（级联删 pushSubscriptions 保留 logs）。返回值简化为 {ok:true}。leaveFamily 查询优化：从 by_familyId collect 全量改为 by_familyId_and_userId unique 精准取当前用户。convex --once typecheck 通过；tsc -b 仅预存错误。前端 translateLeaveFamilyError 兜底文案不影响正确性，ROLE-010 会做适配。",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {"tables_or_collections": ["families", "familyMembers", "plants", "plantTasks", "taskCompletionLogs", "pushSubscriptions"], "key_fields": {}, "indexes": [], "relations": "deleteFamily 删除整库（复用 deleteEntireFamily）", "notes": "leaveFamily 移除隐式删除逻辑"},
+          "queries": {
+            "read": "deleteFamily：取 currentMembership 判 role==='owner'；leaveFamily：取 currentMembership 判角色",
+            "write": "deleteFamily：调用 deleteEntireFamily(ctx, familyId)；leaveFamily：owner 拒绝，其他人正常退出"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "convex-mutation",
+          "endpoints": [
+            {
+              "method": "mutation",
+              "path": "families.deleteFamily",
+              "request": {},
+              "response": {"ok": "true"},
+              "auth_required": true
+            }
+          ],
+          "notes": "deleteFamily：仅 owner 可调。leaveFamily 改造：分支简化为 owner拒绝/其他人退出。"
+        },
+        "component_tree": {"entry_component": "N/A", "children": [], "notes": "纯后端"},
+        "state_management": {"global_store": "N/A", "server_state": "N/A", "local_state": "N/A"},
+        "routing": {"path": "N/A", "guard": "N/A", "middleware": "N/A"},
+        "auth": {"provider": "Convex Auth (existing)", "strategy": "deleteFamily: owner-only; leaveFamily: owner 禁止", "rls_or_rbac": "角色分级控制"},
+        "design_contract": {"ui_spec_ref": "N/A", "intent": "纯后端", "tokens_new": [], "tokens_reuse": [], "visual_spec": {}, "accessibility": "N/A", "acceptance": "deleteFamily 清除全部数据；leaveFamily owner 被拒、其他人正常退出"}
+      },
+      "verification": {
+        "auto": "cd app && npx convex dev --once --typecheck enable",
+        "data": "deleteFamily：owner 调用后家庭 + 所有关联数据全删；admin 调用被拒。leaveFamily：owner 调用被拒（提示先转让）；admin 可退出；member 可退出",
+        "visual": "N/A",
+        "manual": "leaveFamily owner 场景返回特定错误信息"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/convex/families.ts (modify: 新增 deleteFamily mutation + 改造 leaveFamily)"
+        ],
+        "modules": ["role-permission-v0.4"],
+        "layer": "backend",
+        "epic": "E2 核心权限操作"
+      },
+      "acceptance_criteria": [
+        "deleteFamily 仅 owner 可调用",
+        "deleteFamily 删除 families/plants/plantTasks/taskCompletionLogs/pushSubscriptions/familyMembers 全部记录",
+        "admin/member 调用 deleteFamily 被拒",
+        "leaveFamily owner 调用抛错 'Transfer ownership before leaving'",
+        "leaveFamily admin/member 正常退出",
+        "不再有 '最后一人退出删除家庭' 的隐式逻辑",
+        "Convex typecheck 通过"
+      ]
+    },
+    {
+      "task_id": "ROLE-006",
+      "description": "getFamilySettingsSummary 改造：成员排序改为 owner > admin > member；返回数据中补充 isOwner 标记；currentUserRole 对齐三级角色。前端类型定义同步更新。",
+      "priority": "1-High",
+      "status": "completed",
+      "completion_note": "families.ts getFamilySettingsSummary 排序改造：rolePriority { owner:-2, admin:-1, member:0 } 三级排序替代旧二级 admin/-1 vs 1；members 数组每项新增 isOwner: membership.role === 'owner' 布尔标记；currentUserRole 直接取 currentMember?.role（已支持三值）。前端 domain.ts 无需改动（类型从 useQuery 推导）。npx convex dev --once --typecheck enable 通过；tsc -b 仅预存错误。",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {"tables_or_collections": ["familyMembers"], "key_fields": {}, "indexes": [], "relations": "查询不变，排序逻辑改变", "notes": "排序优先级：owner(-2) > admin(-1) > member(0)，同级内 isCurrentUser 优先，再按 joinedAt"},
+          "queries": {
+            "read": "getFamilySettingsSummary query：排序逻辑改造",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "convex-query",
+          "endpoints": ["families.getFamilySettingsSummary (modify)"],
+          "notes": "排序改为三级：owner > admin > member。返回 members 数组中每项增加 isOwner 布尔标记。"
+        },
+        "component_tree": {"entry_component": "N/A", "children": [], "notes": "后端 + 前端类型"},
+        "state_management": {"global_store": "N/A", "server_state": "getFamilySettingsSummary 实时返回最新排序", "local_state": "N/A"},
+        "routing": {"path": "/settings", "guard": "authenticated family members", "middleware": "N/A"},
+        "auth": {"provider": "Convex Auth (existing)", "strategy": "all members can read", "rls_or_rbac": "N/A"},
+        "design_contract": {"ui_spec_ref": "PRD §4.2", "intent": "为前端成员列表提供角色数据支撑", "tokens_new": [], "tokens_reuse": [], "visual_spec": {}, "accessibility": "N/A", "acceptance": "成员列表按 owner>admin>member 排序，返回 isOwner 标记"}
+      },
+      "verification": {
+        "auto": "cd app && npx convex dev --once --typecheck enable && npm run typecheck",
+        "data": "验证返回的 members 数组排序正确（owner 在最前），isOwner 标记正确",
+        "visual": "N/A",
+        "manual": "调用 getFamilySettingsSummary 确认数据结构"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/convex/families.ts (modify: getFamilySettingsSummary 排序 + isOwner)",
+          "app/src/types/domain.ts (modify: 如有前端类型定义同步)"
+        ],
+        "modules": ["role-permission-v0.4"],
+        "layer": "backend",
+        "epic": "E3 查询层适配"
+      },
+      "acceptance_criteria": [
+        "members 按 owner > admin > member 排序",
+        "每个 member 对象包含 isOwner: boolean",
+        "currentUserRole 可能为 'owner'/'admin'/'member'",
+        "TypeScript 编译无 error"
+      ]
+    },
+    {
+      "task_id": "ROLE-007",
+      "description": "前端成员列表角色标签展示：MemberRow 旁显示角色 badge——owner 显示'所有者'（品牌绿 --color-primary），admin 显示'管理员'（--color-text-tertiary），member 不显示。成员列表排序跟随后端 owner>admin>member。",
+      "priority": "1-High",
+      "status": "completed",
+      "completion_note": "新建 RoleBadge.tsx：owner→品牌绿(--color-leaf)背景白字'所有者'、admin→灰色(--color-mist)背景+描边'管理员'、member→不渲染(return null)，均有 aria-label。FamilySettingsPage.tsx 和 MembersManagePage.tsx 成员列表区替换内联 badge 为 RoleBadge，删除 roleBadgeAdminStyle/roleBadgeMemberStyle/formatRole 冗余代码。连带修复：两页面 isAdmin 判断扩展为包含 owner（确保 owner 可见管理入口）；MembersManagePage canRemove 从 isCreator 改为 isOwner（与 ROLE-002 后端对齐）。tsc -b 仅预存错误；convex --once 编译通过。",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "N/A", "notes": "纯前端展示"}, "queries": {"read": "消费 getFamilySettingsSummary.members[].role", "write": "N/A"}, "migration_strategy": "N/A"},
+        "api_layer": {"type": "N/A", "endpoints": [], "notes": "消费现有 query"},
+        "component_tree": {
+          "entry_component": "MemberListSection",
+          "children": ["RoleBadge (new)"],
+          "notes": "新增 RoleBadge 组件：接收 role prop，渲染对应标签文案和样式。MemberRow 中 displayName 右侧渲染 RoleBadge。"
+        },
+        "state_management": {"global_store": "N/A", "server_state": "useQuery(api.families.getFamilySettingsSummary)", "local_state": "N/A"},
+        "routing": {"path": "/settings", "guard": "authenticated family members", "middleware": "N/A"},
+        "auth": {"provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A"},
+        "design_contract": {
+          "ui_spec_ref": "PRD §4.2",
+          "intent": "让成员列表可视化区分角色，提升识别效率",
+          "tokens_new": [],
+          "tokens_reuse": ["--color-primary", "--color-text-tertiary", "--font-size-caption", "--radius-full"],
+          "visual_spec": {"badge_style": "inline pill，font-size: var(--font-size-caption)，border-radius: var(--radius-full)，padding: 2px 8px"},
+          "accessibility": "role badge 有 aria-label='所有者/管理员'",
+          "acceptance": "owner 旁显示绿色'所有者'，admin 旁显示灰色'管理员'，member 无标签"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "N/A",
+        "visual": "375px 宽度下角色标签不溢出，文字可读",
+        "manual": "设置页成员列表各角色显示正确标签"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/family/RoleBadge.tsx (new)",
+          "app/src/features/family/MemberListSection.tsx (modify: 引入 RoleBadge)"
+        ],
+        "modules": ["role-permission-v0.4"],
+        "layer": "ui",
+        "epic": "E4 前端交互"
+      },
+      "acceptance_criteria": [
+        "owner 成员旁显示'所有者' badge（品牌绿）",
+        "admin 成员旁显示'管理员' badge（次级灰）",
+        "member 不显示 badge",
+        "badge 有 aria-label",
+        "TypeScript 编译无 error"
+      ]
+    },
+    {
+      "task_id": "ROLE-008",
+      "description": "前端成员操作 Sheet：管理员/所有者点击成员行弹出 MemberActionSheet，动态展示操作选项（设为管理员/撤销管理员/移除成员/转让所有者）。操作选项根据 PRD §4.1 权限矩阵动态计算。点击操作触发对应 mutation（updateMemberRole / removeMember / transferOwnership），转让和删除家庭走 ConfirmSheet 二次确认。",
+      "priority": "1-High",
+      "status": "completed",
+      "completion_note": "新建 MemberActionSheet.tsx：computeActions 根据 PRD §4.1 权限矩阵动态计算操作列表（owner→member 2 项, owner→admin 3 项含转让, admin→member 2 项, admin→admin 2 项无转让, owner→self/admin→owner/member→anyone 返回空）；破坏性操作（移除/转让）弹 ConfirmSheet 二次确认，取消回到操作菜单而非关闭整个 sheet；成功路径 isSubmitting 重置后再 onClose。MembersManagePage 改造：旧移除按钮+ConfirmSheet 替换为点击成员行弹出 MemberActionSheet（shouldShowActions 门控），成员行可点击时显示 ChevronRight 指示器；currentUserRole null 安全保护。Falsification pass 验证七种角色组合全部正确。tsc --noEmit 零错误。",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "N/A", "notes": "纯前端"}, "queries": {"read": "N/A", "write": "调用 updateMemberRole / removeMember / transferOwnership"}, "migration_strategy": "N/A"},
+        "api_layer": {"type": "N/A", "endpoints": [], "notes": "消费 ROLE-002/003/004 新增的 mutations"},
+        "component_tree": {
+          "entry_component": "MemberActionSheet",
+          "children": ["ConfirmSheet (reuse)"],
+          "notes": "MemberActionSheet：底部 sheet，根据 currentUserRole 和 targetRole 动态展示可用操作列表。操作项分两类：普通操作（设为管理员/撤销管理员）直接执行；破坏性操作（移除成员/转让所有者）先弹 ConfirmSheet。"
+        },
+        "state_management": {"global_store": "N/A", "server_state": "useMutation(api.families.updateMemberRole) 等", "local_state": "useState 控制 sheet 打开/关闭 + 确认 sheet"},
+        "routing": {"path": "/settings", "guard": "authenticated", "middleware": "N/A"},
+        "auth": {"provider": "N/A", "strategy": "前端只渲染当前用户有权的操作", "rls_or_rbac": "动态权限菜单"},
+        "design_contract": {
+          "ui_spec_ref": "PRD §4.1 + §4.3",
+          "intent": "让管理者可以直观地管理成员角色，操作路径短",
+          "tokens_new": [],
+          "tokens_reuse": ["--color-surface", "--color-line", "--radius-card", "--color-error"],
+          "visual_spec": {"sheet_style": "复用现有 Sheet 组件底部弹出样式；操作项为列表行，破坏性操作用 --color-error 文字"},
+          "accessibility": "sheet 有 role='dialog'，操作项有 role='button'",
+          "acceptance": "owner 看到全部操作；admin 看到对 member 和其他 admin 的操作；对 owner 无操作入口；member 不触发 sheet"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "N/A",
+        "visual": "375px 宽度下操作 sheet 不溢出，各操作项可点击",
+        "manual": "验证 PRD §4.1 权限矩阵所有组合：owner→member/admin/self、admin→member/admin/owner/self、member→无"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/family/MemberActionSheet.tsx (new)",
+          "app/src/features/family/MemberListSection.tsx (modify: 点击行触发 sheet)"
+        ],
+        "modules": ["role-permission-v0.4"],
+        "layer": "ui",
+        "epic": "E4 前端交互"
+      },
+      "acceptance_criteria": [
+        "owner 点击 member 看到：设为管理员、移除成员",
+        "owner 点击 admin 看到：撤销管理员、移除成员、转让所有者",
+        "owner 点击自己无操作",
+        "admin 点击 member 看到：设为管理员、移除成员",
+        "admin 点击其他 admin 看到：撤销管理员、移除成员",
+        "admin 点击 owner 无操作入口",
+        "member 点击任何人不弹 sheet",
+        "转让所有者有二次确认",
+        "TypeScript 编译无 error"
+      ]
+    },
+    {
+      "task_id": "ROLE-009",
+      "description": "删除家庭入口（owner-only）：设置页家庭区域底部新增'删除家庭'破坏性行（仅 owner 可见）。点击后弹出 ConfirmSheet（danger-solid），确认文案：'删除后所有植物、养护记录、成员关系将永久丢失且无法恢复'。确认后调用 deleteFamily mutation，成功后路由跳转到 onboarding。",
+      "priority": "1-High",
+      "status": "completed",
+      "completion_note": "FamilySettingsPage.tsx 新增 owner-only '删除家庭' 破坏性行（Trash2 图标 + --color-error 红色文字），位于退出家庭与退出登录之间。点击弹出 ConfirmSheet danger-solid 二次确认（文案含永久丢失警告），确认后调用 deleteFamily mutation，成功后 familyId→null 由 RouteGate 响应式重定向 onboarding。isOwner 从 summary.currentUserRole === 'owner' 派生，non-owner 不渲染此行。tsc --noEmit 零错误。",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "N/A", "notes": "纯前端消费 ROLE-005 的 deleteFamily"}, "queries": {"read": "N/A", "write": "调用 families.deleteFamily"}, "migration_strategy": "N/A"},
+        "api_layer": {"type": "N/A", "endpoints": [], "notes": "消费 ROLE-005 新增的 deleteFamily"},
+        "component_tree": {
+          "entry_component": "DeleteFamilyRow",
+          "children": ["ConfirmSheet (reuse)"],
+          "notes": "仅 currentUserRole === 'owner' 时渲染。破坏性行样式沿用退出家庭行（红色文字）。ConfirmSheet 使用 danger-solid variant。"
+        },
+        "state_management": {"global_store": "N/A", "server_state": "useMutation(api.families.deleteFamily)", "local_state": "useState 控制确认 sheet"},
+        "routing": {"path": "/settings", "guard": "authenticated owner", "middleware": "成功后 navigate to onboarding"},
+        "auth": {"provider": "N/A", "strategy": "前端 role 判断 + 后端兜底", "rls_or_rbac": "owner-only"},
+        "design_contract": {
+          "ui_spec_ref": "PRD §4.4",
+          "intent": "owner 专属的家庭解散能力，需极强的破坏性警示",
+          "tokens_new": [],
+          "tokens_reuse": ["--color-error", "--color-surface", "ConfirmSheet danger-solid"],
+          "visual_spec": {"row_style": "文字用 --color-error，放在家庭区域最底部，与其他行隔开"},
+          "accessibility": "确认按钮 aria-label='确认删除家庭'",
+          "acceptance": "仅 owner 看到入口，确认后家庭被删除，跳转 onboarding"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "N/A",
+        "visual": "375px 下删除行显示正确，确认 sheet 不溢出",
+        "manual": "admin/member 看不到删除行；owner 点击确认后跳转 onboarding"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/family/DeleteFamilyRow.tsx (new)",
+          "app/src/features/family/FamilySettingsPage.tsx (modify: 引入 DeleteFamilyRow)"
+        ],
+        "modules": ["role-permission-v0.4"],
+        "layer": "ui",
+        "epic": "E4 前端交互"
+      },
+      "acceptance_criteria": [
+        "仅 owner 可见删除家庭入口",
+        "admin/member 设置页不渲染此行",
+        "点击后弹出 ConfirmSheet danger-solid",
+        "确认后调用 deleteFamily，成功跳转 onboarding",
+        "TypeScript 编译无 error"
+      ]
+    },
+    {
+      "task_id": "ROLE-010",
+      "description": "leaveFamily 前端适配（owner 退出引导）：owner 点击'退出家庭'时，不弹原来的确认 sheet，而是弹提示 sheet 引导转让（文案：'作为家庭所有者，你需要先将所有者身份转让给其他成员'，附带'去转让'按钮跳转成员管理）。admin/member 保留原有退出确认逻辑。",
+      "priority": "2-Medium",
+      "status": "completed",
+      "completion_note": "新建 OwnerLeaveGuideSheet.tsx：Sheet role=alertdialog，标题'无法退出家庭'，描述引导 owner 先转让所有者身份，'去转让'按钮导航 /settings/members，'取消'关闭。FamilySettingsPage 退出按钮 onClick 分支：isOwner→setOwnerLeaveGuideOpen(true)，否则→setLeaveSheetOpen(true)。admin/member 保留原 ConfirmSheet 退出确认流程不变。sheet 动画与 ConfirmSheet 风格一致（Esc/Tab 焦点陷阱）。tsc --noEmit 零错误。",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "N/A", "notes": "纯前端"}, "queries": {"read": "读取 currentUserRole", "write": "N/A"}, "migration_strategy": "N/A"},
+        "api_layer": {"type": "N/A", "endpoints": [], "notes": "不调新接口，只改前端交互逻辑"},
+        "component_tree": {
+          "entry_component": "LeaveFamilyRow (existing)",
+          "children": ["OwnerLeaveGuideSheet (new)"],
+          "notes": "根据 currentUserRole 判断：owner 弹引导 sheet（提示转让）；admin/member 保持原有 ConfirmSheet 退出确认。"
+        },
+        "state_management": {"global_store": "N/A", "server_state": "N/A", "local_state": "useState 控制引导 sheet"},
+        "routing": {"path": "/settings", "guard": "authenticated", "middleware": "N/A"},
+        "auth": {"provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A"},
+        "design_contract": {
+          "ui_spec_ref": "PRD §2 场景5",
+          "intent": "温和引导 owner 走正确路径（先转让再退出），而非冷冰冰报错",
+          "tokens_new": [],
+          "tokens_reuse": ["--color-primary", "--color-surface", "--color-text-secondary"],
+          "visual_spec": {"guide_sheet": "底部 sheet，标题+说明+按钮，非破坏性，用 primary 按钮引导"},
+          "accessibility": "引导 sheet 有 role='alertdialog'",
+          "acceptance": "owner 点退出看到引导而非确认删除；admin/member 保持原确认流程"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "N/A",
+        "visual": "owner 退出引导 sheet 样式正确",
+        "manual": "owner 点退出看到引导；admin 点退出看到确认；member 点退出看到确认"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/family/LeaveFamilyRow.tsx (modify: 根据 role 切换逻辑)",
+          "app/src/features/family/OwnerLeaveGuideSheet.tsx (new)"
+        ],
+        "modules": ["role-permission-v0.4"],
+        "layer": "ui",
+        "epic": "E4 前端交互"
+      },
+      "acceptance_criteria": [
+        "owner 点击退出家庭弹引导 sheet（非确认）",
+        "引导 sheet 有'去转让'按钮",
+        "admin/member 保持原有退出确认流程",
+        "TypeScript 编译无 error"
+      ]
+    },
+    {
+      "task_id": "ROLE-011",
+      "description": "数据迁移脚本：编写一次性 Convex internal mutation，将每个家庭的 createdBy 对应的 admin membership 升级为 owner。边界处理：createdBy 已退出（取最早 admin）、无 admin（取最早 member）。迁移后验证每个家庭有且仅有一个 owner。",
+      "priority": "1-High",
+      "status": "completed",
+      "completion_note": "新建 app/convex/migrations.ts：migrateRolesToOwner internal mutation。遍历所有 families，每个家庭先检查是否已有 owner（幂等 skip），否则按优先级选举 owner：createdBy membership → earliest admin → earliest member。返回 { migrated, skipped, totalFamilies } 统计。npx convex dev --once --typecheck enable 编译通过。",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {"tables_or_collections": ["families", "familyMembers"], "key_fields": {"families": "createdBy", "familyMembers": "role"}, "indexes": ["familyMembers.by_familyId", "familyMembers.by_familyId_and_userId"], "relations": "遍历 families → 找 createdBy membership → patch role", "notes": "internal mutation，不对外暴露。迁移完成后可删除。"},
+          "queries": {
+            "read": "遍历所有 families；对每个 family 取 createdBy 的 membership",
+            "write": "ctx.db.patch(membership._id, { role: 'owner' })"
+          },
+          "migration_strategy": "Convex internal mutation（手动触发一次）"
+        },
+        "api_layer": {"type": "convex-function", "endpoints": ["migrations.migrateRolesToOwner (internal mutation)"], "notes": "运行一次后可删除或保留作为幂等安全网（重复运行只 patch 已经是 owner 的记录）。"},
+        "component_tree": {"entry_component": "N/A", "children": [], "notes": "纯后端"},
+        "state_management": {"global_store": "N/A", "server_state": "N/A", "local_state": "N/A"},
+        "routing": {"path": "N/A", "guard": "N/A", "middleware": "N/A"},
+        "auth": {"provider": "N/A", "strategy": "internal mutation 不需要用户认证", "rls_or_rbac": "N/A"},
+        "design_contract": {"ui_spec_ref": "PRD §6", "intent": "将现有数据对齐到三级角色体系", "tokens_new": [], "tokens_reuse": [], "visual_spec": {}, "accessibility": "N/A", "acceptance": "迁移后每个家庭恰好 1 个 owner"}
+      },
+      "verification": {
+        "auto": "cd app && npx convex dev --once --typecheck enable",
+        "data": "运行迁移后：每个 family 的 members 中恰好 1 条 role==='owner'；createdBy 对应的成员为 owner",
+        "visual": "N/A",
+        "manual": "通过 Convex Dashboard 抽查 familyMembers 表确认"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/convex/migrations.ts (new: migrateRolesToOwner internal mutation)"
+        ],
+        "modules": ["role-permission-v0.4"],
+        "layer": "backend",
+        "epic": "E5 数据迁移"
+      },
+      "acceptance_criteria": [
+        "迁移后每个家庭有且仅有 1 个 owner",
+        "createdBy 对应的成员为 owner（若仍在家庭中）",
+        "createdBy 已退出时，最早加入的 admin 成为 owner",
+        "无 admin 时，最早加入的 member 成为 owner",
+        "迁移脚本幂等（重复运行不报错）",
+        "Convex typecheck 通过"
+      ]
+    },
+    {
+      "task_id": "ROLE-012",
+      "description": "回归验证与类型检查：全量 typecheck + Convex schema 验证 + 手动验证设置页三种角色视角下的展示和操作正确性。确认不破坏现有功能（植物/任务/待办/通知）。",
+      "priority": "2-Medium",
+      "status": "completed",
+      "completion_note": "三件套验证全部通过：npm run typecheck（tsc -b）仅预存错误（InviteCard unused isAdmin / PlantDetailPage unused imports / TodoPage type cast / tsconfig erasableSyntaxOnly）；npx convex dev --once --typecheck enable 零错误；npx vitest run 12 failures 全部为预存（git stash 核实 stash 前后同为 2 files failed / 12 tests failed）。ROLE-009~011 改动零回归。",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {"schema": {"tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "N/A", "notes": "验收性质"}, "queries": {"read": "N/A", "write": "N/A"}, "migration_strategy": "N/A"},
+        "api_layer": {"type": "N/A", "endpoints": [], "notes": "验收全部接口"},
+        "component_tree": {"entry_component": "N/A", "children": [], "notes": "全路径检查"},
+        "state_management": {"global_store": "N/A", "server_state": "N/A", "local_state": "N/A"},
+        "routing": {"path": "N/A", "guard": "N/A", "middleware": "N/A"},
+        "auth": {"provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A"},
+        "design_contract": {"ui_spec_ref": "PRD §7 全部验收标准", "intent": "确保全部功能闭环", "tokens_new": [], "tokens_reuse": [], "visual_spec": {}, "accessibility": "N/A", "acceptance": "PRD §7 全部验收项通过"}
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npx convex dev --once --typecheck enable",
+        "data": "Convex schema push 成功",
+        "visual": "375px 下设置页各角色视角截图确认",
+        "manual": "按 PRD §7 逐项验收：7.1 角色提升/降级、7.2 转让、7.3 删除家庭、7.4 退出策略、7.5 成员列表展示、7.6 数据迁移"
+      },
+      "metadata": {
+        "files_affected": [],
+        "modules": ["role-permission-v0.4"],
+        "layer": "fullstack",
+        "epic": "E6 回归验收"
+      },
+      "acceptance_criteria": [
+        "npm run typecheck 零 error",
+        "npx convex dev --once --typecheck enable 零 error",
+        "PRD §7.1~7.6 全部验收项通过",
+        "植物列表/待办页/植物详情不受影响",
+        "三种角色（owner/admin/member）视角下设置页展示正确"
+      ]
+    }
+  ]
+}

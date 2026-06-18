@@ -1,0 +1,1445 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>养护历史时间线 · 原型稿</title>
+    <style>
+      /* ============================================================
+         Design Tokens — 与 app/src/styles/tokens.css 保持同步
+         ============================================================ */
+      :root {
+        --color-ink: #16342f;
+        --color-muted: #637b71;
+        --color-paper: #fbfcf7;
+        --color-mist: #edf5f1;
+        --color-surface: #ffffff;
+        --color-leaf: #1f473d;
+        --color-leaf-light: #467061;
+        --color-gold: #f1c567;
+        --color-gold-hover: #ddb04e;
+        --color-line: #d8e4da;
+        --color-success: #2f855a;
+        --color-warning: #dd6b20;
+        --color-error: #c53030;
+
+        --color-task-watering: #3b82c4;
+        --color-task-fertilizing: #a06a3c;
+        --color-task-misting: #2f9c8a;
+        --color-task-repotting: #d2773b;
+        --color-task-pruning: #5c8a3a;
+        --color-task-custom: #8a9690;
+
+        --font-heading: Lora, "Songti SC", Georgia, serif;
+        --font-body: Raleway, "PingFang SC", "Hiragino Sans GB",
+          "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+
+        --space-xs: 4px;
+        --space-sm: 8px;
+        --space-md: 16px;
+        --space-lg: 24px;
+        --space-xl: 32px;
+
+        --radius-card: 16px;
+        --radius-button: 12px;
+        --radius-pill: 999px;
+        --radius-sheet: 20px;
+
+        --shadow-card: 0 18px 42px rgba(36, 73, 63, 0.12);
+      }
+
+      /* ============================================================
+         Reset & Base
+         ============================================================ */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        min-height: 100vh;
+        background: #dfe9de;
+        color: var(--color-ink);
+        font-family: var(--font-body);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* ============================================================
+         Layout — 横向画板（每帧 390×844 iPhone 14 比例）
+         ============================================================ */
+      .board-title {
+        padding: 32px 32px 0;
+        font-family: var(--font-heading);
+        font-size: 28px;
+        font-weight: 800;
+        color: var(--color-ink);
+      }
+
+      .board-subtitle {
+        padding: 6px 32px 24px;
+        font-size: 14px;
+        color: var(--color-muted);
+      }
+
+      .board {
+        display: flex;
+        gap: 32px;
+        padding: 0 32px 48px;
+        overflow-x: auto;
+        align-items: start;
+      }
+
+      /* ============================================================
+         Phone Frame
+         ============================================================ */
+      .phone {
+        position: relative;
+        flex: 0 0 390px;
+        width: 390px;
+        min-height: 844px;
+        border-radius: 34px;
+        overflow: hidden;
+        background:
+          radial-gradient(
+            circle at 80% 0%,
+            rgba(207, 222, 194, 0.8),
+            transparent 30%
+          ),
+          linear-gradient(180deg, #fbfcf7 0%, #f4f8f0 100%);
+        box-shadow: var(--shadow-card);
+      }
+
+      .phone::before {
+        content: "";
+        position: absolute;
+        inset: 0 0 auto auto;
+        width: 190px;
+        height: 170px;
+        background:
+          radial-gradient(
+            ellipse at center,
+            rgba(143, 166, 130, 0.22),
+            transparent 62%
+          ),
+          repeating-linear-gradient(
+            130deg,
+            rgba(143, 166, 130, 0.18) 0 2px,
+            transparent 2px 22px
+          );
+        opacity: 0.38;
+        transform: rotate(-12deg) translate(36px, -40px);
+        pointer-events: none;
+      }
+
+      .screen {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding: 22px 18px 28px;
+      }
+
+      .screen.with-tabs {
+        padding-bottom: 96px;
+      }
+
+      /* Frame label */
+      .frame-label {
+        position: absolute;
+        top: -28px;
+        left: 0;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--color-muted);
+        white-space: nowrap;
+      }
+
+      .phone-wrapper {
+        position: relative;
+        padding-top: 36px;
+      }
+
+      /* ============================================================
+         Navigation Bar
+         ============================================================ */
+      .nav {
+        display: grid;
+        grid-template-columns: 44px 1fr 44px;
+        align-items: center;
+        min-height: 48px;
+      }
+
+      .icon-button {
+        width: 44px;
+        height: 44px;
+        border: none;
+        border-radius: 18px;
+        background: transparent;
+        color: var(--color-leaf);
+        font-size: 28px;
+        line-height: 1;
+        cursor: pointer;
+      }
+
+      .nav-title {
+        text-align: center;
+        font-size: 18px;
+        font-weight: 800;
+        font-family: var(--font-body);
+      }
+
+      /* ============================================================
+         Headers & Typography
+         ============================================================ */
+      h1 {
+        font-family: var(--font-heading);
+        font-size: 34px;
+        font-weight: 900;
+        line-height: 1.12;
+      }
+
+      h2 {
+        font-size: 18px;
+        font-weight: 800;
+        line-height: 1.3;
+      }
+
+      .sub {
+        margin-top: 6px;
+        color: var(--color-muted);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      /* ============================================================
+         Surface Card (GroupedSurface)
+         ============================================================ */
+      .surface {
+        border: 1px solid var(--color-line);
+        border-radius: var(--radius-card);
+        background: rgba(255, 254, 248, 0.92);
+        box-shadow: 0 10px 24px rgba(24, 59, 52, 0.05);
+        overflow: hidden;
+      }
+
+      .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 16px 18px 8px;
+      }
+
+      .section-head h2 {
+        font-size: 16px;
+        font-weight: 800;
+      }
+
+      /* ============================================================
+         Collapsible Section (折叠区 — 养护记录/植物档案)
+         ============================================================ */
+      .collapsible-trigger {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 16px 18px;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        font-family: var(--font-body);
+        font-size: 16px;
+        font-weight: 800;
+        color: var(--color-ink);
+        text-align: left;
+      }
+
+      .collapsible-trigger .count {
+        color: var(--color-muted);
+        font-weight: 600;
+      }
+
+      .collapsible-trigger .arrow {
+        margin-left: auto;
+        font-size: 18px;
+        color: var(--color-muted);
+        transition: transform 0.2s ease;
+      }
+
+      .collapsible-trigger.open .arrow {
+        transform: rotate(90deg);
+      }
+
+      .collapsible-trigger .stat-summary {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: auto;
+        margin-right: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--color-muted);
+      }
+
+      .collapsible-trigger .stat-summary .highlight {
+        color: var(--color-leaf-light);
+        font-weight: 700;
+      }
+
+      /* ============================================================
+         Timeline Record Row (单条养护记录)
+         ============================================================ */
+      .timeline-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-height: 48px;
+        padding: 10px 18px;
+        border-top: 1px solid rgba(216, 228, 218, 0.5);
+      }
+
+      .timeline-row:first-child {
+        border-top: none;
+      }
+
+      /* Task type icon (emoji 圆底) */
+      .task-icon {
+        display: grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        flex: 0 0 32px;
+        border-radius: 50%;
+        font-size: 16px;
+      }
+
+      .task-icon.watering {
+        background: rgba(59, 130, 196, 0.12);
+      }
+      .task-icon.fertilizing {
+        background: rgba(160, 106, 60, 0.12);
+      }
+      .task-icon.misting {
+        background: rgba(47, 156, 138, 0.12);
+      }
+      .task-icon.repotting {
+        background: rgba(210, 119, 59, 0.12);
+      }
+      .task-icon.pruning {
+        background: rgba(92, 138, 58, 0.12);
+      }
+      .task-icon.custom {
+        background: rgba(138, 150, 144, 0.12);
+      }
+
+      /* Member avatar (24×24, 与 MemberAvatar 组件同源) */
+      .member-avatar {
+        display: grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        flex: 0 0 24px;
+        border-radius: var(--radius-pill);
+        font-size: 11px;
+        font-weight: 800;
+        color: var(--color-paper);
+      }
+
+      .member-avatar.c1 {
+        background: var(--color-leaf);
+      }
+      .member-avatar.c2 {
+        background: var(--color-leaf-light);
+      }
+      .member-avatar.c3 {
+        background: var(--color-task-misting);
+      }
+      .member-avatar.c4 {
+        background: var(--color-task-pruning);
+      }
+      .member-avatar.c5 {
+        background: var(--color-task-fertilizing);
+      }
+
+      /* Record content */
+      .record-text {
+        flex: 1;
+        min-width: 0;
+        font-size: 14px;
+        line-height: 1.45;
+        color: var(--color-ink);
+      }
+
+      .record-text .member-name {
+        font-weight: 700;
+      }
+
+      .record-text .task-name {
+        color: var(--color-leaf-light);
+        font-weight: 600;
+      }
+
+      .record-text .verb {
+        color: var(--color-muted);
+      }
+
+      .record-time {
+        flex: 0 0 auto;
+        font-size: 12px;
+        color: var(--color-muted);
+        white-space: nowrap;
+      }
+
+      /* ============================================================
+         Load More Button
+         ============================================================ */
+      .load-more {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 12px;
+        border: none;
+        border-top: 1px solid rgba(216, 228, 218, 0.5);
+        background: transparent;
+        color: var(--color-leaf-light);
+        font-family: var(--font-body);
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      /* ============================================================
+         Empty State
+         ============================================================ */
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 32px 18px;
+        text-align: center;
+      }
+
+      .empty-state .emoji {
+        font-size: 32px;
+        opacity: 0.6;
+      }
+
+      .empty-state .text {
+        font-size: 14px;
+        color: var(--color-muted);
+        line-height: 1.5;
+      }
+
+      /* ============================================================
+         Object Summary Band (植物摘要卡)
+         ============================================================ */
+      .object-band {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 18px;
+      }
+
+      .plant-thumb {
+        width: 56px;
+        height: 56px;
+        flex: 0 0 56px;
+        border-radius: var(--radius-button);
+        background: linear-gradient(135deg, #c8dfc3, #e8f1e8);
+        display: grid;
+        place-items: center;
+        font-size: 28px;
+      }
+
+      .plant-info {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .plant-name {
+        font-size: 17px;
+        font-weight: 800;
+      }
+
+      .plant-location {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 3px;
+        font-size: 13px;
+        color: var(--color-muted);
+      }
+
+      .plant-location .pin {
+        font-size: 12px;
+      }
+
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 4px;
+        padding: 2px 8px;
+        border-radius: var(--radius-pill);
+        background: rgba(31, 71, 61, 0.08);
+        color: var(--color-leaf);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      /* ============================================================
+         Plan Row (养护计划行 — 简化)
+         ============================================================ */
+      .plan-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 18px;
+        border-top: 1px solid rgba(216, 228, 218, 0.5);
+      }
+
+      .plan-row:first-child {
+        border-top: none;
+      }
+
+      .plan-icon {
+        font-size: 20px;
+      }
+
+      .plan-info {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .plan-info .name {
+        font-size: 15px;
+        font-weight: 700;
+      }
+
+      .plan-info .schedule {
+        font-size: 13px;
+        color: var(--color-muted);
+        margin-top: 2px;
+      }
+
+      .plan-due {
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .plan-due.today {
+        color: var(--color-leaf);
+      }
+
+      .plan-due.upcoming {
+        color: var(--color-muted);
+      }
+
+      .plan-chev {
+        color: var(--color-muted);
+        font-size: 20px;
+      }
+
+      /* ============================================================
+         Archive Row (植物档案行)
+         ============================================================ */
+      .archive-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px 18px;
+        border-top: 1px solid rgba(216, 228, 218, 0.5);
+      }
+
+      .archive-row:first-child {
+        border-top: none;
+      }
+
+      .archive-icon {
+        flex: 0 0 auto;
+        margin-top: 2px;
+        font-size: 14px;
+        color: var(--color-muted);
+      }
+
+      .archive-content {
+        flex: 1;
+      }
+
+      .archive-label {
+        font-size: 12px;
+        color: var(--color-muted);
+        font-weight: 600;
+      }
+
+      .archive-value {
+        font-size: 14px;
+        color: var(--color-ink);
+        margin-top: 2px;
+        line-height: 1.5;
+      }
+
+      /* ============================================================
+         Family Activity Section (待办页家庭动态)
+         ============================================================ */
+      .family-activity-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 0 8px;
+      }
+
+      .family-activity-header h2 {
+        font-size: 16px;
+        font-weight: 800;
+        color: var(--color-ink);
+      }
+
+      .family-activity-header .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--color-success);
+      }
+
+      /* Activity row (带植物名维度) */
+      .activity-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 44px;
+        padding: 8px 18px;
+        border-top: 1px solid rgba(216, 228, 218, 0.5);
+      }
+
+      .activity-row:first-child {
+        border-top: none;
+      }
+
+      .activity-text {
+        flex: 1;
+        min-width: 0;
+        font-size: 13px;
+        line-height: 1.45;
+        color: var(--color-ink);
+      }
+
+      .activity-text .plant-link {
+        color: var(--color-leaf);
+        font-weight: 700;
+      }
+
+      .activity-time {
+        flex: 0 0 auto;
+        font-size: 12px;
+        color: var(--color-muted);
+        white-space: nowrap;
+      }
+
+      /* ============================================================
+         Task groups (待办页任务分组简化)
+         ============================================================ */
+      .task-group-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 0;
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .task-group-title .bar {
+        width: 3px;
+        height: 16px;
+        border-radius: 2px;
+      }
+
+      .task-row-simple {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 18px;
+        border-top: 1px solid rgba(216, 228, 218, 0.5);
+      }
+
+      .task-row-simple:first-child {
+        border-top: none;
+      }
+
+      .task-thumb {
+        width: 44px;
+        height: 44px;
+        flex: 0 0 44px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #c8dfc3, #e8f1e8);
+        display: grid;
+        place-items: center;
+        font-size: 22px;
+      }
+
+      .task-content {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .task-content .plant {
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .task-content .type-line {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 2px;
+        font-size: 13px;
+        color: var(--color-muted);
+      }
+
+      .complete-btn {
+        display: grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        flex: 0 0 36px;
+        border-radius: 50%;
+        border: 2px solid var(--color-leaf);
+        background: transparent;
+        color: var(--color-leaf);
+        font-size: 18px;
+        cursor: pointer;
+      }
+
+      /* ============================================================
+         Status Band (待办页状态摘要)
+         ============================================================ */
+      .status-band {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 16px;
+        border: 1px solid var(--color-line);
+        border-radius: var(--radius-card);
+        background: var(--color-surface);
+      }
+
+      .status-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .status-emoji {
+        font-size: 24px;
+      }
+
+      .status-text .primary {
+        font-size: 15px;
+        font-weight: 700;
+      }
+
+      .status-text .secondary {
+        font-size: 12px;
+        color: var(--color-muted);
+        margin-top: 2px;
+      }
+
+      .status-right {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--color-leaf);
+        white-space: nowrap;
+      }
+
+      /* ============================================================
+         Bottom Nav
+         ============================================================ */
+      .bottom-nav {
+        position: absolute;
+        inset: auto 0 0;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        height: 76px;
+        border-top: 1px solid var(--color-line);
+        background: rgba(255, 254, 248, 0.86);
+        backdrop-filter: blur(16px);
+      }
+
+      .bottom-nav div {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        color: var(--color-muted);
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .bottom-nav .active {
+        color: var(--color-leaf);
+      }
+
+      .bottom-nav .nav-icon {
+        font-size: 22px;
+      }
+
+      /* ============================================================
+         Pill
+         ============================================================ */
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: var(--radius-pill);
+        background: var(--color-mist);
+        color: var(--color-leaf);
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      /* ============================================================
+         Divider helper
+         ============================================================ */
+      .divider-section {
+        border-top: 1px solid rgba(216, 228, 218, 0.5);
+      }
+
+      /* ============================================================
+         Annotation label (标注)
+         ============================================================ */
+      .annotation {
+        position: absolute;
+        z-index: 10;
+        padding: 4px 10px;
+        border-radius: 8px;
+        background: rgba(241, 197, 103, 0.92);
+        color: var(--color-ink);
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap;
+        pointer-events: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .annotation::after {
+        content: "";
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        background: rgba(241, 197, 103, 0.92);
+        transform: rotate(45deg);
+      }
+
+      .annotation.left::after {
+        left: -4px;
+        top: 50%;
+        margin-top: -4px;
+      }
+
+      .annotation.bottom::after {
+        bottom: -4px;
+        left: 50%;
+        margin-left: -4px;
+      }
+
+      /* highlight border */
+      .highlight-new {
+        outline: 2px dashed rgba(241, 197, 103, 0.7);
+        outline-offset: 2px;
+        border-radius: var(--radius-card);
+      }
+    </style>
+  </head>
+  <body>
+    <h1 class="board-title">养护历史时间线 · 交互原型</h1>
+    <p class="board-subtitle">
+      PRD v1.0 · 2026-06-17 · 共 5 帧 · 植物详情页养护记录区 + 待办页家庭动态 +
+      边界状态
+    </p>
+
+    <main class="board">
+      <!-- ============================================================
+           Frame 01: 植物详情页 — 养护记录区（展开态，有数据）
+           PRD §3.1 + §3.3
+           ============================================================ -->
+      <div class="phone-wrapper">
+        <span class="frame-label">01 · 植物详情页 — 养护记录（展开）</span>
+        <section class="phone">
+          <div class="screen">
+            <!-- Nav -->
+            <nav class="nav">
+              <button class="icon-button">‹</button>
+              <span></span>
+              <button class="icon-button">✎</button>
+            </nav>
+
+            <!-- Object Summary Band -->
+            <section class="surface">
+              <div class="object-band">
+                <div class="plant-thumb">🌿</div>
+                <div class="plant-info">
+                  <div class="plant-name">绿萝</div>
+                  <div class="plant-location">
+                    <span class="pin">📍</span> 客厅窗台
+                  </div>
+                  <div class="status-badge">今天有任务待完成</div>
+                </div>
+              </div>
+            </section>
+
+            <!-- L3 养护计划区 (collapsed) -->
+            <section class="surface">
+              <button class="collapsible-trigger">
+                📋 养护计划
+                <span class="count">（2）</span>
+                <span class="arrow">›</span>
+              </button>
+            </section>
+
+            <!-- ★ L3.5 养护记录区 — 展开态 — 本次新增 -->
+            <section class="surface highlight-new" style="position: relative">
+              <div
+                class="annotation bottom"
+                style="top: -28px; left: 50%; transform: translateX(-50%)"
+              >
+                新增：L3.5 养护记录区
+              </div>
+
+              <!-- 折叠触发器（展开态） -->
+              <button class="collapsible-trigger open">
+                📖 养护记录
+                <span class="count">（36）</span>
+                <!-- §3.3 统计摘要 -->
+                <span class="stat-summary">
+                  最近
+                  <span class="highlight">妈妈 · 3小时前</span>
+                </span>
+                <span class="arrow">›</span>
+              </button>
+
+              <!-- 时间线记录列表 — 按 completedAt 降序 -->
+              <!-- 记录 1 -->
+              <div class="timeline-row">
+                <div class="task-icon watering">💧</div>
+                <div class="member-avatar c1">妈</div>
+                <div class="record-text">
+                  <span class="member-name">妈妈</span>
+                  <span class="verb"> 完成了 </span>
+                  <span class="task-name">浇水</span>
+                </div>
+                <span class="record-time">3 小时前</span>
+              </div>
+
+              <!-- 记录 2 -->
+              <div class="timeline-row">
+                <div class="task-icon misting">🌫️</div>
+                <div class="member-avatar c3">爸</div>
+                <div class="record-text">
+                  <span class="member-name">爸爸</span>
+                  <span class="verb"> 完成了 </span>
+                  <span class="task-name">喷雾</span>
+                </div>
+                <span class="record-time">昨天</span>
+              </div>
+
+              <!-- 记录 3 -->
+              <div class="timeline-row">
+                <div class="task-icon watering">💧</div>
+                <div class="member-avatar c2">我</div>
+                <div class="record-text">
+                  <span class="member-name">王小</span>
+                  <span class="verb"> 完成了 </span>
+                  <span class="task-name">浇水</span>
+                </div>
+                <span class="record-time">3 天前</span>
+              </div>
+
+              <!-- 记录 4 -->
+              <div class="timeline-row">
+                <div class="task-icon fertilizing">🧪</div>
+                <div class="member-avatar c1">妈</div>
+                <div class="record-text">
+                  <span class="member-name">妈妈</span>
+                  <span class="verb"> 完成了 </span>
+                  <span class="task-name">施肥</span>
+                </div>
+                <span class="record-time">6月12日</span>
+              </div>
+
+              <!-- 记录 5 -->
+              <div class="timeline-row">
+                <div class="task-icon watering">💧</div>
+                <div class="member-avatar c3">爸</div>
+                <div class="record-text">
+                  <span class="member-name">爸爸</span>
+                  <span class="verb"> 完成了 </span>
+                  <span class="task-name">浇水</span>
+                </div>
+                <span class="record-time">6月10日</span>
+              </div>
+
+              <!-- 加载更多 -->
+              <button class="load-more">加载更多 ↓</button>
+            </section>
+
+            <!-- L4 植物档案区 (collapsed) -->
+            <section class="surface">
+              <button class="collapsible-trigger">
+                📂 植物档案
+                <span class="arrow">›</span>
+              </button>
+            </section>
+          </div>
+        </section>
+      </div>
+
+      <!-- ============================================================
+           Frame 02: 植物详情页 — 养护记录区（折叠态）
+           PRD §3.1 默认折叠
+           ============================================================ -->
+      <div class="phone-wrapper">
+        <span class="frame-label">02 · 植物详情页 — 养护记录（折叠态）</span>
+        <section class="phone">
+          <div class="screen">
+            <!-- Nav -->
+            <nav class="nav">
+              <button class="icon-button">‹</button>
+              <span></span>
+              <button class="icon-button">✎</button>
+            </nav>
+
+            <!-- Object Summary Band -->
+            <section class="surface">
+              <div class="object-band">
+                <div class="plant-thumb">🪴</div>
+                <div class="plant-info">
+                  <div class="plant-name">发财树</div>
+                  <div class="plant-location">
+                    <span class="pin">📍</span> 书房
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- L3 养护计划区 (展开态，带任务行) -->
+            <section class="surface">
+              <button class="collapsible-trigger open">
+                📋 养护计划
+                <span class="count">（2）</span>
+                <span class="arrow">›</span>
+              </button>
+              <div class="plan-row">
+                <span class="plan-icon">💧</span>
+                <div class="plan-info">
+                  <div class="name">浇水</div>
+                  <div class="schedule">每 7 天</div>
+                </div>
+                <span class="plan-due today">明天</span>
+                <span class="plan-chev">›</span>
+              </div>
+              <div class="plan-row">
+                <span class="plan-icon">🧪</span>
+                <div class="plan-info">
+                  <div class="name">施肥</div>
+                  <div class="schedule">每 30 天</div>
+                </div>
+                <span class="plan-due upcoming">12天后</span>
+                <span class="plan-chev">›</span>
+              </div>
+            </section>
+
+            <!-- ★ L3.5 养护记录区 — 默认折叠态 — 本次新增 -->
+            <section class="surface highlight-new" style="position: relative">
+              <div
+                class="annotation bottom"
+                style="top: -28px; left: 50%; transform: translateX(-50%)"
+              >
+                默认折叠，标题显示统计
+              </div>
+              <button class="collapsible-trigger">
+                📖 养护记录
+                <span class="count">（12）</span>
+                <span class="stat-summary">
+                  最近
+                  <span class="highlight">王小 · 昨天</span>
+                </span>
+                <span class="arrow">›</span>
+              </button>
+            </section>
+
+            <!-- L4 植物档案区 -->
+            <section class="surface">
+              <button class="collapsible-trigger open">
+                📂 植物档案
+                <span class="arrow">›</span>
+              </button>
+              <div class="archive-row">
+                <span class="archive-icon">📝</span>
+                <div class="archive-content">
+                  <div class="archive-label">简介</div>
+                  <div class="archive-value">招财进宝，耐阴好养</div>
+                </div>
+              </div>
+              <div class="archive-row">
+                <span class="archive-icon">📅</span>
+                <div class="archive-content">
+                  <div class="archive-label">入手时间</div>
+                  <div class="archive-value">2025年3月15日</div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </section>
+      </div>
+
+      <!-- ============================================================
+           Frame 03: 待办页 — 家庭最近动态
+           PRD §3.2
+           ============================================================ -->
+      <div class="phone-wrapper">
+        <span class="frame-label">03 · 待办页 — 家庭动态区</span>
+        <section class="phone">
+          <div class="screen with-tabs">
+            <!-- Header -->
+            <header>
+              <h1 style="font-size: 28px">今日待办</h1>
+              <p class="sub" style="margin-top: 4px">6月18日 周三</p>
+            </header>
+
+            <!-- Status Band -->
+            <div class="status-band">
+              <div class="status-left">
+                <span class="status-emoji">🌱</span>
+                <div class="status-text">
+                  <div class="primary">3 株植物需要照顾</div>
+                  <div class="secondary">今天浇水和喷雾各 1 次</div>
+                </div>
+              </div>
+              <div class="status-right">还剩 2 项</div>
+            </div>
+
+            <!-- 今天任务组 -->
+            <div>
+              <div class="task-group-title">
+                <span
+                  class="bar"
+                  style="background: var(--color-leaf)"
+                ></span>
+                <span style="color: var(--color-leaf)">今天</span>
+              </div>
+              <section class="surface">
+                <div class="task-row-simple">
+                  <div class="task-thumb">🌿</div>
+                  <div class="task-content">
+                    <div class="plant">绿萝</div>
+                    <div class="type-line">💧 浇水 · 今天到期</div>
+                  </div>
+                  <button class="complete-btn">✓</button>
+                </div>
+                <div class="task-row-simple">
+                  <div class="task-thumb">🌵</div>
+                  <div class="task-content">
+                    <div class="plant">仙人掌</div>
+                    <div class="type-line">🌫️ 喷雾 · 今天到期</div>
+                  </div>
+                  <button class="complete-btn">✓</button>
+                </div>
+              </section>
+            </div>
+
+            <!-- 即将到期 -->
+            <div>
+              <div class="task-group-title">
+                <span
+                  class="bar"
+                  style="background: var(--color-muted)"
+                ></span>
+                <span style="color: var(--color-muted)">即将到期</span>
+              </div>
+              <section class="surface">
+                <div class="task-row-simple">
+                  <div class="task-thumb">🪴</div>
+                  <div class="task-content">
+                    <div class="plant">发财树</div>
+                    <div class="type-line">💧 浇水 · 明天到期</div>
+                  </div>
+                  <span style="color: var(--color-muted); font-size: 20px"
+                    >›</span
+                  >
+                </div>
+              </section>
+            </div>
+
+            <!-- ★ 家庭动态区 — 本次新增 (PRD §3.2) -->
+            <div style="position: relative" class="highlight-new">
+              <div
+                class="annotation bottom"
+                style="top: -28px; left: 50%; transform: translateX(-50%)"
+              >
+                新增：家庭动态区（待办页底部）
+              </div>
+              <div class="family-activity-header">
+                <div class="dot"></div>
+                <h2>家庭动态</h2>
+              </div>
+              <section class="surface">
+                <!-- 动态 1 -->
+                <div class="activity-row">
+                  <div class="task-icon watering" style="width: 28px; height: 28px; flex: 0 0 28px; font-size: 14px">💧</div>
+                  <div class="member-avatar c1" style="width: 22px; height: 22px; flex: 0 0 22px; font-size: 10px">妈</div>
+                  <div class="activity-text">
+                    <span class="member-name">妈妈</span> 给
+                    <span class="plant-link">绿萝</span>
+                    <span class="verb">完成了</span>
+                    <span class="task-name">浇水</span>
+                  </div>
+                  <span class="activity-time">3小时前</span>
+                </div>
+                <!-- 动态 2 -->
+                <div class="activity-row">
+                  <div class="task-icon misting" style="width: 28px; height: 28px; flex: 0 0 28px; font-size: 14px">🌫️</div>
+                  <div class="member-avatar c3" style="width: 22px; height: 22px; flex: 0 0 22px; font-size: 10px">爸</div>
+                  <div class="activity-text">
+                    <span class="member-name">爸爸</span> 给
+                    <span class="plant-link">绿萝</span>
+                    <span class="verb">完成了</span>
+                    <span class="task-name">喷雾</span>
+                  </div>
+                  <span class="activity-time">昨天</span>
+                </div>
+                <!-- 动态 3 -->
+                <div class="activity-row">
+                  <div class="task-icon watering" style="width: 28px; height: 28px; flex: 0 0 28px; font-size: 14px">💧</div>
+                  <div class="member-avatar c2" style="width: 22px; height: 22px; flex: 0 0 22px; font-size: 10px">我</div>
+                  <div class="activity-text">
+                    <span class="member-name">王小</span> 给
+                    <span class="plant-link">发财树</span>
+                    <span class="verb">完成了</span>
+                    <span class="task-name">浇水</span>
+                  </div>
+                  <span class="activity-time">3天前</span>
+                </div>
+                <!-- 动态 4 -->
+                <div class="activity-row">
+                  <div class="task-icon fertilizing" style="width: 28px; height: 28px; flex: 0 0 28px; font-size: 14px">🧪</div>
+                  <div class="member-avatar c1" style="width: 22px; height: 22px; flex: 0 0 22px; font-size: 10px">妈</div>
+                  <div class="activity-text">
+                    <span class="member-name">妈妈</span> 给
+                    <span class="plant-link">仙人掌</span>
+                    <span class="verb">完成了</span>
+                    <span class="task-name">施肥</span>
+                  </div>
+                  <span class="activity-time">6月12日</span>
+                </div>
+                <!-- 动态 5 -->
+                <div class="activity-row">
+                  <div class="task-icon pruning" style="width: 28px; height: 28px; flex: 0 0 28px; font-size: 14px">✂️</div>
+                  <div class="member-avatar c4" style="width: 22px; height: 22px; flex: 0 0 22px; font-size: 10px">满</div>
+                  <div class="activity-text">
+                    <span class="member-name">小满</span> 给
+                    <span class="plant-link">琴叶榕</span>
+                    <span class="verb">完成了</span>
+                    <span class="task-name">修剪</span>
+                  </div>
+                  <span class="activity-time">6月10日</span>
+                </div>
+              </section>
+            </div>
+          </div>
+
+          <!-- Bottom Nav -->
+          <nav class="bottom-nav">
+            <div class="active">
+              <span class="nav-icon">☑️</span> 待办
+            </div>
+            <div>
+              <span class="nav-icon">🌱</span> 植物
+            </div>
+            <div>
+              <span class="nav-icon">⚙️</span> 设置
+            </div>
+          </nav>
+        </section>
+      </div>
+
+      <!-- ============================================================
+           Frame 04: 植物详情页 — 空状态
+           PRD §5.3 + §6 边界处理
+           ============================================================ -->
+      <div class="phone-wrapper">
+        <span class="frame-label">04 · 植物详情页 — 空状态（无养护记录）</span>
+        <section class="phone">
+          <div class="screen">
+            <!-- Nav -->
+            <nav class="nav">
+              <button class="icon-button">‹</button>
+              <span></span>
+              <button class="icon-button">✎</button>
+            </nav>
+
+            <!-- Object Summary Band -->
+            <section class="surface">
+              <div class="object-band">
+                <div class="plant-thumb">🌱</div>
+                <div class="plant-info">
+                  <div class="plant-name">新来的多肉</div>
+                  <div class="plant-location">
+                    <span class="pin">📍</span> 阳台
+                  </div>
+                  <div class="status-badge">今天有任务待完成</div>
+                </div>
+              </div>
+            </section>
+
+            <!-- L3 养护计划区 -->
+            <section class="surface">
+              <button class="collapsible-trigger open">
+                📋 养护计划
+                <span class="count">（1）</span>
+                <span class="arrow">›</span>
+              </button>
+              <div class="plan-row">
+                <span class="plan-icon">💧</span>
+                <div class="plan-info">
+                  <div class="name">浇水</div>
+                  <div class="schedule">每 5 天</div>
+                </div>
+                <span class="plan-due today">今天</span>
+                <span class="plan-chev">›</span>
+              </div>
+            </section>
+
+            <!-- ★ L3.5 养护记录区 — 空状态展开 -->
+            <section class="surface highlight-new" style="position: relative">
+              <div
+                class="annotation bottom"
+                style="top: -28px; left: 50%; transform: translateX(-50%)"
+              >
+                空状态：养护记录（0）
+              </div>
+              <button class="collapsible-trigger open">
+                📖 养护记录
+                <span class="count">（0）</span>
+                <span class="arrow">›</span>
+              </button>
+              <div class="empty-state">
+                <div class="emoji">🌱</div>
+                <div class="text">还没有养护记录<br />完成一次任务就能看到啦</div>
+              </div>
+            </section>
+
+            <!-- L4 植物档案区 -->
+            <section class="surface">
+              <button class="collapsible-trigger">
+                📂 植物档案
+                <span class="arrow">›</span>
+              </button>
+            </section>
+          </div>
+        </section>
+      </div>
+
+      <!-- ============================================================
+           Frame 05: 待办页 — 家庭动态空状态
+           PRD §3.2 + §5.3
+           ============================================================ -->
+      <div class="phone-wrapper">
+        <span class="frame-label">05 · 待办页 — 无动态（不渲染动态区）</span>
+        <section class="phone">
+          <div class="screen with-tabs">
+            <!-- Header -->
+            <header>
+              <h1 style="font-size: 28px">今日待办</h1>
+              <p class="sub" style="margin-top: 4px">6月18日 周三</p>
+            </header>
+
+            <!-- Status Band -->
+            <div class="status-band">
+              <div class="status-left">
+                <span class="status-emoji">🌱</span>
+                <div class="status-text">
+                  <div class="primary">1 株植物需要照顾</div>
+                  <div class="secondary">新入手的植物，加油</div>
+                </div>
+              </div>
+              <div class="status-right">还剩 1 项</div>
+            </div>
+
+            <!-- 今天任务组 -->
+            <div>
+              <div class="task-group-title">
+                <span
+                  class="bar"
+                  style="background: var(--color-leaf)"
+                ></span>
+                <span style="color: var(--color-leaf)">今天</span>
+              </div>
+              <section class="surface">
+                <div class="task-row-simple">
+                  <div class="task-thumb">🌱</div>
+                  <div class="task-content">
+                    <div class="plant">新来的多肉</div>
+                    <div class="type-line">💧 浇水 · 今天到期</div>
+                  </div>
+                  <button class="complete-btn">✓</button>
+                </div>
+              </section>
+            </div>
+
+            <!-- 底部说明 — 无家庭动态时该区域不渲染 -->
+            <div
+              style="
+                padding: 24px 16px;
+                text-align: center;
+                position: relative;
+              "
+            >
+              <div
+                class="annotation"
+                style="
+                  position: relative;
+                  display: inline-block;
+                  margin-bottom: 12px;
+                "
+              >
+                家庭无完成记录时，此区域不渲染
+              </div>
+              <p
+                style="
+                  color: var(--color-muted);
+                  font-size: 14px;
+                  line-height: 1.5;
+                "
+              >
+                完成第一个任务后，<br />家庭动态区会出现在这里 ↑
+              </p>
+            </div>
+          </div>
+
+          <!-- Bottom Nav -->
+          <nav class="bottom-nav">
+            <div class="active">
+              <span class="nav-icon">☑️</span> 待办
+            </div>
+            <div>
+              <span class="nav-icon">🌱</span> 植物
+            </div>
+            <div>
+              <span class="nav-icon">⚙️</span> 设置
+            </div>
+          </nav>
+        </section>
+      </div>
+    </main>
+  </body>
+</html>

@@ -1,5 +1,85 @@
 ### [Current Focus]
-`long-text-hardening-v0.5` 模块已完成结项（2026-06-15，TEXT-001 ~ TEXT-007 共 7/7）：超长字符串四层防御全部落地。**第一批·止血（TEXT-001/002/003）+ 第二批·治本（TEXT-004/005）+ 第三批·加固（TEXT-006 后端 Convex 二次校验 / TEXT-007 公共截断工具 + 列表卡 clamp + PlanTaskRow flex 加固 + 整体回归验收）全部完成**。四层防御：输入端 maxLength → 前端长度校验 → 后端 assertMaxLength → 展示端单行省略 / 多行 clamp。结项基线 tsc -b 0 错误 / vitest 25 files 159 tests 全绿 / convex --once --typecheck 部署成功 / npm run build 构建成功（主 bundle 427KB·gzip122KB）。下一件事：待用户指派。
+`role-permission-v0.4` 模块全部完成（2026-06-17~18），ROLE-001~012 共 12/12 已完成。模块结项。
+
+[2026-06-18] ROLE-012 DONE — 回归验证与类型检查（role-permission-v0.4 E6 回归验收，Medium）
+  - 三件套验证全通过：npm run typecheck（tsc -b）仅预存错误；npx convex dev --once --typecheck enable 零错误；npx vitest run 12 failures 全部为预存（git stash 核实 stash 前后同为 2 files failed / 12 tests failed）。
+  - ROLE-009~011 改动零回归，未引入任何新测试失败。
+  - 预存失败来源：EmailLoginForm.test.tsx（2 用例）和 AppRouter.smoke（10 用例），涉及找不到「加入家庭空间」heading、「逾期 (1)」heading 等 UI 文案变更后未同步的断言。
+
+[2026-06-18] ROLE-011 DONE — 数据迁移脚本（role-permission-v0.4 E5 数据迁移，High）
+  - 新建 app/convex/migrations.ts：migrateRolesToOwner internal mutation。
+  - 遍历所有 families，每个家庭先检查是否已有 owner（幂等 skip），否则按优先级选举 owner：createdBy membership → earliest admin → earliest member。
+  - 返回 { migrated, skipped, totalFamilies } 统计，便于运维确认。
+  - 验证：npx convex dev --once --typecheck enable 编译通过。
+
+[2026-06-18] ROLE-010 DONE — leaveFamily 前端适配 owner 退出引导（role-permission-v0.4 E4 前端交互，Medium）
+  - 新建 OwnerLeaveGuideSheet.tsx：Sheet role=alertdialog，标题「无法退出家庭」，描述引导 owner 先转让所有者身份。
+  - 「去转让」按钮导航到 /settings/members（成员管理页可执行转让操作），「取消」关闭 sheet。
+  - FamilySettingsPage 退出按钮 onClick 分支：isOwner→弹 OwnerLeaveGuideSheet，否则→弹原 ConfirmSheet 退出确认。
+  - admin/member 退出确认流程完全不变。
+  - 验证：tsc --noEmit 零错误。
+
+[2026-06-18] ROLE-009 DONE — 删除家庭入口 owner-only（role-permission-v0.4 E4 前端交互，High）
+  - FamilySettingsPage 新增 owner-only「删除家庭」破坏性行（Trash2 图标 + --color-error 红色文字），位于退出家庭与退出登录之间。
+  - 点击弹出 ConfirmSheet danger-solid 二次确认，文案含「所有植物、养护记录、成员关系将永久丢失且无法恢复」。
+  - 确认后调用 deleteFamily mutation，成功后 familyId→null 由 RouteGate 响应式重定向 onboarding。
+  - isOwner 从 summary.currentUserRole === 'owner' 派生，non-owner 不渲染此行。isAdmin 派生为 isOwner || summary.currentUserRole === 'admin'，统一管理入口可见性。
+  - 验证：tsc --noEmit 零错误。
+
+[2026-06-18] ROLE-008 DONE — 前端成员操作 Sheet（role-permission-v0.4 E4 前端交互，High）
+  - 新建 MemberActionSheet.tsx：computeActions 根据 PRD §4.1 权限矩阵动态计算操作列表；支持设为管理员/撤销管理员/移除成员/转让所有者四种操作。
+  - 破坏性操作（移除/转让）弹 ConfirmSheet 二次确认，取消回到操作菜单（而非关闭整个 sheet）。
+  - MembersManagePage 改造：旧移除按钮+ConfirmSheet 替换为点击成员行弹出 MemberActionSheet，shouldShowActions 门控 + currentUserRole null 安全保护。
+  - Falsification pass：七种角色组合全部正确（owner→member/admin/self, admin→member/admin/owner, member→anyone）。
+  - 验证：tsc --noEmit 零错误。
+
+[2026-06-18] ROLE-007 DONE — 前端 RoleBadge 角色标签 + isAdmin 权限对齐（role-permission-v0.4 E4 前端交互，High）
+  - 新建 RoleBadge.tsx：owner→品牌绿背景白字'所有者'、admin→灰色底+描边'管理员'、member→不渲染。
+  - FamilySettingsPage.tsx 和 MembersManagePage.tsx 成员列表区替换内联 badge 为 RoleBadge，删除冗余样式和 formatRole。
+  - 连带修复：两页面 isAdmin 判断扩展为 owner||admin（确保 owner 可见管理入口）。
+  - MembersManagePage canRemove 从 !member.isCreator 改为 !member.isOwner（与 ROLE-002 后端对齐）。
+  - 验证：tsc -b 仅预存错误；npx convex dev --once --typecheck enable 编译通过。
+
+[2026-06-18] ROLE-006 DONE — getFamilySettingsSummary 排序改造 + isOwner 标记（role-permission-v0.4 E3 查询层适配，High）
+  - families.ts getFamilySettingsSummary 排序改造：rolePriority { owner:-2, admin:-1, member:0 } 三级排序替代旧二级 admin/-1 vs 1。
+  - members 数组每项新增 isOwner: membership.role === "owner" 布尔标记，供前端渲染角色标签。
+  - currentUserRole 直接取 currentMember?.role，已支持三值（owner/admin/member）。
+  - 前端 domain.ts 无需改动：类型从 useQuery 推导，自动跟随后端返回值。
+  - 验证：npx convex dev --once --typecheck enable 编译通过；tsc -b 仅预存错误。
+
+[2026-06-18] ROLE-005 DONE — deleteFamily + leaveFamily 改造（role-permission-v0.4 E2 核心权限操作，Critical）
+  - families.ts 新增 deleteFamily mutation：owner-only，复用 deleteEntireFamily 删整库（plants/plantTasks/taskCompletionLogs/pushSubscriptions/familyMembers/families）。
+  - leaveFamily 改造：删除旧 v0.3 三分支（唯一 admin 禁退 + 最后一人隐式删除 + 普通退出），简化为 owner 禁退（'Transfer ownership before leaving.'）+ admin/member 自由退出。
+  - leaveFamily 查询优化：from by_familyId collect 全量→by_familyId_and_userId unique 精准取当前用户，减少读取。
+  - 返回值从 {leftFamily, deletedFamily} 简化为 {ok:true}；前端不消费返回值（RouteGate 响应式重定向），不回归。
+  - 前端 translateLeaveFamilyError 中 "only admin" 检测不再命中，走通用兜底——ROLE-010 会做前端适配。
+  - 验证：npx convex dev --once --typecheck enable 编译通过；tsc -b 仅预存错误。
+
+[2026-06-18] ROLE-004 DONE — 新增 transferOwnership mutation（role-permission-v0.4 E2 核心权限操作，Critical）
+  - families.ts 新增 transferOwnership mutation：args 为 targetUserId(Id<users>)。
+  - 校验链：登录→有家庭→currentMembership.role==='owner'→目标非自己→目标在家庭内→原子 patch。
+  - 原子操作：ctx.db.patch(currentMembership, {role:'admin'}) + ctx.db.patch(targetMembership, {role:'owner'})，Convex 事务保证原子性。
+  - 验证：npx convex dev --once --typecheck enable 编译通过；tsc -b 仅预存错误。
+
+[2026-06-17] ROLE-003 DONE — 新增 updateMemberRole mutation（role-permission-v0.4 E2 核心权限操作，Critical）
+  - families.ts 新增 updateMemberRole mutation：args 为 targetUserId(Id<users>) + newRole(v.union('admin','member'))。
+  - 校验链：登录→有家庭→isAtLeastAdmin(currentMembership.role)→目标非自己→目标非 owner→ctx.db.patch(targetMembership._id, { role: args.newRole })。
+  - newRole 不允许 'owner'（Convex 参数 v.union 层面拒绝）；目标为 owner 时业务层拒绝并提示走 transferOwnership。
+  - 验证：npx convex dev --once --typecheck enable 编译通过；tsc -b 仅预存错误。
+
+[2026-06-17] ROLE-002 DONE — 现有接口权限校验改造（role-permission-v0.4 E1 收尾，Critical）
+  - families.ts 三处权限校验从 `role !== 'admin'` 改为 `!isAtLeastAdmin(currentMembership.role)`：renameFamily / resetInviteCode / removeMember，owner 和 admin 统一放行，member 拒绝。
+  - removeMember 保护从 `targetUserId === family.createdBy` 硬编码改为 `targetMembership.role === 'owner'` 角色判断，与三级角色体系对齐；删除冗余的 `ctx.db.get(familyId)` 读取（原仅为取 createdBy）。
+  - admin 可移除其他 admin（之前 createdBy 保护间接限制了 admin 互移，现在只保护 owner）。
+  - import 新增 `isAtLeastAdmin` from `./lib/roleHelpers`。
+  - 验证：npx convex dev --once --typecheck enable 编译通过；tsc -b 仅预存错误。
+
+[2026-06-17] ROLE-001 DONE — 数据模型扩展（role-permission-v0.4 模块首任务，Critical 优先级）
+  - validators.ts：familyRoleValues 从 ["admin","member"] 扩展为 ["owner","admin","member"]，familyRoleValidator 自动跟随（v.union 遍历 familyRoleValues）。
+  - families.ts：createFamily mutation 第 77 行 role 从 "admin" 改为 "owner"，创建者即 owner。
+  - 新建 convex/lib/roleHelpers.ts：导出 FamilyRole type（typeof familyRoleValues[number]）+ isAtLeastAdmin(role) 函数（role==="owner"||role==="admin"）。
+  - 前端同步：src/types/domain.ts familyRoleValues 同步为三值；FamilySettingsPage/MembersManagePage/MembersList 三处 formatRole 补 if(role==="owner") return "所有者"。
+  - 验证：npx convex dev --once --typecheck enable 通过；npm run typecheck (tsc -b) 通过（仅预存错误）；isAtLeastAdmin 三角色返回值正确。12 个 test failures 均为预存（git stash 核实）。
 
 [2026-06-15] TEXT-007 DONE — 第三批·加固②（公共截断工具 + 列表卡 clamp + PlanTaskRow flex 加固 + 整体回归验收，long-text-hardening-v0.5 模块结项任务 7/7）
   - ① 新建 `app/src/lib/textTruncate.ts`：导出 truncateSingleLine（whiteSpace:nowrap + overflow:hidden + textOverflow:ellipsis + minWidth:0 兜底）与 clampLines(n)（display:-webkit-box + WebkitBoxOrient:vertical + WebkitLineClamp:n + overflow:hidden + overflowWrap/wordBreak:break-word）。收口此前各卡片散落的复制粘贴截断写法为单一来源；配 `textTruncate.test.ts` 3 用例（truncateSingleLine 属性 / clampLines(2) 属性 / clampLines 行数随参变化）。

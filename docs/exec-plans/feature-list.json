@@ -217,6 +217,19 @@
         "main-flow-continuity-v0.7",
         "icon-system-v0.4"
       ]
+    },
+    {
+      "module": "role-permission-v0.4",
+      "file": "docs/exec-plans/modules/role-permission-v0.4.json",
+      "description": "角色与权限管理 v0.4：引入三级角色体系（owner/admin/member），替代 v0.3 D5 临时方案。owner 为家庭创建者（可转让、唯一），独有权限为删除家庭和禁止退出；其余权限与 admin 一致。含数据模型扩展、权限校验改造、核心 mutation（updateMemberRole/transferOwnership/deleteFamily）、前端角色标签与操作 Sheet、数据迁移。",
+      "prd": "docs/product-specs/2026-06-17-role-permission-management-spec.md",
+      "task_count": 12,
+      "completed": 12,
+      "depends_on": [
+        "family-access",
+        "settings-page-v0.3",
+        "settings-page-v2"
+      ]
     }
   ],
   "tasks_summary": [
@@ -1269,6 +1282,90 @@
       "description": "Onboarding 精修回归验证：全流程走通新注册→设昵称→选择家庭→创建/加入→首页，截图对比设计稿。",
       "status": "completed",
       "priority": "1-High"
+    },
+    {
+      "task_id": "ROLE-001",
+      "module": "role-permission-v0.4",
+      "description": "数据模型扩展：familyRoleValues 新增 'owner'，createFamily 创建者 role→'owner'，新增 isAtLeastAdmin helper。",
+      "status": "completed",
+      "priority": "0-Critical"
+    },
+    {
+"task_id": "ROLE-002",
+"module": "role-permission-v0.4",
+"description": "现有接口权限校验改造：renameFamily/resetInviteCode/removeMember 使用 isAtLeastAdmin 统一校验，removeMember 保护 owner 不被移除。",
+"status": "completed",
+"priority": "0-Critical"
+    },
+    {
+"task_id": "ROLE-003",
+"module": "role-permission-v0.4",
+"description": "新增 updateMemberRole mutation：admin↔member 角色切换，不可操作 owner。",
+"status": "completed",
+"priority": "0-Critical"
+    },
+    {
+      "task_id": "ROLE-004",
+      "module": "role-permission-v0.4",
+      "description": "新增 transferOwnership mutation：owner 转让，原 owner→admin + 目标→owner 原子操作。",
+      "status": "completed",
+      "priority": "0-Critical"
+    },
+    {
+      "task_id": "ROLE-005",
+      "module": "role-permission-v0.4",
+      "description": "新增 deleteFamily mutation（owner-only）+ leaveFamily 改造（owner 禁退，其他人自由退出）。",
+      "status": "completed",
+      "priority": "0-Critical"
+    },
+    {
+      "task_id": "ROLE-006",
+      "module": "role-permission-v0.4",
+      "description": "getFamilySettingsSummary 改造：成员排序 owner>admin>member，返回 isOwner 标记。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "ROLE-007",
+      "module": "role-permission-v0.4",
+      "description": "前端成员列表角色标签展示：owner 绿色'所有者' badge、admin 灰色'管理员' badge。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "ROLE-008",
+      "module": "role-permission-v0.4",
+      "description": "前端成员操作 Sheet：动态权限菜单（设为管理员/撤销/移除/转让），破坏性操作走 ConfirmSheet。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "ROLE-009",
+      "module": "role-permission-v0.4",
+      "description": "删除家庭入口（owner-only）：设置页底部破坏性行 + ConfirmSheet danger-solid。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "ROLE-010",
+      "module": "role-permission-v0.4",
+      "description": "leaveFamily 前端适配：owner 退出时弹引导 sheet（先转让），admin/member 保留原确认逻辑。",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "ROLE-011",
+      "module": "role-permission-v0.4",
+      "description": "数据迁移脚本：将每个家庭 createdBy 对应的 admin 升级为 owner（internal mutation，幂等）。",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "ROLE-012",
+      "module": "role-permission-v0.4",
+      "description": "回归验证：全量 typecheck + Convex 验证 + 三角色视角设置页手动验收。",
+      "status": "completed",
+      "priority": "2-Medium"
     }
   ],
   "cross_module_dependencies": [
@@ -1826,6 +1923,71 @@
       "from": "TEXT-007",
       "to": "TEXT-001",
       "reason": "公共截断工具 textTruncate.ts 收口 TEXT-001 的单行省略写法，并统一全列表卡片截断；回归验收覆盖前序所有 TEXT 任务结果。"
+    },
+    {
+      "from": "ROLE-002",
+      "to": "ROLE-001",
+      "reason": "权限校验改造依赖 ROLE-001 的 isAtLeastAdmin helper 和 owner 角色定义。"
+    },
+    {
+      "from": "ROLE-003",
+      "to": "ROLE-001",
+      "reason": "updateMemberRole 使用 isAtLeastAdmin 做权限校验。"
+    },
+    {
+      "from": "ROLE-004",
+      "to": "ROLE-001",
+      "reason": "transferOwnership 依赖 owner 角色字面量已在 validator 中定义。"
+    },
+    {
+      "from": "ROLE-005",
+      "to": "ROLE-001",
+      "reason": "deleteFamily/leaveFamily 改造依赖 owner 角色判断和 isAtLeastAdmin helper。"
+    },
+    {
+      "from": "ROLE-006",
+      "to": "ROLE-001",
+      "reason": "排序逻辑依赖三级角色体系已建立。"
+    },
+    {
+      "from": "ROLE-007",
+      "to": "ROLE-006",
+      "reason": "前端角色标签展示依赖后端 query 返回 role 和 isOwner 数据。"
+    },
+    {
+      "from": "ROLE-008",
+      "to": "ROLE-003",
+      "reason": "成员操作 Sheet 调用 updateMemberRole mutation。"
+    },
+    {
+      "from": "ROLE-008",
+      "to": "ROLE-004",
+      "reason": "成员操作 Sheet 调用 transferOwnership mutation。"
+    },
+    {
+      "from": "ROLE-009",
+      "to": "ROLE-005",
+      "reason": "删除家庭前端入口调用 deleteFamily mutation。"
+    },
+    {
+      "from": "ROLE-010",
+      "to": "ROLE-005",
+      "reason": "owner 退出引导依赖 leaveFamily 已改造（owner 禁退由后端保障）。"
+    },
+    {
+      "from": "ROLE-011",
+      "to": "ROLE-001",
+      "reason": "数据迁移依赖 owner 角色已定义在 schema validator 中。"
+    },
+    {
+      "from": "ROLE-012",
+      "to": "ROLE-011",
+      "reason": "回归验收依赖数据迁移完成，确保所有家庭有 owner。"
+    },
+    {
+      "from": "ROLE-005",
+      "to": "SET3-012",
+      "reason": "leaveFamily 改造基于 v0.3 的 SET3-012 实现（删除 D5 临时逻辑，替换为 owner 禁退）。"
     }
   ]
 }

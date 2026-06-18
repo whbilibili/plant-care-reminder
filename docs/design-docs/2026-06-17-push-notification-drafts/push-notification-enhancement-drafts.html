@@ -1,0 +1,1429 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>推送通知体验增强 · 原型稿</title>
+    <style>
+      /* ============================================================
+         Design Tokens — 与 app/src/styles/tokens.css 保持同步
+         ============================================================ */
+      :root {
+        --color-ink: #16342f;
+        --color-muted: #637b71;
+        --color-paper: #fbfcf7;
+        --color-mist: #edf5f1;
+        --color-surface: #ffffff;
+        --color-leaf: #1f473d;
+        --color-leaf-light: #467061;
+        --color-gold: #f1c567;
+        --color-gold-hover: #ddb04e;
+        --color-line: #d8e4da;
+        --color-success: #2f855a;
+        --color-warning: #dd6b20;
+        --color-error: #c53030;
+
+        --color-task-watering: #3b82c4;
+        --color-task-fertilizing: #a06a3c;
+        --color-task-misting: #2f9c8a;
+        --color-task-repotting: #d2773b;
+        --color-task-pruning: #5c8a3a;
+        --color-task-custom: #8a9690;
+
+        --font-heading: Lora, "Songti SC", Georgia, serif;
+        --font-body: Raleway, "PingFang SC", "Hiragino Sans GB",
+          "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+
+        --space-xs: 4px;
+        --space-sm: 8px;
+        --space-md: 16px;
+        --space-lg: 24px;
+        --space-xl: 32px;
+
+        --radius-card: 16px;
+        --radius-button: 12px;
+        --radius-pill: 999px;
+        --radius-sheet: 20px;
+
+        --shadow-card: 0 18px 42px rgba(36, 73, 63, 0.12);
+        --shadow-sheet: 0 -8px 32px rgba(36, 73, 63, 0.15);
+      }
+
+      /* ============================================================
+         Reset & Base
+         ============================================================ */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        min-height: 100vh;
+        background: #dfe9de;
+        color: var(--color-ink);
+        font-family: var(--font-body);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* ============================================================
+         Layout — 横向画板
+         ============================================================ */
+      .board-title {
+        padding: 32px 32px 0;
+        font-family: var(--font-heading);
+        font-size: 28px;
+        font-weight: 800;
+        color: var(--color-ink);
+      }
+
+      .board-subtitle {
+        padding: 6px 32px 24px;
+        font-size: 14px;
+        color: var(--color-muted);
+      }
+
+      .section-label {
+        padding: 0 32px 16px;
+        font-family: var(--font-heading);
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--color-leaf);
+      }
+
+      .board {
+        display: flex;
+        gap: 32px;
+        padding: 0 32px 48px;
+        overflow-x: auto;
+        align-items: start;
+      }
+
+      .board + .section-label {
+        padding-top: 32px;
+      }
+
+      /* ============================================================
+         Phone Frame (390x844 iPhone 14)
+         ============================================================ */
+      .phone {
+        position: relative;
+        flex: 0 0 390px;
+        width: 390px;
+        min-height: 844px;
+        border-radius: 40px;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 80% 0%, rgba(207, 222, 194, 0.6), transparent 30%),
+          linear-gradient(180deg, var(--color-paper) 0%, #f0f5ed 100%);
+        box-shadow: var(--shadow-card);
+      }
+
+      .phone-label {
+        position: absolute;
+        bottom: -28px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 12px;
+        color: var(--color-muted);
+        white-space: nowrap;
+      }
+
+      .phone-wrapper {
+        position: relative;
+        margin-bottom: 36px;
+      }
+
+      .screen {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 56px 0 0;
+      }
+
+      /* ============================================================
+         Status Bar (iOS style)
+         ============================================================ */
+      .status-bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 54px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 28px 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--color-ink);
+        z-index: 10;
+      }
+
+      .status-bar-right {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+
+      /* ============================================================
+         Navigation Bar
+         ============================================================ */
+      .nav-bar {
+        display: flex;
+        align-items: center;
+        padding: 8px 18px;
+        gap: 12px;
+      }
+
+      .nav-back {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        border: none;
+        background: transparent;
+        color: var(--color-leaf);
+        font-size: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+
+      .nav-title {
+        flex: 1;
+        font-family: var(--font-heading);
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--color-ink);
+      }
+
+      /* ============================================================
+         Notification Banner (OS-level mock)
+         ============================================================ */
+      .os-notification {
+        margin: 12px 18px;
+        padding: 14px 16px;
+        background: var(--color-surface);
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+      }
+
+      .os-notification-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, var(--color-leaf) 0%, var(--color-leaf-light) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        flex-shrink: 0;
+      }
+
+      .os-notification-content {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .os-notification-app {
+        font-size: 11px;
+        color: var(--color-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+      }
+
+      .os-notification-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--color-ink);
+        margin-bottom: 2px;
+      }
+
+      .os-notification-body {
+        font-size: 13px;
+        color: var(--color-muted);
+        line-height: 1.4;
+      }
+
+      .os-notification-time {
+        font-size: 11px;
+        color: var(--color-muted);
+        flex-shrink: 0;
+      }
+
+      /* ============================================================
+         Settings Section
+         ============================================================ */
+      .settings-section {
+        padding: 0 18px;
+      }
+
+      .settings-section-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--color-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 16px 0 8px;
+      }
+
+      .settings-card {
+        background: var(--color-surface);
+        border-radius: var(--radius-card);
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(36, 73, 63, 0.06);
+      }
+
+      .settings-row {
+        display: flex;
+        align-items: center;
+        padding: 16px;
+        gap: 12px;
+        border-bottom: 1px solid var(--color-line);
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+
+      .settings-row:last-child {
+        border-bottom: none;
+      }
+
+      .settings-row:hover {
+        background: var(--color-mist);
+      }
+
+      .settings-row-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        flex-shrink: 0;
+      }
+
+      .settings-row-content {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .settings-row-label {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--color-ink);
+      }
+
+      .settings-row-desc {
+        font-size: 13px;
+        color: var(--color-muted);
+        margin-top: 2px;
+      }
+
+      .settings-row-value {
+        font-size: 14px;
+        color: var(--color-leaf-light);
+        font-weight: 500;
+        flex-shrink: 0;
+      }
+
+      .settings-row-arrow {
+        color: var(--color-muted);
+        font-size: 16px;
+        flex-shrink: 0;
+      }
+
+      /* Toggle Switch */
+      .toggle {
+        width: 48px;
+        height: 28px;
+        border-radius: 14px;
+        background: var(--color-line);
+        position: relative;
+        flex-shrink: 0;
+        transition: background 0.2s;
+      }
+
+      .toggle.active {
+        background: var(--color-success);
+      }
+
+      .toggle::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        transition: transform 0.2s;
+      }
+
+      .toggle.active::after {
+        transform: translateX(20px);
+      }
+
+      /* ============================================================
+         Bottom Sheet (Time Picker)
+         ============================================================ */
+      .sheet-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(22, 52, 47, 0.6);
+        z-index: 20;
+        display: flex;
+        align-items: flex-end;
+      }
+
+      .sheet {
+        width: 100%;
+        background: var(--color-surface);
+        border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+        padding: 24px 18px 36px;
+        box-shadow: var(--shadow-sheet);
+      }
+
+      .sheet-handle {
+        width: 36px;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--color-line);
+        margin: 0 auto 20px;
+      }
+
+      .sheet-title {
+        font-family: var(--font-heading);
+        font-size: 20px;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 6px;
+      }
+
+      .sheet-desc {
+        font-size: 14px;
+        color: var(--color-muted);
+        text-align: center;
+        margin-bottom: 24px;
+      }
+
+      /* Time Picker Wheel */
+      .time-picker {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 16px 0;
+        margin-bottom: 24px;
+      }
+
+      .time-picker-column {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        height: 160px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .time-picker-column::before,
+      .time-picker-column::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 48px;
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      .time-picker-column::before {
+        top: 0;
+        background: linear-gradient(to bottom, var(--color-surface), transparent);
+      }
+
+      .time-picker-column::after {
+        bottom: 0;
+        background: linear-gradient(to top, var(--color-surface), transparent);
+      }
+
+      .time-item {
+        font-size: 24px;
+        padding: 8px 20px;
+        color: var(--color-muted);
+        opacity: 0.4;
+        transition: all 0.2s;
+      }
+
+      .time-item.selected {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--color-ink);
+        opacity: 1;
+      }
+
+      .time-picker-highlight {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 48px;
+        transform: translateY(-50%);
+        border-radius: 12px;
+        background: var(--color-mist);
+        border: 1.5px solid var(--color-line);
+      }
+
+      .time-separator {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--color-ink);
+      }
+
+      /* Quick Option */
+      .quick-option {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
+        border-radius: 12px;
+        background: var(--color-mist);
+        margin-bottom: 16px;
+        cursor: pointer;
+      }
+
+      .quick-option-radio {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid var(--color-line);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .quick-option-radio.checked {
+        border-color: var(--color-leaf);
+      }
+
+      .quick-option-radio.checked::after {
+        content: "";
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--color-leaf);
+      }
+
+      .quick-option-text {
+        font-size: 15px;
+        font-weight: 500;
+      }
+
+      /* Button */
+      .btn-primary {
+        width: 100%;
+        padding: 16px;
+        border: none;
+        border-radius: var(--radius-button);
+        background: var(--color-gold);
+        color: var(--color-ink);
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+
+      .btn-primary:hover {
+        background: var(--color-gold-hover);
+      }
+
+      /* ============================================================
+         Plant Detail Page — Action Zone
+         ============================================================ */
+      .page-content {
+        padding: 0 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .plant-hero {
+        width: 100%;
+        height: 200px;
+        border-radius: var(--radius-card);
+        background: linear-gradient(135deg, var(--color-mist) 0%, #d4e8d8 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 72px;
+      }
+
+      .plant-name {
+        font-family: var(--font-heading);
+        font-size: 24px;
+        font-weight: 700;
+        text-align: center;
+      }
+
+      .plant-species {
+        font-size: 14px;
+        color: var(--color-muted);
+        text-align: center;
+        margin-top: -8px;
+      }
+
+      .action-zone {
+        background: var(--color-surface);
+        border-radius: var(--radius-card);
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(36, 73, 63, 0.06);
+      }
+
+      .action-zone-header {
+        padding: 14px 16px 8px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--color-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .task-row {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        gap: 12px;
+        border-top: 1px solid var(--color-line);
+      }
+
+      .task-row.highlighted {
+        background: rgba(59, 130, 196, 0.06);
+        border-left: 3px solid var(--color-task-watering);
+      }
+
+      .task-icon {
+        font-size: 22px;
+        flex-shrink: 0;
+      }
+
+      .task-info {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .task-name {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--color-ink);
+      }
+
+      .task-due {
+        font-size: 12px;
+        color: var(--color-warning);
+        margin-top: 2px;
+      }
+
+      .task-due.overdue {
+        color: var(--color-error);
+      }
+
+      .task-complete-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 2px solid var(--color-success);
+        background: transparent;
+        color: var(--color-success);
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+
+      .task-complete-btn:hover {
+        background: var(--color-success);
+        color: white;
+      }
+
+      /* ============================================================
+         Todo Page — Aggregated View
+         ============================================================ */
+      .todo-greeting {
+        padding: 12px 18px 0;
+      }
+
+      .todo-greeting h2 {
+        font-family: var(--font-heading);
+        font-size: 22px;
+        font-weight: 700;
+      }
+
+      .todo-greeting p {
+        font-size: 14px;
+        color: var(--color-muted);
+        margin-top: 4px;
+      }
+
+      .todo-section-title {
+        padding: 16px 18px 8px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--color-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .todo-card {
+        margin: 0 18px 10px;
+        background: var(--color-surface);
+        border-radius: var(--radius-card);
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(36, 73, 63, 0.06);
+        display: flex;
+        align-items: center;
+        padding: 14px 16px;
+        gap: 12px;
+      }
+
+      .todo-card-color {
+        width: 4px;
+        height: 40px;
+        border-radius: 2px;
+        flex-shrink: 0;
+      }
+
+      .todo-card-icon {
+        font-size: 24px;
+        flex-shrink: 0;
+      }
+
+      .todo-card-content {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .todo-card-plant {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--color-ink);
+      }
+
+      .todo-card-task {
+        font-size: 13px;
+        color: var(--color-muted);
+        margin-top: 2px;
+      }
+
+      .todo-card-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 2px solid var(--color-success);
+        background: transparent;
+        color: var(--color-success);
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        flex-shrink: 0;
+      }
+
+      /* ============================================================
+         Bottom Navigation
+         ============================================================ */
+      .bottom-nav {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 82px;
+        background: var(--color-surface);
+        border-top: 1px solid var(--color-line);
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-around;
+        padding-top: 10px;
+      }
+
+      .bottom-nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        font-size: 10px;
+        color: var(--color-muted);
+      }
+
+      .bottom-nav-item.active {
+        color: var(--color-leaf);
+      }
+
+      .bottom-nav-item-icon {
+        font-size: 22px;
+      }
+
+      /* ============================================================
+         Flow Arrows
+         ============================================================ */
+      .flow-connector {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 60px;
+        font-size: 28px;
+        color: var(--color-leaf-light);
+        padding-top: 200px;
+      }
+
+      /* ============================================================
+         Annotation
+         ============================================================ */
+      .annotation {
+        position: absolute;
+        font-size: 11px;
+        color: var(--color-leaf);
+        background: rgba(237, 245, 241, 0.95);
+        padding: 4px 8px;
+        border-radius: 6px;
+        border: 1px dashed var(--color-leaf-light);
+        z-index: 15;
+        max-width: 180px;
+        line-height: 1.3;
+      }
+
+      /* ============================================================
+         Fallback Page
+         ============================================================ */
+      .fallback-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 32px;
+        text-align: center;
+        gap: 16px;
+      }
+
+      .fallback-icon {
+        font-size: 64px;
+        opacity: 0.6;
+      }
+
+      .fallback-title {
+        font-family: var(--font-heading);
+        font-size: 20px;
+        font-weight: 700;
+      }
+
+      .fallback-desc {
+        font-size: 14px;
+        color: var(--color-muted);
+        line-height: 1.5;
+      }
+
+      .btn-secondary {
+        padding: 12px 24px;
+        border: 2px solid var(--color-leaf);
+        border-radius: var(--radius-button);
+        background: transparent;
+        color: var(--color-leaf);
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+
+      .btn-secondary:hover {
+        background: var(--color-leaf);
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ============================================================
+         Section 1: 通知深链跳转流程
+         ============================================================ -->
+    <h1 class="board-title">推送通知体验增强 · 交互原型</h1>
+    <p class="board-subtitle">Feature: 通知深链跳转 / 推送时间偏好 / 到期任务聚合推送 — 2026-06-17</p>
+
+    <p class="section-label">1. 通知深链跳转（单任务 → 植物详情）</p>
+    <div class="board">
+      <!-- Frame 1: 单任务通知 -->
+      <div class="phone-wrapper">
+        <div class="phone">
+          <div class="status-bar">
+            <span>9:41</span>
+            <div class="status-bar-right">
+              <span>📶</span>
+              <span>🔋</span>
+            </div>
+          </div>
+          <div class="screen">
+            <div style="padding: 180px 0 0; text-align: center;">
+              <div style="font-size: 48px; margin-bottom: 12px;">🔒</div>
+              <div style="font-size: 14px; color: var(--color-muted);">iPhone 锁屏</div>
+            </div>
+            <!-- 系统通知横幅 -->
+            <div class="os-notification" style="margin-top: 40px;">
+              <div class="os-notification-icon">🌿</div>
+              <div class="os-notification-content">
+                <div class="os-notification-app">植物养护提醒</div>
+                <div class="os-notification-title">发财树 · 浇水</div>
+                <div class="os-notification-body">「发财树」的浇水任务已到期，记得去处理哦！</div>
+              </div>
+              <div class="os-notification-time">刚刚</div>
+            </div>
+            <!-- 标注 -->
+            <div class="annotation" style="bottom: 280px; right: 18px;">
+              payload.url = "/plants/{plantId}"<br/>
+              点击 → 植物详情页
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">1-1 锁屏收到单任务通知</div>
+      </div>
+
+      <div class="flow-connector">→</div>
+
+      <!-- Frame 2: 植物详情页（深链落地） -->
+      <div class="phone-wrapper">
+        <div class="phone">
+          <div class="status-bar">
+            <span>9:41</span>
+            <div class="status-bar-right">
+              <span>📶</span>
+              <span>🔋</span>
+            </div>
+          </div>
+          <div class="screen">
+            <div class="nav-bar">
+              <button class="nav-back">‹</button>
+              <div class="nav-title">发财树</div>
+            </div>
+            <div class="page-content">
+              <div class="plant-hero">🌳</div>
+              <div class="plant-name">发财树</div>
+              <div class="plant-species">Pachira aquatica · 客厅</div>
+
+              <div class="action-zone">
+                <div class="action-zone-header">⚡ 需要处理</div>
+                <div class="task-row highlighted">
+                  <span class="task-icon">💧</span>
+                  <div class="task-info">
+                    <div class="task-name">浇水</div>
+                    <div class="task-due overdue">已逾期 1 天</div>
+                  </div>
+                  <button class="task-complete-btn">✓</button>
+                </div>
+                <div class="task-row">
+                  <span class="task-icon">🧪</span>
+                  <div class="task-info">
+                    <div class="task-name">施肥</div>
+                    <div class="task-due">3 天后到期</div>
+                  </div>
+                  <button class="task-complete-btn">✓</button>
+                </div>
+              </div>
+            </div>
+            <!-- 标注 -->
+            <div class="annotation" style="top: 380px; left: 18px;">
+              深链落地后<br/>
+              高亮对应任务行<br/>
+              (左侧蓝色边框)
+            </div>
+            <div class="bottom-nav">
+              <div class="bottom-nav-item"><span class="bottom-nav-item-icon">📋</span><span>待办</span></div>
+              <div class="bottom-nav-item active"><span class="bottom-nav-item-icon">🌱</span><span>植物</span></div>
+              <div class="bottom-nav-item"><span class="bottom-nav-item-icon">⚙️</span><span>设置</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">1-2 点击通知 → 植物详情（高亮任务）</div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         Section 2: 聚合推送 → 待办页
+         ============================================================ -->
+    <p class="section-label">2. 聚合推送（多任务 → 待办页）</p>
+    <div class="board">
+      <!-- Frame 3: 聚合通知 -->
+      <div class="phone-wrapper">
+        <div class="phone">
+          <div class="status-bar">
+            <span>8:00</span>
+            <div class="status-bar-right">
+              <span>📶</span>
+              <span>🔋</span>
+            </div>
+          </div>
+          <div class="screen">
+            <div style="padding: 120px 0 0; text-align: center;">
+              <div style="font-size: 48px; margin-bottom: 12px;">🔒</div>
+              <div style="font-size: 14px; color: var(--color-muted);">iPhone 锁屏</div>
+            </div>
+            <!-- 聚合通知 -->
+            <div class="os-notification" style="margin-top: 40px;">
+              <div class="os-notification-icon">🌿</div>
+              <div class="os-notification-content">
+                <div class="os-notification-app">植物养护提醒</div>
+                <div class="os-notification-title">你有 5 个养护任务待完成</div>
+                <div class="os-notification-body">发财树（浇水）、绿萝（施肥）、龟背竹（喷雾）等 5 个任务</div>
+              </div>
+              <div class="os-notification-time">8:00</div>
+            </div>
+            <!-- 标注 -->
+            <div class="annotation" style="bottom: 260px; left: 18px;">
+              ≥2 个任务到期时触发聚合<br/>
+              body 列出前 3 个 + "等 N 个"<br/>
+              tag: "daily-summary"<br/>
+              url: "/todo"
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">2-1 聚合通知（≥2个任务）</div>
+      </div>
+
+      <div class="flow-connector">→</div>
+
+      <!-- Frame 4: 待办页 -->
+      <div class="phone-wrapper">
+        <div class="phone">
+          <div class="status-bar">
+            <span>8:01</span>
+            <div class="status-bar-right">
+              <span>📶</span>
+              <span>🔋</span>
+            </div>
+          </div>
+          <div class="screen">
+            <div class="todo-greeting">
+              <h2>早上好 ☀️</h2>
+              <p>今天有 5 个养护任务需要处理</p>
+            </div>
+
+            <div class="todo-section-title">今日待办</div>
+
+            <div class="todo-card">
+              <div class="todo-card-color" style="background: var(--color-task-watering);"></div>
+              <span class="todo-card-icon">💧</span>
+              <div class="todo-card-content">
+                <div class="todo-card-plant">发财树</div>
+                <div class="todo-card-task">浇水 · 已逾期 1 天</div>
+              </div>
+              <button class="todo-card-btn">✓</button>
+            </div>
+
+            <div class="todo-card">
+              <div class="todo-card-color" style="background: var(--color-task-fertilizing);"></div>
+              <span class="todo-card-icon">🧪</span>
+              <div class="todo-card-content">
+                <div class="todo-card-plant">绿萝</div>
+                <div class="todo-card-task">施肥 · 今天到期</div>
+              </div>
+              <button class="todo-card-btn">✓</button>
+            </div>
+
+            <div class="todo-card">
+              <div class="todo-card-color" style="background: var(--color-task-misting);"></div>
+              <span class="todo-card-icon">🌫️</span>
+              <div class="todo-card-content">
+                <div class="todo-card-plant">龟背竹</div>
+                <div class="todo-card-task">喷雾 · 今天到期</div>
+              </div>
+              <button class="todo-card-btn">✓</button>
+            </div>
+
+            <div class="todo-card">
+              <div class="todo-card-color" style="background: var(--color-task-watering);"></div>
+              <span class="todo-card-icon">💧</span>
+              <div class="todo-card-content">
+                <div class="todo-card-plant">虎皮兰</div>
+                <div class="todo-card-task">浇水 · 今天到期</div>
+              </div>
+              <button class="todo-card-btn">✓</button>
+            </div>
+
+            <div class="todo-card">
+              <div class="todo-card-color" style="background: var(--color-task-pruning);"></div>
+              <span class="todo-card-icon">✂️</span>
+              <div class="todo-card-content">
+                <div class="todo-card-plant">琴叶榕</div>
+                <div class="todo-card-task">修剪 · 今天到期</div>
+              </div>
+              <button class="todo-card-btn">✓</button>
+            </div>
+
+            <div class="bottom-nav">
+              <div class="bottom-nav-item active"><span class="bottom-nav-item-icon">📋</span><span>待办</span></div>
+              <div class="bottom-nav-item"><span class="bottom-nav-item-icon">🌱</span><span>植物</span></div>
+              <div class="bottom-nav-item"><span class="bottom-nav-item-icon">⚙️</span><span>设置</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">2-2 点击聚合通知 → 待办页（全部任务）</div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         Section 3: 推送时间偏好设置
+         ============================================================ -->
+    <p class="section-label">3. 推送时间偏好设置</p>
+    <div class="board">
+      <!-- Frame 5: 设置页（通知区域） -->
+      <div class="phone-wrapper">
+        <div class="phone">
+          <div class="status-bar">
+            <span>9:41</span>
+            <div class="status-bar-right">
+              <span>📶</span>
+              <span>🔋</span>
+            </div>
+          </div>
+          <div class="screen">
+            <div class="nav-bar">
+              <button class="nav-back">‹</button>
+              <div class="nav-title">设置</div>
+            </div>
+
+            <div class="settings-section">
+              <div class="settings-section-title">通知</div>
+              <div class="settings-card">
+                <div class="settings-row">
+                  <div class="settings-row-icon" style="background: rgba(47, 133, 90, 0.1);">🔔</div>
+                  <div class="settings-row-content">
+                    <div class="settings-row-label">推送通知</div>
+                    <div class="settings-row-desc">已开启</div>
+                  </div>
+                  <div class="toggle active"></div>
+                </div>
+                <div class="settings-row">
+                  <div class="settings-row-icon" style="background: rgba(241, 197, 103, 0.15);">⏰</div>
+                  <div class="settings-row-content">
+                    <div class="settings-row-label">提醒时间</div>
+                    <div class="settings-row-desc">设置每天几点收到养护提醒</div>
+                  </div>
+                  <span class="settings-row-value">每天 8:00</span>
+                  <span class="settings-row-arrow">›</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <div class="settings-section-title">家庭</div>
+              <div class="settings-card">
+                <div class="settings-row">
+                  <div class="settings-row-icon" style="background: rgba(31, 71, 61, 0.08);">👨‍👩‍👧</div>
+                  <div class="settings-row-content">
+                    <div class="settings-row-label">家庭成员</div>
+                    <div class="settings-row-desc">3 位成员</div>
+                  </div>
+                  <span class="settings-row-arrow">›</span>
+                </div>
+                <div class="settings-row">
+                  <div class="settings-row-icon" style="background: rgba(31, 71, 61, 0.08);">🔗</div>
+                  <div class="settings-row-content">
+                    <div class="settings-row-label">邀请码</div>
+                    <div class="settings-row-desc">分享给家人加入</div>
+                  </div>
+                  <span class="settings-row-arrow">›</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 标注 -->
+            <div class="annotation" style="top: 200px; right: 18px;">
+              通知开启后<br/>
+              显示"提醒时间"行<br/>
+              入口在此
+            </div>
+
+            <div class="bottom-nav">
+              <div class="bottom-nav-item"><span class="bottom-nav-item-icon">📋</span><span>待办</span></div>
+              <div class="bottom-nav-item"><span class="bottom-nav-item-icon">🌱</span><span>植物</span></div>
+              <div class="bottom-nav-item active"><span class="bottom-nav-item-icon">⚙️</span><span>设置</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">3-1 设置页 · 通知区域入口</div>
+      </div>
+
+      <div class="flow-connector">→</div>
+
+      <!-- Frame 6: 时间选择 Sheet -->
+      <div class="phone-wrapper">
+        <div class="phone">
+          <div class="status-bar">
+            <span>9:41</span>
+            <div class="status-bar-right">
+              <span>📶</span>
+              <span>🔋</span>
+            </div>
+          </div>
+          <div class="screen" style="height: 844px;">
+            <div class="nav-bar" style="opacity: 0.3;">
+              <button class="nav-back">‹</button>
+              <div class="nav-title">设置</div>
+            </div>
+            <!-- Sheet Overlay -->
+            <div class="sheet-overlay">
+              <div class="sheet">
+                <div class="sheet-handle"></div>
+                <div class="sheet-title">提醒时间</div>
+                <div class="sheet-desc">选择每天希望收到养护提醒的时间</div>
+
+                <!-- Time Picker -->
+                <div class="time-picker">
+                  <div class="time-picker-column" style="position: relative;">
+                    <div class="time-picker-highlight"></div>
+                    <div class="time-item">06</div>
+                    <div class="time-item">07</div>
+                    <div class="time-item selected">08</div>
+                    <div class="time-item">09</div>
+                    <div class="time-item">10</div>
+                  </div>
+                  <span class="time-separator">:</span>
+                  <div class="time-picker-column" style="position: relative;">
+                    <div class="time-picker-highlight"></div>
+                    <div class="time-item">45</div>
+                    <div class="time-item">50</div>
+                    <div class="time-item selected">00</div>
+                    <div class="time-item">05</div>
+                    <div class="time-item">10</div>
+                  </div>
+                </div>
+
+                <!-- Quick Option -->
+                <div class="quick-option">
+                  <div class="quick-option-radio"></div>
+                  <span class="quick-option-text">任务到期时立即提醒（不等待）</span>
+                </div>
+
+                <button class="btn-primary">保存</button>
+              </div>
+            </div>
+            <!-- 标注 -->
+            <div class="annotation" style="top: 60px; left: 18px; z-index: 25;">
+              底部 Sheet 弹出<br/>
+              时区自动检测<br/>
+              默认 08:00
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">3-2 提醒时间选择（Sheet）</div>
+      </div>
+
+      <div class="flow-connector">→</div>
+
+      <!-- Frame 7: 保存成功 -->
+      <div class="phone-wrapper">
+        <div class="phone">
+          <div class="status-bar">
+            <span>9:41</span>
+            <div class="status-bar-right">
+              <span>📶</span>
+              <span>🔋</span>
+            </div>
+          </div>
+          <div class="screen">
+            <div class="nav-bar">
+              <button class="nav-back">‹</button>
+              <div class="nav-title">设置</div>
+            </div>
+
+            <div class="settings-section">
+              <div class="settings-section-title">通知</div>
+              <div class="settings-card">
+                <div class="settings-row">
+                  <div class="settings-row-icon" style="background: rgba(47, 133, 90, 0.1);">🔔</div>
+                  <div class="settings-row-content">
+                    <div class="settings-row-label">推送通知</div>
+                    <div class="settings-row-desc">已开启</div>
+                  </div>
+                  <div class="toggle active"></div>
+                </div>
+                <div class="settings-row" style="background: rgba(47, 133, 90, 0.04);">
+                  <div class="settings-row-icon" style="background: rgba(241, 197, 103, 0.15);">⏰</div>
+                  <div class="settings-row-content">
+                    <div class="settings-row-label">提醒时间</div>
+                    <div class="settings-row-desc">每天 8:00 统一提醒</div>
+                  </div>
+                  <span class="settings-row-value" style="color: var(--color-success);">✓ 已保存</span>
+                  <span class="settings-row-arrow">›</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Toast -->
+            <div style="position: absolute; top: 80px; left: 50%; transform: translateX(-50%); background: var(--color-ink); color: white; padding: 10px 20px; border-radius: 999px; font-size: 14px; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 30; white-space: nowrap;">
+              ✓ 提醒时间已更新
+            </div>
+
+            <div class="bottom-nav">
+              <div class="bottom-nav-item"><span class="bottom-nav-item-icon">📋</span><span>待办</span></div>
+              <div class="bottom-nav-item"><span class="bottom-nav-item-icon">🌱</span><span>植物</span></div>
+              <div class="bottom-nav-item active"><span class="bottom-nav-item-icon">⚙️</span><span>设置</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">3-3 保存成功 · Toast 反馈</div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         Section 4: 异常兜底
+         ============================================================ -->
+    <p class="section-label">4. 异常兜底（植物已删除）</p>
+    <div class="board">
+      <!-- Frame 8: 植物已删除兜底页 -->
+      <div class="phone-wrapper">
+        <div class="phone">
+          <div class="status-bar">
+            <span>9:41</span>
+            <div class="status-bar-right">
+              <span>📶</span>
+              <span>🔋</span>
+            </div>
+          </div>
+          <div class="screen" style="height: 762px;">
+            <div class="nav-bar">
+              <button class="nav-back">‹</button>
+              <div class="nav-title"></div>
+            </div>
+            <div class="fallback-content">
+              <div class="fallback-icon">🌿</div>
+              <div class="fallback-title">该植物已被移除</div>
+              <div class="fallback-desc">
+                你点击的通知对应的植物已经不在家庭中了。<br/>
+                可能已被其他成员删除或归档。
+              </div>
+              <button class="btn-secondary">返回待办页</button>
+            </div>
+            <!-- 标注 -->
+            <div class="annotation" style="bottom: 120px; right: 18px;">
+              深链目标不存在时<br/>
+              友好兜底 + 引导回退
+            </div>
+            <div class="bottom-nav">
+              <div class="bottom-nav-item"><span class="bottom-nav-item-icon">📋</span><span>待办</span></div>
+              <div class="bottom-nav-item active"><span class="bottom-nav-item-icon">🌱</span><span>植物</span></div>
+              <div class="bottom-nav-item"><span class="bottom-nav-item-icon">⚙️</span><span>设置</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">4-1 植物已删除 · 兜底页</div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         Section 5: 通知文案对比
+         ============================================================ -->
+    <p class="section-label">5. 通知文案规范</p>
+    <div class="board">
+      <!-- 单任务通知示例 -->
+      <div class="phone-wrapper">
+        <div class="phone" style="min-height: 480px; border-radius: 24px;">
+          <div class="screen" style="padding-top: 24px;">
+            <div style="padding: 12px 18px; font-size: 13px; color: var(--color-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">单任务通知</div>
+
+            <div class="os-notification">
+              <div class="os-notification-icon">🌿</div>
+              <div class="os-notification-content">
+                <div class="os-notification-app">植物养护提醒</div>
+                <div class="os-notification-title">发财树 · 浇水</div>
+                <div class="os-notification-body">「发财树」的浇水任务已到期，记得去处理哦！</div>
+              </div>
+              <div class="os-notification-time">8:00</div>
+            </div>
+
+            <div style="padding: 24px 18px 12px; font-size: 13px; color: var(--color-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">聚合通知（2-3个）</div>
+
+            <div class="os-notification">
+              <div class="os-notification-icon">🌿</div>
+              <div class="os-notification-content">
+                <div class="os-notification-app">植物养护提醒</div>
+                <div class="os-notification-title">你有 3 个养护任务待完成</div>
+                <div class="os-notification-body">发财树（浇水）、绿萝（施肥）、龟背竹（喷雾）</div>
+              </div>
+              <div class="os-notification-time">8:00</div>
+            </div>
+
+            <div style="padding: 24px 18px 12px; font-size: 13px; color: var(--color-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">聚合通知（>3个）</div>
+
+            <div class="os-notification">
+              <div class="os-notification-icon">🌿</div>
+              <div class="os-notification-content">
+                <div class="os-notification-app">植物养护提醒</div>
+                <div class="os-notification-title">你有 5 个养护任务待完成</div>
+                <div class="os-notification-body">发财树（浇水）、绿萝（施肥）、龟背竹（喷雾）等 5 个任务</div>
+              </div>
+              <div class="os-notification-time">8:00</div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">5-1 通知文案三种形态对比</div>
+      </div>
+
+      <!-- 逻辑流程 -->
+      <div class="phone-wrapper">
+        <div class="phone" style="min-height: 480px; border-radius: 24px;">
+          <div class="screen" style="padding: 24px 18px;">
+            <div style="font-family: var(--font-heading); font-size: 18px; font-weight: 700; margin-bottom: 16px;">推送决策流程</div>
+
+            <div style="background: var(--color-mist); border-radius: 12px; padding: 16px; margin-bottom: 12px;">
+              <div style="font-size: 13px; color: var(--color-muted); margin-bottom: 6px;">STEP 1</div>
+              <div style="font-size: 14px; font-weight: 600;">Cron 每 30min 扫描到期任务</div>
+            </div>
+
+            <div style="text-align: center; font-size: 18px; color: var(--color-leaf-light); margin: 4px 0;">↓</div>
+
+            <div style="background: var(--color-mist); border-radius: 12px; padding: 16px; margin-bottom: 12px;">
+              <div style="font-size: 13px; color: var(--color-muted); margin-bottom: 6px;">STEP 2</div>
+              <div style="font-size: 14px; font-weight: 600;">按用户分组，检查 preferredHour</div>
+              <div style="font-size: 12px; color: var(--color-muted); margin-top: 4px;">未设置偏好 → 立即推送（当前行为）</div>
+              <div style="font-size: 12px; color: var(--color-muted);">已设置偏好 → 仅在时间窗口内发送</div>
+            </div>
+
+            <div style="text-align: center; font-size: 18px; color: var(--color-leaf-light); margin: 4px 0;">↓</div>
+
+            <div style="background: var(--color-mist); border-radius: 12px; padding: 16px; margin-bottom: 12px;">
+              <div style="font-size: 13px; color: var(--color-muted); margin-bottom: 6px;">STEP 3</div>
+              <div style="font-size: 14px; font-weight: 600;">聚合判断</div>
+              <div style="font-size: 12px; color: var(--color-muted); margin-top: 4px;">同一窗口 1 个任务 → 单条推送 + 深链</div>
+              <div style="font-size: 12px; color: var(--color-muted);">同一窗口 ≥2 个任务 → 聚合推送</div>
+            </div>
+
+            <div style="text-align: center; font-size: 18px; color: var(--color-leaf-light); margin: 4px 0;">↓</div>
+
+            <div style="background: rgba(241, 197, 103, 0.15); border-radius: 12px; padding: 16px;">
+              <div style="font-size: 13px; color: var(--color-muted); margin-bottom: 6px;">STEP 4</div>
+              <div style="font-size: 14px; font-weight: 600;">发送推送 (Web Push API)</div>
+              <div style="font-size: 12px; color: var(--color-muted); margin-top: 4px;">单条: url="/plants/{id}" tag="{taskId}"</div>
+              <div style="font-size: 12px; color: var(--color-muted);">聚合: url="/todo" tag="daily-summary"</div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">5-2 后端推送决策逻辑</div>
+      </div>
+    </div>
+
+    <div style="padding: 0 32px 48px; font-size: 12px; color: var(--color-muted);">
+      · 原型稿仅供交互讨论，实际视觉以开发实现为准 · 关联 PRD：docs/product-specs/2026-06-17-push-notification-enhancement-spec.md ·
+    </div>
+  </body>
+</html>

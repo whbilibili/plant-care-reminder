@@ -21,6 +21,24 @@
 
 Team: `honghong`，Project: `plant-care-reminder`
 
+## 日常部署（推荐）
+
+项目已接入 Cloudflare Pages 的 Git 集成，推送代码到远程仓库即可自动触发前端构建和发布。日常改动按以下步骤操作：
+
+```bash
+# 1. 如果有 Convex 后端改动（schema / functions），先部署后端
+cd app && npx convex deploy --yes
+
+# 2. 提交代码
+git add <files>
+git commit -m "fix: 描述改动"
+
+# 3. 推送到远程，自动触发 Cloudflare Pages 部署
+git push
+```
+
+纯前端改动（组件、样式、文案等）只需步骤 2-3，跳过 Convex deploy。
+
 ## 部署步骤（手动上传方式）
 
 ### 1. 构建前端

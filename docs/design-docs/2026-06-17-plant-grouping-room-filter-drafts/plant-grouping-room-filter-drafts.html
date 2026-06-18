@@ -1,0 +1,1243 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>植物分组与房间筛选 - 原型稿</title>
+    <style>
+      /* ============================================================
+         Design Tokens
+         ============================================================ */
+      :root {
+        --color-ink: #16342f;
+        --color-muted: #637b71;
+        --color-paper: #fbfcf7;
+        --color-mist: #edf5f1;
+        --color-surface: #ffffff;
+        --color-leaf: #1f473d;
+        --color-leaf-light: #467061;
+        --color-gold: #f1c567;
+        --color-gold-hover: #ddb04e;
+        --color-line: #d8e4da;
+        --color-success: #2f855a;
+        --color-warning: #dd6b20;
+        --color-error: #c53030;
+
+        --color-task-watering: #3b82c4;
+        --color-task-fertilizing: #a06a3c;
+        --color-task-misting: #2f9c8a;
+        --color-task-repotting: #d2773b;
+        --color-task-pruning: #5c8a3a;
+        --color-task-custom: #8a9690;
+
+        --font-heading: Lora, "Songti SC", Georgia, serif;
+        --font-body: Raleway, "PingFang SC", "Hiragino Sans GB",
+          "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+
+        --space-xs: 4px;
+        --space-sm: 8px;
+        --space-md: 16px;
+        --space-lg: 24px;
+        --space-xl: 32px;
+
+        --radius-card: 16px;
+        --radius-button: 12px;
+        --radius-pill: 999px;
+        --radius-sheet: 20px;
+
+        --shadow-card: 0 18px 42px rgba(36, 73, 63, 0.12);
+      }
+
+      /* ============================================================
+         Reset and Base
+         ============================================================ */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        min-height: 100vh;
+        background: #dfe9de;
+        color: var(--color-ink);
+        font-family: var(--font-body);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* ============================================================
+         Layout
+         ============================================================ */
+      .board-title {
+        padding: 32px 32px 0;
+        font-family: var(--font-heading);
+        font-size: 28px;
+        font-weight: 800;
+        color: var(--color-ink);
+      }
+
+      .board-subtitle {
+        padding: 6px 32px 24px;
+        font-size: 14px;
+        color: var(--color-muted);
+      }
+
+      .board {
+        display: flex;
+        gap: 32px;
+        padding: 0 32px 48px;
+        overflow-x: auto;
+        align-items: start;
+      }
+
+      /* ============================================================
+         Phone Frame
+         ============================================================ */
+      .phone {
+        position: relative;
+        flex: 0 0 390px;
+        width: 390px;
+        min-height: 844px;
+        border-radius: 34px;
+        overflow: hidden;
+        background:
+          radial-gradient(
+            circle at 80% 0%,
+            rgba(207, 222, 194, 0.8),
+            transparent 30%
+          ),
+          linear-gradient(180deg, #fbfcf7 0%, #f4f8f0 100%);
+        box-shadow: var(--shadow-card);
+      }
+
+      .screen {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 22px 18px 96px;
+      }
+
+      .phone-wrapper {
+        position: relative;
+        padding-top: 36px;
+        flex-shrink: 0;
+      }
+
+      .frame-label {
+        position: absolute;
+        top: 8px;
+        left: 0;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--color-muted);
+        white-space: nowrap;
+      }
+
+      /* ============================================================
+         Page Header
+         ============================================================ */
+      .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .page-header h1 {
+        font-family: var(--font-heading);
+        font-size: 28px;
+        font-weight: 900;
+        line-height: 1.12;
+      }
+
+      .sub {
+        font-size: 13px;
+        color: var(--color-muted);
+      }
+
+      .icon-button {
+        width: 40px;
+        height: 40px;
+        border: none;
+        border-radius: 14px;
+        background: var(--color-mist);
+        color: var(--color-leaf);
+        font-size: 20px;
+        line-height: 1;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* ============================================================
+         Search Bar
+         ============================================================ */
+      .search-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        background: var(--color-mist);
+        border-radius: var(--radius-button);
+        border: 1px solid var(--color-line);
+      }
+
+      .search-bar .search-icon {
+        font-size: 16px;
+        color: var(--color-muted);
+      }
+
+      .search-bar .search-text {
+        font-size: 14px;
+        color: var(--color-muted);
+      }
+
+      /* ============================================================
+         Segmented Control
+         ============================================================ */
+      .segmented-control {
+        display: flex;
+        background: var(--color-mist);
+        border-radius: var(--radius-button);
+        padding: 3px;
+        gap: 2px;
+      }
+
+      .segment {
+        flex: 1;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 10px;
+        background: transparent;
+        font-family: var(--font-body);
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--color-muted);
+        cursor: pointer;
+        text-align: center;
+      }
+
+      .segment.active {
+        background: var(--color-surface);
+        color: var(--color-ink);
+        box-shadow: 0 2px 8px rgba(36, 73, 63, 0.1);
+      }
+
+      /* ============================================================
+         Group Header
+         ============================================================ */
+      .group-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        background: rgba(237, 245, 241, 0.6);
+        border-radius: 12px;
+        cursor: pointer;
+        margin-top: 4px;
+      }
+
+      .group-header .group-icon {
+        font-size: 18px;
+      }
+
+      .group-header .group-name {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--color-ink);
+      }
+
+      .group-header .group-count {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--color-muted);
+      }
+
+      .group-header .group-arrow {
+        margin-left: auto;
+        font-size: 14px;
+        color: var(--color-muted);
+      }
+
+      /* ============================================================
+         Plant Card
+         ============================================================ */
+      .plant-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        background: rgba(255, 254, 248, 0.92);
+        border: 1px solid var(--color-line);
+        border-radius: var(--radius-card);
+        box-shadow: 0 4px 12px rgba(24, 59, 52, 0.04);
+      }
+
+      .plant-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        background: var(--color-mist);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        flex-shrink: 0;
+      }
+
+      .plant-info {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .plant-name {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--color-ink);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .plant-meta {
+        font-size: 12px;
+        color: var(--color-muted);
+        margin-top: 3px;
+      }
+
+      .plant-task-badge {
+        padding: 4px 10px;
+        border-radius: var(--radius-pill);
+        font-size: 11px;
+        font-weight: 600;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+
+      .badge-due {
+        background: rgba(59, 130, 196, 0.12);
+        color: var(--color-task-watering);
+      }
+
+      .badge-overdue {
+        background: rgba(197, 48, 48, 0.1);
+        color: var(--color-error);
+      }
+
+      .badge-ok {
+        background: rgba(47, 133, 90, 0.1);
+        color: var(--color-success);
+      }
+
+      /* ============================================================
+         Filter Chips
+         ============================================================ */
+      .filter-chips {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding: 2px 0;
+      }
+
+      .filter-chips::-webkit-scrollbar {
+        display: none;
+      }
+
+      .chip {
+        padding: 7px 14px;
+        border-radius: var(--radius-pill);
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+        cursor: pointer;
+        border: none;
+        flex-shrink: 0;
+      }
+
+      .chip-active {
+        background: var(--color-leaf);
+        color: #ffffff;
+      }
+
+      .chip:not(.chip-active) {
+        background: var(--color-mist);
+        color: var(--color-ink);
+        border: 1px solid var(--color-line);
+      }
+
+      /* ============================================================
+         Todo Card
+         ============================================================ */
+      .task-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .task-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
+        background: rgba(255, 254, 248, 0.92);
+        border: 1px solid var(--color-line);
+        border-radius: var(--radius-card);
+        box-shadow: 0 4px 12px rgba(24, 59, 52, 0.04);
+      }
+
+      .task-color-bar {
+        width: 4px;
+        height: 36px;
+        border-radius: 2px;
+        flex-shrink: 0;
+      }
+
+      .task-content {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .task-plant {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--color-ink);
+      }
+
+      .task-action {
+        font-size: 13px;
+        color: var(--color-muted);
+        margin-top: 2px;
+      }
+
+      .task-location {
+        font-size: 11px;
+        color: var(--color-muted);
+        margin-top: 2px;
+      }
+
+      .task-complete-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 2px solid var(--color-line);
+        background: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        flex-shrink: 0;
+        font-size: 16px;
+        color: var(--color-muted);
+      }
+
+      /* ============================================================
+         Date Selector
+         ============================================================ */
+      .date-selector {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 0;
+      }
+
+      .date-item {
+        padding: 8px 14px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--color-muted);
+        cursor: pointer;
+      }
+
+      .date-item.active {
+        background: var(--color-leaf);
+        color: #ffffff;
+      }
+
+      /* ============================================================
+         Filter Result Hint
+         ============================================================ */
+      .filter-result-hint {
+        text-align: center;
+        font-size: 12px;
+        color: var(--color-muted);
+        padding: 16px 0;
+        font-style: italic;
+      }
+
+      /* ============================================================
+         Nav Bar
+         ============================================================ */
+      .nav {
+        display: grid;
+        grid-template-columns: 44px 1fr 44px;
+        align-items: center;
+        min-height: 48px;
+      }
+
+      .nav-title {
+        text-align: center;
+        font-size: 18px;
+        font-weight: 800;
+        font-family: var(--font-body);
+      }
+
+      /* ============================================================
+         Form Elements
+         ============================================================ */
+      .form-section {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding-top: 8px;
+      }
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .form-label {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--color-ink);
+      }
+
+      .form-input {
+        padding: 12px 14px;
+        background: var(--color-surface);
+        border: 1.5px solid var(--color-line);
+        border-radius: 12px;
+        font-size: 14px;
+        color: var(--color-ink);
+        font-family: var(--font-body);
+      }
+
+      .form-input.input-active {
+        border-color: var(--color-leaf);
+        box-shadow: 0 0 0 3px rgba(31, 71, 61, 0.08);
+      }
+
+      .input-cursor {
+        color: var(--color-leaf);
+        animation: blink 1s step-end infinite;
+      }
+
+      @keyframes blink {
+        50% { opacity: 0; }
+      }
+
+      .form-textarea {
+        min-height: 80px;
+      }
+
+      /* ============================================================
+         Autocomplete Dropdown
+         ============================================================ */
+      .autocomplete-dropdown {
+        background: var(--color-surface);
+        border: 1px solid var(--color-line);
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(36, 73, 63, 0.12);
+        overflow: hidden;
+        margin-top: -2px;
+      }
+
+      .autocomplete-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 14px;
+        font-size: 14px;
+        color: var(--color-ink);
+        cursor: pointer;
+        border-bottom: 1px solid var(--color-line);
+      }
+
+      .autocomplete-item:last-child {
+        border-bottom: none;
+      }
+
+      .autocomplete-item.highlight {
+        background: var(--color-mist);
+      }
+
+      .autocomplete-item.new-item {
+        color: var(--color-leaf-light);
+        font-weight: 600;
+      }
+
+      .autocomplete-divider {
+        height: 1px;
+        background: var(--color-line);
+      }
+
+      /* ============================================================
+         Guide Banner
+         ============================================================ */
+      .guide-banner {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 14px;
+        background: rgba(241, 197, 103, 0.12);
+        border: 1px solid rgba(241, 197, 103, 0.3);
+        border-radius: 12px;
+        font-size: 13px;
+        color: var(--color-ink);
+      }
+
+      .guide-banner .guide-icon {
+        font-size: 20px;
+        flex-shrink: 0;
+      }
+
+      /* ============================================================
+         Bottom Nav
+         ============================================================ */
+      .bottom-nav {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        height: 72px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(12px);
+        border-top: 1px solid var(--color-line);
+        padding-bottom: 8px;
+      }
+
+      .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--color-muted);
+        cursor: pointer;
+      }
+
+      .nav-item.active {
+        color: var(--color-leaf);
+      }
+
+      /* ============================================================
+         Annotation Section
+         ============================================================ */
+      .annotations {
+        padding: 32px;
+        max-width: 1400px;
+      }
+
+      .annotations h2 {
+        font-family: var(--font-heading);
+        margin-bottom: 16px;
+        font-size: 22px;
+      }
+
+      .annotation-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 24px;
+        padding: 24px;
+        background: rgba(255, 254, 248, 0.92);
+        border: 1px solid var(--color-line);
+        border-radius: var(--radius-card);
+      }
+
+      .annotation-block h3 {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--color-leaf);
+        margin-bottom: 8px;
+      }
+
+      .annotation-block ul {
+        font-size: 13px;
+        color: var(--color-muted);
+        line-height: 1.8;
+        padding-left: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1 class="board-title">植物分组与房间筛选</h1>
+    <p class="board-subtitle">
+      PRD v1.0 - 2026-06-17 - 共 6 帧：全部视图 / 按房间分组 / 待办页筛选(全部) / 待办页筛选(阳台) / 位置自动补全 / 分组折叠态
+    </p>
+
+    <div class="board">
+      <!-- ============================================================
+           Frame 1: 植物列表 - 全部视图（默认）
+           ============================================================ -->
+      <div class="phone-wrapper">
+        <span class="frame-label">1. 植物列表 - 全部视图（默认）</span>
+        <div class="phone">
+          <div class="screen">
+            <div class="page-header">
+              <h1>我的植物</h1>
+              <button class="icon-button">+</button>
+            </div>
+
+            <div class="search-bar">
+              <span class="search-icon">&#x1F50D;</span>
+              <span class="search-text">搜索植物名称...</span>
+            </div>
+
+            <div class="segmented-control">
+              <button class="segment active">全部</button>
+              <button class="segment">按房间</button>
+            </div>
+
+            <div class="plant-card">
+              <div class="plant-avatar">&#x1F33F;</div>
+              <div class="plant-info">
+                <div class="plant-name">龟背竹</div>
+                <div class="plant-meta">阳台 - 上次浇水 2 天前</div>
+              </div>
+              <span class="plant-task-badge badge-due">&#x1F4A7; 今天</span>
+            </div>
+
+            <div class="plant-card">
+              <div class="plant-avatar">&#x1F331;</div>
+              <div class="plant-info">
+                <div class="plant-name">绿萝</div>
+                <div class="plant-meta">客厅 - 上次浇水 1 天前</div>
+              </div>
+              <span class="plant-task-badge badge-ok">&#x2713; 正常</span>
+            </div>
+
+            <div class="plant-card">
+              <div class="plant-avatar">&#x1F338;</div>
+              <div class="plant-info">
+                <div class="plant-name">蝴蝶兰</div>
+                <div class="plant-meta">卧室 - 上次浇水 5 天前</div>
+              </div>
+              <span class="plant-task-badge badge-overdue">&#x1F4A7; 逾期</span>
+            </div>
+
+            <div class="plant-card">
+              <div class="plant-avatar">&#x1FAB4;</div>
+              <div class="plant-info">
+                <div class="plant-name">虎皮兰</div>
+                <div class="plant-meta">阳台 - 上次浇水 3 天前</div>
+              </div>
+              <span class="plant-task-badge badge-ok">&#x2713; 正常</span>
+            </div>
+
+            <div class="plant-card">
+              <div class="plant-avatar">&#x1F335;</div>
+              <div class="plant-info">
+                <div class="plant-name">仙人掌</div>
+                <div class="plant-meta">阳台 - 上次浇水 12 天前</div>
+              </div>
+              <span class="plant-task-badge badge-due">&#x1F4A7; 明天</span>
+            </div>
+
+            <div class="plant-card">
+              <div class="plant-avatar">&#x2618;</div>
+              <div class="plant-info">
+                <div class="plant-name">铜钱草</div>
+                <div class="plant-meta">客厅 - 上次浇水 1 天前</div>
+              </div>
+              <span class="plant-task-badge badge-ok">&#x2713; 正常</span>
+            </div>
+          </div>
+
+          <div class="bottom-nav">
+            <div class="nav-item">&#x1F4CB;<span>待办</span></div>
+            <div class="nav-item active">&#x1F33F;<span>植物</span></div>
+            <div class="nav-item">&#x2699;&#xFE0F;<span>设置</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================
+           Frame 2: 植物列表 - 按房间分组视图
+           ============================================================ -->
+      <div class="phone-wrapper">
+        <span class="frame-label">2. 植物列表 - 按房间分组视图</span>
+        <div class="phone">
+          <div class="screen">
+            <div class="page-header">
+              <h1>我的植物</h1>
+              <button class="icon-button">+</button>
+            </div>
+
+            <div class="search-bar">
+              <span class="search-icon">&#x1F50D;</span>
+              <span class="search-text">搜索植物名称...</span>
+            </div>
+
+            <div class="segmented-control">
+              <button class="segment">全部</button>
+              <button class="segment active">按房间</button>
+            </div>
+
+            <!-- Group: 阳台 (3) -->
+            <div class="group-header">
+              <span class="group-icon">&#x2600;&#xFE0F;</span>
+              <span class="group-name">阳台</span>
+              <span class="group-count">（3）</span>
+              <span class="group-arrow">&#x25BE;</span>
+            </div>
+
+            <div class="plant-card">
+              <div class="plant-avatar">&#x1F33F;</div>
+              <div class="plant-info">
+                <div class="plant-name">龟背竹</div>
+                <div class="plant-meta">上次浇水 2 天前</div>
+              </div>
+              <span class="plant-task-badge badge-due">&#x1F4A7; 今天</span>
+            </div>
+
+            <div class="plant-card">
+              <div class="plant-avatar">&#x1FAB4;</div>
+              <div class="plant-info">
+                <div class="plant-name">虎皮兰</div>
+                <div class="plant-meta">上次浇水 3 天前</div>
+              </div>
+              <span class="plant-task-badge badge-ok">&#x2713; 正常</span>
+            </div>
+
+            <div class="plant-card">
+              <div class="plant-avatar">&#x1F335;</div>
+              <div class="plant-info">
+                <div class="plant-name">仙人掌</div>
+                <div class="plant-meta">上次浇水 12 天前</div>
+              </div>
+              <span class="plant-task-badge badge-due">&#x1F4A7; 明天</span>
+            </div>
+
+            <!-- Group: 客厅 (2) -->
+            <div class="group-header">
+              <span class="group-icon">&#x1F6CB;&#xFE0F;</span>
+              <span class="group-name">客厅</span>
+              <span class="group-count">（2）</span>
+              <span class="group-arrow">&#x25BE;</span>
+            </div>
+
+            <div class="plant-card">
+              <div class="plant-avatar">&#x1F331;</div>
+              <div class="plant-info">
+                <div class="plant-name">绿萝</div>
+                <div class="plant-meta">上次浇水 1 天前</div>
+              </div>
+              <span class="plant-task-badge badge-ok">&#x2713; 正常</span>
+            </div>
+
+            <div class="plant-card">
+              <div class="plant-avatar">&#x2618;</div>
+              <div class="plant-info">
+                <div class="plant-name">铜钱草</div>
+                <div class="plant-meta">上次浇水 1 天前</div>
+              </div>
+              <span class="plant-task-badge badge-ok">&#x2713; 正常</span>
+            </div>
+
+            <!-- Group: 卧室 (1) -->
+            <div class="group-header">
+              <span class="group-icon">&#x1F6CF;&#xFE0F;</span>
+              <span class="group-name">卧室</span>
+              <span class="group-count">（1）</span>
+              <span class="group-arrow">&#x25BE;</span>
+            </div>
+
+            <div class="plant-card">
+              <div class="plant-avatar">&#x1F338;</div>
+              <div class="plant-info">
+                <div class="plant-name">蝴蝶兰</div>
+                <div class="plant-meta">上次浇水 5 天前</div>
+              </div>
+              <span class="plant-task-badge badge-overdue">&#x1F4A7; 逾期</span>
+            </div>
+
+            <!-- Group: 未分组 (1) -->
+            <div class="group-header">
+              <span class="group-icon">&#x1F4E6;</span>
+              <span class="group-name">未分组</span>
+              <span class="group-count">（1）</span>
+              <span class="group-arrow">&#x25BE;</span>
+            </div>
+
+            <div class="guide-banner">
+              <span class="guide-icon">&#x1F4A1;</span>
+              给植物设置位置，按房间管理更方便
+            </div>
+
+            <div class="plant-card">
+              <div class="plant-avatar">&#x1F33B;</div>
+              <div class="plant-info">
+                <div class="plant-name">向日葵</div>
+                <div class="plant-meta">上次浇水 3 天前</div>
+              </div>
+              <span class="plant-task-badge badge-ok">&#x2713; 正常</span>
+            </div>
+          </div>
+
+          <div class="bottom-nav">
+            <div class="nav-item">&#x1F4CB;<span>待办</span></div>
+            <div class="nav-item active">&#x1F33F;<span>植物</span></div>
+            <div class="nav-item">&#x2699;&#xFE0F;<span>设置</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================
+           Frame 3: 待办页 - 房间筛选（全部）
+           ============================================================ -->
+      <div class="phone-wrapper">
+        <span class="frame-label">3. 待办页 - 房间筛选（全部）</span>
+        <div class="phone">
+          <div class="screen">
+            <div class="page-header">
+              <h1>待办</h1>
+            </div>
+            <p class="sub" style="margin-top: -8px">今天有 5 项任务需要完成</p>
+
+            <div class="date-selector">
+              <div class="date-item">昨天</div>
+              <div class="date-item active">今天</div>
+              <div class="date-item">明天</div>
+            </div>
+
+            <div class="filter-chips">
+              <div class="chip chip-active">全部</div>
+              <div class="chip">阳台</div>
+              <div class="chip">客厅</div>
+              <div class="chip">卧室</div>
+            </div>
+
+            <div class="task-list">
+              <div class="task-card">
+                <div class="task-color-bar" style="background: var(--color-task-watering)"></div>
+                <div class="task-content">
+                  <div class="task-plant">&#x1F33F; 龟背竹</div>
+                  <div class="task-action">&#x1F4A7; 浇水</div>
+                  <div class="task-location">阳台</div>
+                </div>
+                <button class="task-complete-btn">&#x2713;</button>
+              </div>
+
+              <div class="task-card">
+                <div class="task-color-bar" style="background: var(--color-task-fertilizing)"></div>
+                <div class="task-content">
+                  <div class="task-plant">&#x1FAB4; 虎皮兰</div>
+                  <div class="task-action">&#x1F9EA; 施肥</div>
+                  <div class="task-location">阳台</div>
+                </div>
+                <button class="task-complete-btn">&#x2713;</button>
+              </div>
+
+              <div class="task-card">
+                <div class="task-color-bar" style="background: var(--color-task-watering)"></div>
+                <div class="task-content">
+                  <div class="task-plant">&#x1F331; 绿萝</div>
+                  <div class="task-action">&#x1F4A7; 浇水</div>
+                  <div class="task-location">客厅</div>
+                </div>
+                <button class="task-complete-btn">&#x2713;</button>
+              </div>
+
+              <div class="task-card">
+                <div class="task-color-bar" style="background: var(--color-task-misting)"></div>
+                <div class="task-content">
+                  <div class="task-plant">&#x1F338; 蝴蝶兰</div>
+                  <div class="task-action">&#x1F32B;&#xFE0F; 喷雾</div>
+                  <div class="task-location">卧室</div>
+                </div>
+                <button class="task-complete-btn">&#x2713;</button>
+              </div>
+
+              <div class="task-card">
+                <div class="task-color-bar" style="background: var(--color-task-watering)"></div>
+                <div class="task-content">
+                  <div class="task-plant">&#x2618; 铜钱草</div>
+                  <div class="task-action">&#x1F4A7; 浇水</div>
+                  <div class="task-location">客厅</div>
+                </div>
+                <button class="task-complete-btn">&#x2713;</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="bottom-nav">
+            <div class="nav-item active">&#x1F4CB;<span>待办</span></div>
+            <div class="nav-item">&#x1F33F;<span>植物</span></div>
+            <div class="nav-item">&#x2699;&#xFE0F;<span>设置</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================
+           Frame 4: 待办页 - 筛选「阳台」
+           ============================================================ -->
+      <div class="phone-wrapper">
+        <span class="frame-label">4. 待办页 - 筛选「阳台」</span>
+        <div class="phone">
+          <div class="screen">
+            <div class="page-header">
+              <h1>待办</h1>
+            </div>
+            <p class="sub" style="margin-top: -8px">阳台有 2 项任务</p>
+
+            <div class="date-selector">
+              <div class="date-item">昨天</div>
+              <div class="date-item active">今天</div>
+              <div class="date-item">明天</div>
+            </div>
+
+            <div class="filter-chips">
+              <div class="chip">全部</div>
+              <div class="chip chip-active">阳台</div>
+              <div class="chip">客厅</div>
+              <div class="chip">卧室</div>
+            </div>
+
+            <div class="task-list">
+              <div class="task-card">
+                <div class="task-color-bar" style="background: var(--color-task-watering)"></div>
+                <div class="task-content">
+                  <div class="task-plant">&#x1F33F; 龟背竹</div>
+                  <div class="task-action">&#x1F4A7; 浇水</div>
+                  <div class="task-location">阳台</div>
+                </div>
+                <button class="task-complete-btn">&#x2713;</button>
+              </div>
+
+              <div class="task-card">
+                <div class="task-color-bar" style="background: var(--color-task-fertilizing)"></div>
+                <div class="task-content">
+                  <div class="task-plant">&#x1FAB4; 虎皮兰</div>
+                  <div class="task-action">&#x1F9EA; 施肥</div>
+                  <div class="task-location">阳台</div>
+                </div>
+                <button class="task-complete-btn">&#x2713;</button>
+              </div>
+            </div>
+
+            <div class="filter-result-hint">
+              只显示阳台的任务，切换「全部」查看所有
+            </div>
+          </div>
+
+          <div class="bottom-nav">
+            <div class="nav-item active">&#x1F4CB;<span>待办</span></div>
+            <div class="nav-item">&#x1F33F;<span>植物</span></div>
+            <div class="nav-item">&#x2699;&#xFE0F;<span>设置</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================
+           Frame 5: 编辑植物 - 位置自动补全
+           ============================================================ -->
+      <div class="phone-wrapper">
+        <span class="frame-label">5. 编辑植物 - 位置自动补全</span>
+        <div class="phone">
+          <div class="screen">
+            <div class="nav">
+              <button class="icon-button" style="background: transparent; font-size: 24px">&#x2190;</button>
+              <div class="nav-title">编辑植物</div>
+              <button class="icon-button" style="background: transparent; color: var(--color-leaf); font-size: 20px">&#x2713;</button>
+            </div>
+
+            <div class="form-section">
+              <div class="form-group">
+                <label class="form-label">植物名称</label>
+                <div class="form-input">绿萝</div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">位置 / 房间</label>
+                <div class="form-input input-active">
+                  阳<span class="input-cursor">|</span>
+                </div>
+                <div class="autocomplete-dropdown">
+                  <div class="autocomplete-item highlight">&#x1F3E0; 阳台</div>
+                  <div class="autocomplete-item">&#x1F3E0; 阳台（南）</div>
+                  <div class="autocomplete-divider"></div>
+                  <div class="autocomplete-item new-item">+ 新建「阳」</div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">浇水频率</label>
+                <div class="form-input">每 3 天</div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">备注</label>
+                <div class="form-input form-textarea">喜欢散射光，避免直晒</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================
+           Frame 6: 分组视图 - 折叠态
+           ============================================================ -->
+      <div class="phone-wrapper">
+        <span class="frame-label">6. 分组视图 - 折叠态</span>
+        <div class="phone">
+          <div class="screen">
+            <div class="page-header">
+              <h1>我的植物</h1>
+              <button class="icon-button">+</button>
+            </div>
+
+            <div class="search-bar">
+              <span class="search-icon">&#x1F50D;</span>
+              <span class="search-text">搜索植物名称...</span>
+            </div>
+
+            <div class="segmented-control">
+              <button class="segment">全部</button>
+              <button class="segment active">按房间</button>
+            </div>
+
+            <!-- Group: 阳台 (collapsed) -->
+            <div class="group-header">
+              <span class="group-icon">&#x2600;&#xFE0F;</span>
+              <span class="group-name">阳台</span>
+              <span class="group-count">（6）</span>
+              <span class="group-arrow">&#x25B8;</span>
+            </div>
+
+            <!-- Group: 客厅 (collapsed) -->
+            <div class="group-header">
+              <span class="group-icon">&#x1F6CB;&#xFE0F;</span>
+              <span class="group-name">客厅</span>
+              <span class="group-count">（4）</span>
+              <span class="group-arrow">&#x25B8;</span>
+            </div>
+
+            <!-- Group: 卧室 (expanded) -->
+            <div class="group-header">
+              <span class="group-icon">&#x1F6CF;&#xFE0F;</span>
+              <span class="group-name">卧室</span>
+              <span class="group-count">（3）</span>
+              <span class="group-arrow">&#x25BE;</span>
+            </div>
+
+            <div class="plant-card">
+              <div class="plant-avatar">&#x1F338;</div>
+              <div class="plant-info">
+                <div class="plant-name">蝴蝶兰</div>
+                <div class="plant-meta">上次浇水 5 天前</div>
+              </div>
+              <span class="plant-task-badge badge-overdue">&#x1F4A7; 逾期</span>
+            </div>
+
+            <div class="plant-card">
+              <div class="plant-avatar">&#x1F335;</div>
+              <div class="plant-info">
+                <div class="plant-name">仙人掌</div>
+                <div class="plant-meta">上次浇水 14 天前</div>
+              </div>
+              <span class="plant-task-badge badge-ok">&#x2713; 正常</span>
+            </div>
+
+            <div class="plant-card">
+              <div class="plant-avatar">&#x1F33A;</div>
+              <div class="plant-info">
+                <div class="plant-name">芦荟</div>
+                <div class="plant-meta">上次浇水 7 天前</div>
+              </div>
+              <span class="plant-task-badge badge-due">&#x1F4A7; 明天</span>
+            </div>
+
+            <!-- Group: 未分组 (collapsed) -->
+            <div class="group-header">
+              <span class="group-icon">&#x1F4E6;</span>
+              <span class="group-name">未分组</span>
+              <span class="group-count">（2）</span>
+              <span class="group-arrow">&#x25B8;</span>
+            </div>
+          </div>
+
+          <div class="bottom-nav">
+            <div class="nav-item">&#x1F4CB;<span>待办</span></div>
+            <div class="nav-item active">&#x1F33F;<span>植物</span></div>
+            <div class="nav-item">&#x2699;&#xFE0F;<span>设置</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         Annotation Section
+         ============================================================ -->
+    <div class="annotations">
+      <h2>交互说明</h2>
+      <div class="annotation-grid">
+        <div class="annotation-block">
+          <h3>视图切换器 (SegmentedControl)</h3>
+          <ul>
+            <li>两个选项「全部」/「按房间」，紧凑样式</li>
+            <li>位于搜索栏下方，与搜索栏等宽</li>
+            <li>切换有 200ms fade 过渡动画</li>
+            <li>用户选择持久化到 localStorage</li>
+          </ul>
+        </div>
+        <div class="annotation-block">
+          <h3>分组头</h3>
+          <ul>
+            <li>高度 40px，背景 --color-mist 半透明</li>
+            <li>字体 14px 粗体，颜色 --color-ink</li>
+            <li>数量标记用 --color-muted</li>
+            <li>折叠/展开箭头 Chevron，16px</li>
+            <li>点击分组头切换折叠/展开</li>
+          </ul>
+        </div>
+        <div class="annotation-block">
+          <h3>房间筛选标签栏</h3>
+          <ul>
+            <li>横向滚动，不换行，间距 8px</li>
+            <li>选中：--color-leaf 背景 + 白色文字</li>
+            <li>未选中：--color-mist 背景 + --color-ink 文字</li>
+            <li>圆角 pill 形状 (999px)</li>
+            <li>只展示有任务的 location</li>
+          </ul>
+        </div>
+        <div class="annotation-block">
+          <h3>位置自动补全</h3>
+          <ul>
+            <li>输入时下拉展示家庭已有 location 值</li>
+            <li>匹配项高亮显示</li>
+            <li>底部「+ 新建」入口允许自由输入</li>
+            <li>数据来源：前端从植物列表去重</li>
+          </ul>
+        </div>
+        <div class="annotation-block">
+          <h3>分组排序规则</h3>
+          <ul>
+            <li>按分组内植物数量降序（多的在前）</li>
+            <li>「未分组」永远排在最后</li>
+            <li>组内排序与全部视图一致</li>
+            <li>所有植物无 location 时只有「未分组」+ 引导文案</li>
+          </ul>
+        </div>
+        <div class="annotation-block">
+          <h3>边界处理</h3>
+          <ul>
+            <li>location 名称过长时截断加省略号</li>
+            <li>20+ 个 location 时分组全部展示（可折叠）</li>
+            <li>搜索结果仍按分组展示</li>
+            <li>新建植物设新 location 后自动出现新分组</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
