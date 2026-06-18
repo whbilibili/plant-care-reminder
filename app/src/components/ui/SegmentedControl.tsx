@@ -40,7 +40,7 @@ export function SegmentedControl({ options, selected, onChange }: SegmentedContr
             onClick={() => onChange(option.value)}
             style={{
               ...buttonStyle,
-              color: isSelected ? "#ffffff" : "var(--color-ink)",
+              color: isSelected ? "var(--color-ink)" : "var(--color-muted)",
               fontWeight: isSelected ? 600 : 400,
             }}
             type="button"
@@ -56,20 +56,21 @@ export function SegmentedControl({ options, selected, onChange }: SegmentedContr
 const containerStyle: CSSProperties = {
   position: "relative",
   display: "flex",
-  height: "36px",
-  borderRadius: "var(--radius-md, 8px)",
-  background: "var(--color-surface-secondary, var(--color-mist))",
-  padding: "2px",
+  height: "40px",
+  borderRadius: "var(--radius-pill)",
+  background: "var(--color-mist)",
+  padding: "4px",
   boxSizing: "border-box",
 };
 
 const indicatorStyle: CSSProperties = {
   position: "absolute",
-  top: "2px",
-  left: "2px",
-  bottom: "2px",
-  borderRadius: "calc(var(--radius-md, 8px) - 2px)",
-  background: "var(--color-leaf)",
+  top: "4px",
+  left: "4px",
+  bottom: "4px",
+  borderRadius: "var(--radius-pill)",
+  background: "var(--color-surface)",
+  boxShadow: "0 1px 4px rgba(0, 0, 0, 0.08)",
   transition: "transform 200ms ease",
   pointerEvents: "none",
 };
@@ -82,7 +83,7 @@ const buttonStyle: CSSProperties = {
   border: "none",
   background: "transparent",
   cursor: "pointer",
-  fontSize: "var(--font-body-sm, 13px)",
+  fontSize: "14px",
   fontFamily: "var(--font-body)",
   lineHeight: 1,
   padding: 0,

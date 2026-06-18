@@ -31,10 +31,10 @@ export function BottomNav({ pathname }: BottomNavProps) {
             aria-current={isActive ? "page" : undefined}
             style={{
               ...itemStyle,
-              ...(isActive ? activeItemStyle : null),
+              ...(isActive ? activeItemStyle : inactiveItemStyle),
             }}
           >
-            <Icon icon={item.icon} size={22} />
+            <Icon icon={item.icon} size={20} />
             <span>{item.label}</span>
           </button>
         );
@@ -65,25 +65,28 @@ const navInnerStyle: React.CSSProperties = {
 
 const itemStyle: React.CSSProperties = {
   appearance: "none",
-  border: "1px solid transparent",
-  borderRadius: "var(--radius-button)",
+  border: "none",
+  borderRadius: "20px",
   background: "transparent",
-  color: "var(--color-muted)",
-  height: "56px",
+  height: "48px",
+  padding: "0 16px",
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
   justifyContent: "center",
-  gap: "var(--space-xs)",
+  gap: "2px",
   fontSize: "11px",
-  fontWeight: 600,
+  fontWeight: 500,
   cursor: "pointer",
-  transition: "background 160ms ease, color 160ms ease, box-shadow 160ms ease",
+  transition: "background 200ms ease, color 200ms ease",
 };
 
 const activeItemStyle: React.CSSProperties = {
-  background: "var(--color-leaf)",
-  color: "var(--color-paper)",
-  fontWeight: 700,
-  boxShadow: "0 6px 16px rgba(31, 71, 61, 0.28)",
+  background: "rgba(45, 140, 100, 0.10)",
+  color: "var(--color-leaf)",
+  fontWeight: 600,
+};
+
+const inactiveItemStyle: React.CSSProperties = {
+  color: "var(--color-muted)",
 };

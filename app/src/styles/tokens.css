@@ -210,6 +210,18 @@
   }
 }
 
+/* 待办任务卡片交错入场动效。 */
+@keyframes taskFadeSlideIn {
+  0% {
+    transform: translateY(6px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 /* 尊重用户减少动画偏好 */
 @media (prefers-reduced-motion: reduce) {
   *,

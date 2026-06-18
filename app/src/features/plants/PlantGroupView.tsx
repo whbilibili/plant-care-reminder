@@ -111,7 +111,7 @@ export function PlantGroupView<T extends { location: string | null }>({
         const isExpanded = !collapsedGroups.has(group.location);
 
         return (
-          <div key={group.location ?? "__ungrouped"} style={groupBlockStyle}>
+          <div key={group.location ?? "__ungrouped"} style={groupCardStyle}>
             <GroupHeader
               count={group.plants.length}
               isExpanded={isExpanded}
@@ -136,16 +136,20 @@ const containerStyle: CSSProperties = {
   gap: "var(--space-sm)",
 };
 
-const groupBlockStyle: CSSProperties = {
+const groupCardStyle: CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  gap: "var(--space-sm)",
+  background: "var(--color-surface)",
+  borderRadius: "var(--radius-card)",
+  border: "1px solid var(--color-line)",
+  overflow: "hidden",
 };
 
 const groupContentStyle: CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  gap: "var(--space-md)",
+  gap: "var(--space-sm)",
+  padding: "0 var(--space-md) var(--space-md)",
 };
 
 const hintContainerStyle: CSSProperties = {

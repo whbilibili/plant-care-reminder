@@ -1,17 +1,16 @@
 import { useQuery } from "convex/react";
-import { CheckCircle, ChevronRight, MapPin, Search } from "lucide-react";
+import { CheckCircle, ChevronRight, Search } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 
 import { api } from "../../../convex/_generated/api";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { Icon } from "../../components/ui/Icon";
-import { SegmentedControl } from "../../components/ui/SegmentedControl";
 import { navigate } from "../../app/router";
 import { formatDueDate, formatTaskTypeLabel } from "../../lib/formatters";
 import { getTaskTypeIcon, type CareTaskType } from "../tasks/taskTypes";
 import { taskTypeColorVar } from "../tasks/TaskTypeBadge";
+import { RoomFilterChips } from "../tasks/RoomFilterChips";
 import { ArchivedSection } from "./ArchivedSection";
-import { PlantGroupView } from "./PlantGroupView";
 import { PlantImage } from "./PlantImage";
 
 interface PlantListCardData {
@@ -35,25 +34,9 @@ interface PlantListResponse {
   plants: PlantListCardData[];
 }
 
-const VIEW_MODE_KEY = "plant-care:plant-list-view-mode";
-type ViewMode = "all" | "by-room";
-
-const VIEW_OPTIONS = [
-  { label: "全部", value: "all" },
-  { label: "按房间", value: "by-room" },
-] as const;
-
-function getInitialViewMode(): ViewMode {
-  try {
-    const stored = localStorage.getItem(VIEW_MODE_KEY);
-    if (stored === "all" || stored === "by-room") return stored;
-  } catch { /* ignore */ }
-  return "all";
-}
-
 export function PlantListPage() {
   const [searchText, setSearchText] = useState("");
-  const [viewMode, setViewMode] = useState<ViewMode>(getInitialViewMode);
+  const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const result = useQuery(api.plants.listPlantsWithNextDue, {}) as PlantListResponse | undefined;
   const hasAnimatedRef = useRef(false);
 
@@ -66,16 +49,42 @@ export function PlantListPage() {
     return result?.plants ?? [];
   }, [result?.plants]);
 
+  // 提取去重的房间位置列表（按数量降序）
+  const roomLocations = useMemo(() => {
+    const freq = new Map<string, number>();
+    for (const plant of activePlants) {
+      const loc = plant.location?.trim();
+      if (loc) {
+        freq.set(loc, (freq.get(loc) ?? 0) + 1);
+      }
+    }
+    return [...freq.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([loc]) => loc);
+  }, [activePlants]);
+
+  // 先按搜索文本过滤，再按选中房间过滤
   const filteredPlants = useMemo(() => {
+    let plants = activePlants;
+
+    // 搜索过滤
     const query = searchText.trim().toLowerCase();
-    if (!query) return activePlants;
-    return activePlants.filter((plant) => {
-      const haystack = [plant.name, plant.location ?? "", plant.description ?? ""]
-        .join(" ")
-        .toLowerCase();
-      return haystack.includes(query);
-    });
-  }, [activePlants, searchText]);
+    if (query) {
+      plants = plants.filter((plant) => {
+        const haystack = [plant.name, plant.location ?? "", plant.description ?? ""]
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(query);
+      });
+    }
+
+    // 房间过滤
+    if (selectedRoom !== null) {
+      plants = plants.filter((plant) => plant.location?.trim() === selectedRoom);
+    }
+
+    return plants;
+  }, [activePlants, searchText, selectedRoom]);
 
   const plantCount = activePlants.length;
 
@@ -95,7 +104,6 @@ export function PlantListPage() {
 
   // --- Helpers to compute "last care" ---
   function getLastCareDaysAgo(plant: PlantListCardData): string | null {
-    // Use creationTime as proxy for last care if no explicit lastCareDate
     const ref = plant.creationTime;
     if (!ref) return null;
     const daysAgo = Math.floor((Date.now() - ref) / (1000 * 60 * 60 * 24));
@@ -135,64 +143,56 @@ export function PlantListPage() {
           ...(animate ? getStaggerStyle(index) : undefined),
         }}
       >
-        {/* Large photo */}
+        {/* Plant photo */}
         <div style={photoSlotStyle}>
           <PlantImage
             alt={`${plant.name}封面图`}
             imageUrl={plant.imageUrl}
             plantName={plant.name}
-            slotSize={120}
+            slotSize={72}
           />
         </div>
 
-        {/* Content right side */}
+        {/* Content middle */}
         <div style={cardContentStyle}>
-          {/* Name row */}
+          {/* Row 1: Name + Location inline */}
           <div style={nameRowStyle}>
             <h2 style={cardNameStyle}>{plant.name}</h2>
-            <span style={chevronStyle} aria-hidden="true">
-              <Icon icon={ChevronRight} size={18} colorVar="--color-muted" />
-            </span>
+            {plant.location?.trim() ? (
+              <span style={locationTagStyle}>{plant.location.trim()}</span>
+            ) : null}
           </div>
 
-          {/* Location */}
-          {plant.location?.trim() ? (
-            <p style={locationStyle}>
-              <span style={locationIconStyle}>
-                <Icon icon={MapPin} size={13} colorVar="--color-muted" />
+          {/* Row 2: Next task pill or fallback */}
+          <div style={taskRowStyle}>
+            {nextDueTitle ? (
+              <span
+                style={{
+                  ...pillStyle,
+                  background: isOverdue
+                    ? "rgba(235, 87, 87, 0.08)"
+                    : "rgba(45, 140, 100, 0.08)",
+                  color: isOverdue ? "var(--color-warning)" : "var(--color-leaf)",
+                }}
+              >
+                {taskType ? (
+                  <span style={{ display: "inline-flex", alignItems: "center", color: isOverdue ? "var(--color-warning)" : taskTypeColorVar(taskType) }}>
+                    <Icon icon={getTaskTypeIcon(taskType)} size={14} />
+                  </span>
+                ) : null}
+                <span>{nextDueCopy ? `${nextDueCopy} ${nextDueTitle}` : nextDueTitle}</span>
               </span>
-              {plant.location.trim()}
-            </p>
-          ) : null}
-
-          {/* Next task pill */}
-          {nextDueTitle ? (
-            <span
-              style={{
-                ...pillStyle,
-                background: isOverdue
-                  ? "rgba(235, 87, 87, 0.08)"
-                  : "rgba(45, 140, 100, 0.08)",
-                color: isOverdue ? "var(--color-warning)" : "var(--color-leaf)",
-              }}
-            >
-              {taskType ? (
-                <span style={{ display: "inline-flex", alignItems: "center", color: isOverdue ? "var(--color-warning)" : taskTypeColorVar(taskType) }}>
-                  <Icon icon={getTaskTypeIcon(taskType)} size={14} />
-                </span>
-              ) : null}
-              <span>{nextDueCopy ? `${nextDueCopy} ${nextDueTitle}` : nextDueTitle}</span>
-              <span style={{ display: "inline-flex", alignItems: "center", marginLeft: "2px" }}>
-                <Icon icon={ChevronRight} size={13} />
-              </span>
-            </span>
-          ) : (
-            <span style={noCareStyle}>还没有养护任务</span>
-          )}
-
-          {/* Last care hint */}
-          {lastCare ? <p style={lastCareStyle}>{lastCare}</p> : null}
+            ) : (
+              <span style={noCareStyle}>还没有养护任务</span>
+            )}
+            {lastCare ? <span style={lastCareInlineStyle}>{lastCare}</span> : null}
+          </div>
         </div>
+
+        {/* Chevron — vertically centered via parent alignItems:"center" */}
+        <span style={chevronStyle} aria-hidden="true">
+          <Icon icon={ChevronRight} size={18} colorVar="--color-muted" />
+        </span>
       </article>
     );
   }
@@ -229,16 +229,12 @@ export function PlantListPage() {
         />
       </div>
 
-      {/* View mode toggle */}
-      {activePlants.length > 0 && (
-        <SegmentedControl
-          onChange={(v) => {
-            const mode = v as ViewMode;
-            setViewMode(mode);
-            try { localStorage.setItem(VIEW_MODE_KEY, mode); } catch { /* ignore */ }
-          }}
-          options={[...VIEW_OPTIONS]}
-          selected={viewMode}
+      {/* Room filter chips */}
+      {roomLocations.length > 0 && (
+        <RoomFilterChips
+          locations={roomLocations}
+          selected={selectedRoom}
+          onChange={setSelectedRoom}
         />
       )}
 
@@ -256,12 +252,6 @@ export function PlantListPage() {
           title="没有找到匹配的植物"
           description="试试输入植物名称，或者它所在的位置。"
           minHeight="200px"
-        />
-      ) : viewMode === "by-room" ? (
-        <PlantGroupView
-          filteredPlants={filteredPlants}
-          plants={activePlants}
-          renderPlant={(plant, index) => renderPlantCard(plant, index, shouldAnimate)}
         />
       ) : (
         <div style={listStyle}>
@@ -368,28 +358,28 @@ const searchInputStyle: React.CSSProperties = {
 const listStyle: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  gap: "var(--space-md)",
+  gap: "var(--space-sm)",
   minWidth: 0,
 };
 
 const cardStyle: React.CSSProperties = {
   display: "flex",
-  alignItems: "stretch",
-  padding: "var(--space-md)",
+  alignItems: "center",
+  padding: "12px",
   borderRadius: "var(--radius-card)",
   border: "1px solid var(--color-line)",
   background: "var(--color-surface)",
   boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
   cursor: "pointer",
-  gap: "var(--space-md)",
+  gap: "12px",
   overflow: "hidden",
 };
 
 const photoSlotStyle: React.CSSProperties = {
   flexShrink: 0,
-  width: "120px",
-  height: "120px",
-  borderRadius: "14px",
+  width: "72px",
+  height: "72px",
+  borderRadius: "12px",
   overflow: "hidden",
   background: "var(--color-mist)",
 };
@@ -405,21 +395,43 @@ const cardContentStyle: React.CSSProperties = {
 
 const nameRowStyle: React.CSSProperties = {
   display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  gap: "var(--space-sm)",
+  alignItems: "baseline",
+  gap: "8px",
+  minWidth: 0,
 };
 
 const cardNameStyle: React.CSSProperties = {
   margin: 0,
   fontFamily: "var(--font-heading)",
-  fontSize: "18px",
+  fontSize: "16px",
   fontWeight: 700,
   lineHeight: 1.3,
   color: "var(--color-ink)",
   overflow: "hidden",
   textOverflow: "ellipsis",
   whiteSpace: "nowrap",
+  flexShrink: 1,
+  minWidth: 0,
+};
+
+const locationTagStyle: React.CSSProperties = {
+  flexShrink: 0,
+  fontSize: "11px",
+  color: "var(--color-muted)",
+  background: "var(--color-surface-secondary, var(--color-mist))",
+  padding: "2px 6px",
+  borderRadius: "4px",
+  whiteSpace: "nowrap",
+  maxWidth: "80px",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+};
+
+const taskRowStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  flexWrap: "wrap",
 };
 
 const chevronStyle: React.CSSProperties = {
@@ -428,28 +440,9 @@ const chevronStyle: React.CSSProperties = {
   alignItems: "center",
 };
 
-const locationStyle: React.CSSProperties = {
-  margin: 0,
-  display: "flex",
-  alignItems: "center",
-  gap: "4px",
-  fontSize: "13px",
-  color: "var(--color-muted)",
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-  whiteSpace: "nowrap",
-};
-
-const locationIconStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  flexShrink: 0,
-};
-
 const pillStyle: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
-  alignSelf: "flex-start",
   gap: "5px",
   padding: "4px 10px",
   borderRadius: "var(--radius-pill)",
@@ -464,8 +457,7 @@ const noCareStyle: React.CSSProperties = {
   fontStyle: "italic",
 };
 
-const lastCareStyle: React.CSSProperties = {
-  margin: 0,
+const lastCareInlineStyle: React.CSSProperties = {
   fontSize: "12px",
   color: "var(--color-muted)",
 };

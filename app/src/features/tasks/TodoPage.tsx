@@ -187,15 +187,6 @@ export function TodoPage() {
         </div>
         </header>
 
-      {/* Room Filter Chips */}
-      {roomLocations.length > 0 && (
-        <RoomFilterChips
-          locations={roomLocations}
-          selected={selectedRoom}
-          onChange={setSelectedRoom}
-        />
-      )}
-
       {/* Status Band */}
       <div style={statusBandStyle}>
         <div style={statusLeftStyle}>
@@ -217,6 +208,15 @@ export function TodoPage() {
             : "全部完成 ✓"}
         </span>
       </div>
+
+      {/* Room Filter Chips — 情感反馈区下方 */}
+      {roomLocations.length > 0 && (
+        <RoomFilterChips
+          locations={roomLocations}
+          selected={selectedRoom}
+          onChange={setSelectedRoom}
+        />
+      )}
 
       {/* Empty state */}
       {totalTaskCount === 0 ? (
@@ -253,7 +253,7 @@ export function TodoPage() {
               <h2 style={groupTitleOverdueStyle}><span style={groupTitleBarOverdueStyle} />逾期（{filterByRoom(result.overdue).length}）</h2>
               <GroupedSurface style={overdueGroupStyle}>
                 {filterByRoom(result.overdue).map((task, index) => (
-                  <div key={task.taskId}>
+                  <div key={task.taskId} style={getStaggerStyle(index)}>
                     {index > 0 && <GroupedSurfaceDivider />}
                     <TaskRow
                       task={task}
@@ -273,7 +273,7 @@ export function TodoPage() {
               <h2 style={groupTitleDefaultStyle}><span style={groupTitleBarDefaultStyle} />今天（{filterByRoom(result.today).length}）</h2>
               <GroupedSurface style={todayGroupStyle}>
                 {filterByRoom(result.today).map((task, index) => (
-                  <div key={task.taskId}>
+                  <div key={task.taskId} style={getStaggerStyle(index)}>
                     {index > 0 && <GroupedSurfaceDivider />}
                     <TaskRow
                       task={task}
@@ -294,7 +294,7 @@ export function TodoPage() {
               <GroupedSurface>
               {(showAllUpcoming ? filterByRoom(result.upcoming) : filterByRoom(result.upcoming).slice(0, 3)).map(
                 (task, index) => (
-                  <div key={task.taskId}>
+                  <div key={task.taskId} style={getStaggerStyle(index)}>
                     {index > 0 && <GroupedSurfaceDivider />}
                     <TaskRow
                       task={task}
@@ -401,16 +401,19 @@ function TaskRow({ task, onCompleted, onOpenPlant, variant }: TaskRowProps) {
       <div style={taskContentStyle}>
         <span style={taskPlantNameStyle}>{task.plantName}</span>
         <div style={taskMetaRowStyle}>
-          <Icon icon={TaskIcon} size={13} style={{ color: iconColor }} />
+          <Icon icon={TaskIcon} size={14} style={{ color: iconColor }} />
           <span style={taskTypeTextStyle}>{taskLabel}</span>
-          {dueInfo.isOverdue ? (
-            <span style={overdueBadgeStyle}>逾期 {dueInfo.daysOverdue} 天</span>
-          ) : (
-            <span style={dueLabelStyle}>{dueInfo.label}</span>
-          )}
+          <span style={taskDateDotStyle}>·</span>
+          <span style={taskDateStyle}>{dueInfo.date}</span>
         </div>
-        <span style={taskDateStyle}>{dueInfo.isOverdue ? dueInfo.date : dueInfo.date}</span>
       </div>
+
+      {/* Due tag — vertically centered via parent alignItems:"center" */}
+      {dueInfo.isOverdue ? (
+        <span style={overdueBadgeStyle}>逾期 {dueInfo.daysOverdue} 天</span>
+      ) : (
+        <span style={dueTagStyle}>{dueInfo.label}</span>
+      )}
 
       {/* Right Action */}
       <div style={taskActionStyle}>
@@ -581,6 +584,14 @@ const todayGroupStyle: React.CSSProperties = {
   borderColor: "rgba(76,175,80,0.3)",
 };
 
+/* Stagger animation helper */
+function getStaggerStyle(index: number): React.CSSProperties {
+  return {
+    animation: `taskFadeSlideIn 320ms ease both`,
+    animationDelay: `${index * 50}ms`,
+  };
+}
+
 /* Task Row Styles */
 
 const taskRowStyle: React.CSSProperties = {
@@ -638,7 +649,7 @@ const taskContentStyle: React.CSSProperties = {
   minWidth: 0,
   display: "flex",
   flexDirection: "column",
-  gap: "3px",
+  gap: "4px",
 };
 
 const taskPlantNameStyle: React.CSSProperties = {
@@ -648,6 +659,8 @@ const taskPlantNameStyle: React.CSSProperties = {
   whiteSpace: "nowrap",
   overflow: "hidden",
   textOverflow: "ellipsis",
+  flex: 1,
+  minWidth: 0,
 };
 
 const taskMetaRowStyle: React.CSSProperties = {
@@ -659,6 +672,7 @@ const taskMetaRowStyle: React.CSSProperties = {
 const taskTypeTextStyle: React.CSSProperties = {
   fontSize: "13px",
   color: "var(--color-muted)",
+  fontWeight: 500,
 };
 
 const overdueBadgeStyle: React.CSSProperties = {
@@ -669,12 +683,24 @@ const overdueBadgeStyle: React.CSSProperties = {
   padding: "2px 6px",
   borderRadius: "var(--radius-pill)",
   whiteSpace: "nowrap",
+  flexShrink: 0,
 };
 
-const dueLabelStyle: React.CSSProperties = {
-  fontSize: "12px",
+const dueTagStyle: React.CSSProperties = {
+  fontSize: "11px",
+  fontWeight: 600,
   color: "var(--color-leaf)",
-  fontWeight: 500,
+  background: "rgba(45, 140, 100, 0.08)",
+  padding: "2px 6px",
+  borderRadius: "var(--radius-pill)",
+  whiteSpace: "nowrap",
+  flexShrink: 0,
+};
+
+const taskDateDotStyle: React.CSSProperties = {
+  color: "var(--color-muted)",
+  fontSize: "13px",
+  lineHeight: 1,
 };
 
 const taskDateStyle: React.CSSProperties = {
