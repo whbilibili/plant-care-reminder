@@ -238,7 +238,7 @@
       "prd": "docs/product-specs/2026-06-17-care-history-timeline-spec.md",
       "tech_spec": "docs/design-docs/2026-06-17-care-history-timeline-tech-spec.md",
       "task_count": 6,
-      "completed": 0,
+      "completed": 6,
       "depends_on": [
         "care-reminders",
         "plant-detail-v2",
@@ -1386,42 +1386,42 @@
       "task_id": "CARE-HIST-001",
       "module": "care-history-timeline-v0.9",
       "description": "数据层基建：schema 新增 by_plantId_and_completedAt 索引 + listPlantCompletionLogs / listFamilyRecentActivity 两个 Convex query。",
-      "status": "pending",
+      "status": "done",
       "priority": "1-High"
     },
     {
       "task_id": "CARE-HIST-002",
       "module": "care-history-timeline-v0.9",
       "description": "前端类型定义 + formatRelativeTime 相对时间工具函数。",
-      "status": "pending",
+      "status": "done",
       "priority": "1-High"
     },
     {
       "task_id": "CARE-HIST-003",
       "module": "care-history-timeline-v0.9",
       "description": "植物详情页养护记录折叠区：CareHistorySection + CompletionLogRow 组件，集成 usePaginatedQuery 分页。",
-      "status": "pending",
+      "status": "done",
       "priority": "1-High"
     },
     {
       "task_id": "CARE-HIST-004",
       "module": "care-history-timeline-v0.9",
       "description": "待办页家庭动态区：FamilyRecentActivity 组件，展示最近 5 条全家庭养护活动流。",
-      "status": "pending",
+      "status": "done",
       "priority": "2-Medium"
     },
     {
       "task_id": "CARE-HIST-005",
       "module": "care-history-timeline-v0.9",
       "description": "植物详情页集成：CareHistorySection 嵌入 PlantDetailPage L3.5 位置。",
-      "status": "pending",
+      "status": "done",
       "priority": "1-High"
     },
     {
       "task_id": "CARE-HIST-006",
       "module": "care-history-timeline-v0.9",
       "description": "回归验证 + 端到端验收：全链路完成/撤销→时间线更新、familyId 隔离、空状态、加载更多、边界场景。",
-      "status": "pending",
+      "status": "done",
       "priority": "1-High"
     }
   ],

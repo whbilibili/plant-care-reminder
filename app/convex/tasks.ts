@@ -1,3 +1,4 @@
+import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 
 import type { Doc } from "./_generated/dataModel";
@@ -485,6 +486,211 @@ export const postponePlantTask = mutation({
       taskId: task._id,
       nextDueAt,
       consecutivePostponeCount,
+    };
+  },
+});
+
+// ─── 养护历史时间线 queries（CARE-HIST-001）────────────────────
+
+/**
+ * 按植物查询养护完成日志（cursor-based 分页，降序）。
+ * 校验 plantId 归属当前家庭；join users 表获取 completedByName / completedByImageStorageId。
+ * 已离开家庭的用户仍返回其历史昵称/头像（db.get 返回 null 时兜底「未知成员」）。
+ */
+export const listPlantCompletionLogs = query({
+  args: {
+    plantId: v.id("plants"),
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, args) => {
+    const currentUserContext = await requireCurrentFamilyMember(ctx);
+
+    // 校验植物归属当前家庭
+    const plant = await ctx.db.get(args.plantId);
+    if (!plant || plant.familyId !== currentUserContext.familyId) {
+      throw new Error("This plant does not belong to your current household.");
+    }
+
+    // 使用 by_plantId_and_completedAt 索引降序分页查询
+    const paginatedLogs = await ctx.db
+      .query("taskCompletionLogs")
+      .withIndex("by_plantId_and_completedAt", (q) => q.eq("plantId", args.plantId))
+      .order("desc")
+      .paginate(args.paginationOpts);
+
+    // 批量去重 join users 表
+    const userIds = [...new Set(paginatedLogs.page.map((log) => log.completedBy))];
+    const usersMap = new Map<string, { displayName: string; imageStorageId: string | null }>();
+    await Promise.all(
+      userIds.map(async (userId) => {
+        const user = await ctx.db.get(userId);
+        usersMap.set(userId as string, {
+          displayName: user?.displayName ?? user?.name ?? "未知成员",
+          imageStorageId: (user?.imageStorageId as string | undefined) ?? null,
+        });
+      }),
+    );
+
+    // 计算 totalCount（该植物总完成次数）
+    const allLogs = await ctx.db
+      .query("taskCompletionLogs")
+      .withIndex("by_plantId_and_completedAt", (q) => q.eq("plantId", args.plantId))
+      .collect();
+    const totalCount = allLogs.length;
+
+    // 批量去重 join plantTasks 表以获取 customLabel（日志表不存 customLabel）
+    const taskIds = [...new Set(paginatedLogs.page.map((log) => log.taskId))];
+    const tasksMap = new Map<string, string | null>();
+    await Promise.all(
+      taskIds.map(async (taskId) => {
+        const taskDoc = await ctx.db.get(taskId);
+        tasksMap.set(taskId as string, taskDoc?.customLabel ?? null);
+      }),
+    );
+
+    const page = paginatedLogs.page.map((log) => {
+      const userInfo = usersMap.get(log.completedBy as string) ?? {
+        displayName: "未知成员",
+        imageStorageId: null,
+      };
+      return {
+        logId: log._id,
+        taskType: log.taskType,
+        customLabel: tasksMap.get(log.taskId as string) ?? null,
+        completedByName: userInfo.displayName,
+        completedByImageStorageId: userInfo.imageStorageId,
+        completedAt: log.completedAt,
+      };
+    });
+
+    return {
+      page,
+      totalCount,
+      isDone: paginatedLogs.isDone,
+      continueCursor: paginatedLogs.continueCursor,
+    };
+  },
+});
+
+/**
+ * 查询当前家庭最近 5 条养护完成动态。
+ * join users 表（completedByName/completedByImageStorageId）和 plants 表（plantName/plantId）。
+ * 已离开家庭的用户兜底「未知成员」；已删除的植物兜底「已删除的植物」。
+ */
+export const listFamilyRecentActivity = query({
+  args: {},
+  handler: async (ctx) => {
+    const currentUserContext = await requireCurrentFamilyMember(ctx);
+
+    // 使用 by_familyId_and_completedAt 索引降序取最近 5 条
+    const recentLogs = await ctx.db
+      .query("taskCompletionLogs")
+      .withIndex("by_familyId_and_completedAt", (q) =>
+        q.eq("familyId", currentUserContext.familyId),
+      )
+      .order("desc")
+      .take(5);
+
+    if (recentLogs.length === 0) {
+      return [];
+    }
+
+    // 批量去重 join users 表
+    const userIds = [...new Set(recentLogs.map((log) => log.completedBy))];
+    const usersMap = new Map<string, { displayName: string; imageStorageId: string | null }>();
+    await Promise.all(
+      userIds.map(async (userId) => {
+        const user = await ctx.db.get(userId);
+        usersMap.set(userId as string, {
+          displayName: user?.displayName ?? user?.name ?? "未知成员",
+          imageStorageId: (user?.imageStorageId as string | undefined) ?? null,
+        });
+      }),
+    );
+
+    // 批量去重 join plants 表
+    const plantIds = [...new Set(recentLogs.map((log) => log.plantId))];
+    const plantsMap = new Map<string, string>();
+    await Promise.all(
+      plantIds.map(async (plantId) => {
+        const plantDoc = await ctx.db.get(plantId);
+        plantsMap.set(plantId as string, plantDoc?.name ?? "已删除的植物");
+      }),
+    );
+
+    // 批量去重 join plantTasks 表获取 customLabel
+    const taskIds = [...new Set(recentLogs.map((log) => log.taskId))];
+    const tasksMap = new Map<string, string | null>();
+    await Promise.all(
+      taskIds.map(async (taskId) => {
+        const taskDoc = await ctx.db.get(taskId);
+        tasksMap.set(taskId as string, taskDoc?.customLabel ?? null);
+      }),
+    );
+
+    return recentLogs.map((log) => {
+      const userInfo = usersMap.get(log.completedBy as string) ?? {
+        displayName: "未知成员",
+        imageStorageId: null,
+      };
+      return {
+        logId: log._id,
+        taskType: log.taskType,
+        customLabel: tasksMap.get(log.taskId as string) ?? null,
+        completedByName: userInfo.displayName,
+        completedByImageStorageId: userInfo.imageStorageId,
+        plantName: plantsMap.get(log.plantId as string) ?? "已删除的植物",
+        plantId: log.plantId,
+        completedAt: log.completedAt,
+      };
+    });
+  },
+});
+
+/**
+ * 植物养护记录概览摘要（轻量 query，不分页）。
+ * 返回 totalCount + 最近一条记录的 completedByName / completedAt。
+ * 用于折叠态下展示「养护记录（N）  最近 XXX · 时间」，避免挂载重量级分页 query。
+ */
+export const getPlantCareHistorySummary = query({
+  args: {
+    plantId: v.id("plants"),
+  },
+  handler: async (ctx, args) => {
+    const currentUserContext = await requireCurrentFamilyMember(ctx);
+
+    // 校验植物归属当前家庭
+    const plant = await ctx.db.get(args.plantId);
+    if (!plant || plant.familyId !== currentUserContext.familyId) {
+      throw new Error("This plant does not belong to your current household.");
+    }
+
+    // 取最近一条记录
+    const latestLog = await ctx.db
+      .query("taskCompletionLogs")
+      .withIndex("by_plantId_and_completedAt", (q) => q.eq("plantId", args.plantId))
+      .order("desc")
+      .first();
+
+    // 计算总条数
+    const allLogs = await ctx.db
+      .query("taskCompletionLogs")
+      .withIndex("by_plantId_and_completedAt", (q) => q.eq("plantId", args.plantId))
+      .collect();
+    const totalCount = allLogs.length;
+
+    if (!latestLog) {
+      return { totalCount: 0, latestCompletedByName: null, latestCompletedAt: null };
+    }
+
+    // join user 获取最近完成者的昵称
+    const user = await ctx.db.get(latestLog.completedBy);
+    const latestCompletedByName = user?.displayName ?? user?.name ?? "未知成员";
+
+    return {
+      totalCount,
+      latestCompletedByName,
+      latestCompletedAt: latestLog.completedAt,
     };
   },
 });
