@@ -74,7 +74,7 @@ MVP 已在 `plants` 表提供了 `location` 字段（可选自由文本，最长
 
 ### 3.3 待办页 —— 房间筛选
 
-**入口**：待办页顶部，日期选择器下方增加房间筛选标签栏（horizontal scrollable chips）。
+**入口**：待办页顶部，情感反馈区（Greeting）与任务列表之间，增加房间筛选标签栏（horizontal scrollable chips）。
 
 **筛选标签**：
 

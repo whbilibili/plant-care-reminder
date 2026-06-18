@@ -245,6 +245,21 @@
         "todo-page-v2",
         "icon-system-v0.4"
       ]
+    },
+    {
+      "module": "plant-grouping-room-filter",
+      "file": "docs/exec-plans/modules/plant-grouping-room-filter.json",
+      "description": "植物分组与房间筛选：利用已有 location 字段，植物列表页引入按房间分组视图（SegmentedControl + GroupHeader 折叠/展开），待办页引入房间筛选标签栏（RoomFilterChips 前端过滤），植物编辑页引入位置自动补全（LocationAutocomplete）。后端唯一改动为 listDueTasks 补充 plantLocation 字段。",
+      "prd": "docs/product-specs/2026-06-17-plant-grouping-room-filter-spec.md",
+      "task_breakdown": "docs/product-specs/2026-06-17-plant-grouping-room-filter-task-breakdown.md",
+      "task_count": 10,
+      "completed": 0,
+      "depends_on": [
+        "plant-registry",
+        "care-reminders",
+        "plant-list-v2",
+        "todo-page-v2"
+      ]
     }
   ],
   "tasks_summary": [
@@ -1422,6 +1437,76 @@
       "module": "care-history-timeline-v0.9",
       "description": "回归验证 + 端到端验收：全链路完成/撤销→时间线更新、familyId 隔离、空状态、加载更多、边界场景。",
       "status": "done",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "GRP-001",
+      "module": "plant-grouping-room-filter",
+      "description": "后端补字段：listDueTasks 返回值追加 plantLocation，从 plants 表 join 获取。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "GRP-002",
+      "module": "plant-grouping-room-filter",
+      "description": "前端工具函数：groupPlantsByLocation / filterTasksByLocation / useDistinctLocations。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "GRP-003",
+      "module": "plant-grouping-room-filter",
+      "description": "原子组件 SegmentedControl：列表/分组视图切换控件。",
+      "status": "pending",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "GRP-004",
+      "module": "plant-grouping-room-filter",
+      "description": "原子组件 GroupHeader：房间分组折叠/展开头部（含植物计数 Badge）。",
+      "status": "pending",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "GRP-005",
+      "module": "plant-grouping-room-filter",
+      "description": "植物列表页集成分组视图：SegmentedControl + GroupHeader + 折叠动画。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "GRP-006",
+      "module": "plant-grouping-room-filter",
+      "description": "原子组件 RoomFilterChips：待办页房间筛选标签栏（横向滚动 + 全部选项）。",
+      "status": "pending",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "GRP-007",
+      "module": "plant-grouping-room-filter",
+      "description": "待办页集成房间筛选：RoomFilterChips 嵌入 Greeting 与任务列表之间，前端过滤逻辑。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "GRP-008",
+      "module": "plant-grouping-room-filter",
+      "description": "原子组件 LocationAutocomplete：位置输入自动补全（基于家庭已有 location 值）。",
+      "status": "pending",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "GRP-009",
+      "module": "plant-grouping-room-filter",
+      "description": "植物编辑页集成 LocationAutocomplete：替换原 InputField，保持向后兼容。",
+      "status": "pending",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "GRP-010",
+      "module": "plant-grouping-room-filter",
+      "description": "端到端验收：分组/筛选/自动补全全链路 + 空状态 + 视图偏好持久化 + 375px 响应式。",
+      "status": "pending",
       "priority": "1-High"
     }
   ],

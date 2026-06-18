@@ -44,6 +44,8 @@
   - P0 PRD：推送通知体验增强——通知深链跳转（点击直达植物详情）、推送时间偏好（每天几点提醒）、到期任务聚合推送，从"能推"到"推得准"
 - [2026-06-17-plant-grouping-room-filter-spec.md](./2026-06-17-plant-grouping-room-filter-spec.md)
   - P0 PRD：植物分组与房间筛选——利用已有 location 字段构建按房间分组视图 + 待办页房间筛选标签 + 位置自动补全，纯前端实现
+- [2026-06-17-plant-grouping-room-filter-task-breakdown.md](./2026-06-17-plant-grouping-room-filter-task-breakdown.md)
+  - P0 功能规格：植物分组与房间筛选——数据流设计、后端微调（listDueTasks 补 plantLocation）、组件契约（SegmentedControl/PlantGroupView/RoomFilterChips/LocationAutocomplete）、10 个任务拆分（GRP-001~010）含依赖拓扑与执行顺序
 - [2026-06-17-iteration-backlog-outline.md](./2026-06-17-iteration-backlog-outline.md)
   - 迭代需求储备大纲：P1（多图上传/任务灵活性/数据导出）和 P2（植物知识卡片/季节性建议/协作增强）六个方向的初步方案记录
 
