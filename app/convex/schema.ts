@@ -29,7 +29,8 @@ export default defineSchema({
     .index("by_familyId_and_nextDueAt", ["familyId", "nextDueAt"]),
   taskCompletionLogs: defineTable(taskCompletionLogFields)
     .index("by_taskId", ["taskId"])
-    .index("by_familyId_and_completedAt", ["familyId", "completedAt"]),
+    .index("by_familyId_and_completedAt", ["familyId", "completedAt"])
+    .index("by_plantId_and_completedAt", ["plantId", "completedAt"]),
   pushSubscriptions: defineTable(pushSubscriptionFields)
     .index("by_userId", ["userId"])
     .index("by_familyId", ["familyId"])

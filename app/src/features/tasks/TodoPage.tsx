@@ -17,6 +17,7 @@ import { Icon } from "../../components/ui/Icon";
 import { Button } from "../../components/ui/Button";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { CompleteTaskButton } from "./CompleteTaskButton";
+import { FamilyRecentActivity } from "./FamilyRecentActivity";
 import { UndoToast } from "./UndoToast";
 import { formatTaskTypeLabel } from "./taskTypes";
 import type { DueTaskCardData } from "./DueTaskCard";
@@ -282,8 +283,12 @@ export function TodoPage() {
                   >
                     <span>{showAllUpcoming ? "收起" : "查看全部任务"}</span>
                     <Icon
-                      icon={showAllUpcoming ? ChevronDown : ChevronDown}
+                      icon={ChevronDown}
                       size={14}
+                      style={{
+                        transform: showAllUpcoming ? "rotate(180deg)" : undefined,
+                        transition: "transform 200ms ease",
+                      }}
                     />
                   </button>
                 </>
@@ -293,6 +298,9 @@ export function TodoPage() {
           )}
         </div>
       )}
+
+      {/* 家庭动态（CARE-HIST-004）——空数据时整个区域不渲染 */}
+      <FamilyRecentActivity />
 
       {/* Undo Toast */}
       {undoPayload ? (

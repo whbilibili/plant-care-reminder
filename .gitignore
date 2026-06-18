@@ -13,3 +13,4 @@ build/
 # 环境与本地配置
 .env.local
 .DS_Store
+.idea/

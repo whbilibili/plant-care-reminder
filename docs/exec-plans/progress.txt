@@ -1,5 +1,34 @@
 ### [Current Focus]
-`role-permission-v0.4` 模块全部完成（2026-06-17~18），ROLE-001~012 共 12/12 已完成。模块结项。
+`care-history-timeline-v0.9` 模块全部完成（2026-06-18），CARE-HIST-001~006 共 6/6 已完成。模块结项。
+
+[2026-06-18] CARE-HIST-006 DONE — 回归验证 + 端到端验收（care-history-timeline-v0.9 回归验收，High）
+  - 三件套验证全通过：npm run typecheck（tsc -b）仅预存错误（7 个，git stash 核实全部预存）；npm run test 14 failures 全部为预存（2 files: EmailLoginForm.test.tsx + AppRouter.smoke.test.tsx，git stash 核实 stash 前后同源）；npx convex dev --once --typecheck enable 零错误。
+  - 新增索引 by_plantId_and_completedAt 已部署成功。
+  - 零新增编译错误、零新增测试失败。
+
+[2026-06-18] CARE-HIST-005 DONE — 植物详情页集成 CareHistorySection 布局调整（care-history-timeline-v0.9 前端集成，High）
+  - PlantDetailPage.tsx 导入 CareHistorySection，插入 PlanSection 之后、归档区之前（L3.5 位置）。
+  - 传入 plantId={plant._id}，与上下 section 间距一致。
+
+[2026-06-18] CARE-HIST-004 DONE — 待办页家庭动态区组件（care-history-timeline-v0.9 前端，Medium）
+  - 新建 FamilyRecentActivity.tsx：useQuery(api.tasks.listFamilyRecentActivity)，空数组时不渲染。
+  - 最多 5 条记录，每条含 plantName 维度（「谁 给 植物名 完成了 任务名」）。
+  - 复用 CompletionLogRow 行布局模式。
+  - TodoPage.tsx 导入并嵌入 FamilyRecentActivity，位于 Undo Toast 之前。
+
+[2026-06-18] CARE-HIST-003 DONE — 植物详情页养护记录折叠区组件（care-history-timeline-v0.9 前端，High）
+  - 新建 CompletionLogRow.tsx：单条记录行，TaskIcon + MemberAvatar(24px) + 成员名 + 任务名 + 相对时间。
+  - 新建 CareHistorySection.tsx：折叠容器，usePaginatedQuery 分页加载，折叠时卸载 query 释放订阅。
+  - 标题「养护记录（N）」，「加载更多」按钮，空状态「还没有养护记录」。
+
+[2026-06-18] CARE-HIST-002 DONE — 前端类型定义 + formatRelativeTime 工具函数（care-history-timeline-v0.9 前端，High）
+  - domain.ts 新增 PlantCompletionLogEntry / FamilyActivityEntry 类型接口。
+  - formatters.ts 新增 formatRelativeTime(timestamp, now?)：五档（刚刚/N分钟前/N小时前/M月D日/YYYY年M月D日）。
+
+[2026-06-18] CARE-HIST-001 DONE — 数据层基建 schema 索引 + 两个 Convex query（care-history-timeline-v0.9 后端，High）
+  - schema.ts：taskCompletionLogs 新增 .index("by_plantId_and_completedAt", ["plantId", "completedAt"])。
+  - tasks.ts：新增 listPlantCompletionLogs（paginatedQuery，join users + plantTasks 获取 customLabel）和 listFamilyRecentActivity（top 5，join users + plants + plantTasks）。
+  - 两个 query 均通过 requireCurrentFamilyMember 校验 familyId 隔离。
 
 [2026-06-18] ROLE-012 DONE — 回归验证与类型检查（role-permission-v0.4 E6 回归验收，Medium）
   - 三件套验证全通过：npm run typecheck（tsc -b）仅预存错误；npx convex dev --once --typecheck enable 零错误；npx vitest run 12 failures 全部为预存（git stash 核实 stash 前后同为 2 files failed / 12 tests failed）。

@@ -94,3 +94,27 @@ export interface PushSubscriptionRecord {
   lastSeenAt: TimestampMs;
   createdAt: TimestampMs;
 }
+
+// ─── 养护历史时间线（CARE-HIST-002）─────────────────────────────
+
+/** 单条植物养护完成日志（listPlantCompletionLogs 返回值单项）。 */
+export interface PlantCompletionLogEntry {
+  logId: string;
+  taskType: PlantTaskType;
+  customLabel: string | null;
+  completedByName: string;
+  completedByImageStorageId: string | null;
+  completedAt: TimestampMs;
+}
+
+/** 家庭动态单条（listFamilyRecentActivity 返回值单项）。 */
+export interface FamilyActivityEntry {
+  logId: string;
+  taskType: PlantTaskType;
+  customLabel: string | null;
+  completedByName: string;
+  completedByImageStorageId: string | null;
+  plantName: string;
+  plantId: PlantId;
+  completedAt: TimestampMs;
+}

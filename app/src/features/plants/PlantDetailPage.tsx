@@ -28,6 +28,7 @@ import { TaskActionRow } from "../../components/ui/TaskActionRow";
 import { StorageImage } from "../../components/ui/StorageImage";
 import { Icon } from "../../components/ui/Icon";
 import { PlantManagementSection } from "./PlantManagementSection";
+import { CareHistorySection } from "./CareHistorySection";
 import { ImagePreviewOverlay } from "./ImagePreviewOverlay";
 import { UndoToast } from "../tasks/UndoToast";
 import type { CompletionUndoPayload } from "../tasks/undoComplete";
@@ -427,6 +428,11 @@ export function PlantDetailPage({ plantId }: PlantDetailPageProps) {
             </>
           )}
         </GroupedSurface>
+      </div>
+
+      {/* 养护记录折叠区（CARE-HIST-003 / CARE-HIST-005：L3.5 位置） */}
+      <div style={sectionSpacingStyle}>
+        <CareHistorySection plantId={plant.id as Id<"plants">} />
       </div>
 
       {/* 植物档案 section */}

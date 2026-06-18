@@ -34,11 +34,16 @@ function getInitial(name: string): string {
   return /[a-z]/i.test(first) ? first.toUpperCase() : first;
 }
 
+/** 支持的头像尺寸（px）。默认 36，养护记录行用 24。 */
+type AvatarSize = 24 | 28 | 36;
+
 interface MemberAvatarProps {
   /** 成员显示名；为空/空白时兜底 👤。 */
   name: string | null | undefined;
   /** 用户头像 storageId（SET3-009）；有值时渲染真实头像，无值回退首字母色块。 */
   imageStorageId?: StorageId | null;
+  /** 头像尺寸（px），默认 36。 */
+  size?: AvatarSize;
 }
 
 /**
@@ -47,21 +52,24 @@ interface MemberAvatarProps {
  * 加载失败或无值时回退到首字头像：底色按 displayName hash 取模从色池轮换，
  * 保证同人颜色稳定；无名兜底 👤 + --color-muted。纯装饰，aria-hidden。
  */
-export function MemberAvatar({ name, imageStorageId = null }: MemberAvatarProps) {
+export function MemberAvatar({ name, imageStorageId = null, size = 36 }: MemberAvatarProps) {
   const convex = useConvex();
   const trimmed = name?.trim() ?? "";
   const initial = getInitial(trimmed);
 
+  const sizeOverride = sizeStyles[size];
+
   const fallback =
     initial.length === 0 ? (
-      <span aria-hidden="true" style={{ ...avatarStyle, ...fallbackStyle }}>
-        <Icon icon={User} size={20} colorVar="--color-muted" />
+      <span aria-hidden="true" style={{ ...avatarStyle, ...sizeOverride, ...fallbackStyle }}>
+        <Icon icon={User} size={size <= 24 ? 14 : 20} colorVar="--color-muted" />
       </span>
     ) : (
       <span
         aria-hidden="true"
         style={{
           ...avatarStyle,
+          ...sizeOverride,
           background: AVATAR_COLORS[hashString(trimmed) % AVATAR_COLORS.length],
         }}
       >
@@ -78,7 +86,7 @@ export function MemberAvatar({ name, imageStorageId = null }: MemberAvatarProps)
       alt=""
       fallback={fallback}
       storageId={imageStorageId}
-      style={imageStyle}
+      style={{ ...imageStyle, ...sizeOverride }}
       fetchUrl={async (id) => {
         const { url } = await convex.query(api.users.getAvatarUrl, {
           storageId: id as never,
@@ -117,4 +125,11 @@ const fallbackStyle: CSSProperties = {
   background: "var(--color-mist)",
   color: "var(--color-muted)",
   fontSize: "18px",
+};
+
+/** 尺寸变体覆盖样式。 */
+const sizeStyles: Record<AvatarSize, CSSProperties> = {
+  24: { width: "24px", height: "24px", fontSize: "11px" },
+  28: { width: "28px", height: "28px", fontSize: "12px" },
+  36: { /* 默认，不覆盖 */ },
 };

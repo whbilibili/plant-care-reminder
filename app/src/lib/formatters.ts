@@ -40,3 +40,62 @@ export function formatDueDate(
 
   return `${longDateFormatter.format(dueDate)} 到期`;
 }
+
+// ─── 相对时间格式化（CARE-HIST-002）────────────────────────────
+
+const relativeMonthDayFormatter = new Intl.DateTimeFormat("zh-CN", {
+  month: "numeric",
+  day: "numeric",
+});
+
+const relativeFullDateFormatter = new Intl.DateTimeFormat("zh-CN", {
+  year: "numeric",
+  month: "numeric",
+  day: "numeric",
+});
+
+/**
+ * 将时间戳格式化为相对时间文案（四档）。
+ * - ≤60s → 「刚刚」
+ * - <60min → 「N 分钟前」（1–59）
+ * - <24h → 「N 小时前」（1–23）
+ * - 同年 → 「M月D日」
+ * - 跨年 → 「YYYY年M月D日」
+ *
+ * 不引入外部日期库，保持项目零新增依赖原则。
+ */
+export function formatRelativeTime(
+  timestamp: number,
+  now: number = Date.now(),
+): string {
+  const diffMs = now - timestamp;
+
+  // 未来时间或几乎同时 → 刚刚
+  if (diffMs <= 0) {
+    return "刚刚";
+  }
+
+  const diffSeconds = Math.floor(diffMs / 1000);
+  if (diffSeconds <= 60) {
+    return "刚刚";
+  }
+
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  if (diffMinutes < 60) {
+    return `${diffMinutes} 分钟前`;
+  }
+
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  if (diffHours < 24) {
+    return `${diffHours} 小时前`;
+  }
+
+  const date = new Date(timestamp);
+  const nowDate = new Date(now);
+
+  if (date.getFullYear() === nowDate.getFullYear()) {
+    return relativeMonthDayFormatter.format(date);
+  }
+
+  return relativeFullDateFormatter.format(date);
+}
