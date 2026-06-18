@@ -1,0 +1,594 @@
+{
+  "project": "plant-care-reminder",
+  "prd": "docs/product-specs/2026-06-17-care-history-timeline-spec.md",
+  "tech_spec": "docs/design-docs/2026-06-17-care-history-timeline-tech-spec.md",
+  "created_at": "2026-06-17",
+  "module_intent": "养护历史时间线 v0.9：在植物详情页新增「养护记录」折叠区（cursor-based 分页展示该植物的养护完成记录），在待办页底部新增「家庭动态」轻量区域（最近 5 条全家庭养护活动流）。后端新增两个 Convex query + 一个索引，前端新增三个组件 + 一个工具函数。每个 Task 同时承载功能开发契约（data/api）与 UI 美化契约（design_contract），复用现有 MemberAvatar / taskTypes.ts / formatters.ts，不引入新依赖。",
+  "design_baseline": {
+    "token_source": "app/src/styles/tokens.css",
+    "hard_rule": "禁止硬编码 #hex；所有色值/间距/圆角/阴影一律引用 token 变量。",
+    "reduced_motion": "所有动效在 prefers-reduced-motion: reduce 下退化为即时状态切换（tokens.css 已有全局兜底）。"
+  },
+  "tasks": [
+    {
+      "task_id": "CARE-HIST-001",
+      "description": "数据层基建：schema 新增索引 + 两个 Convex query 实现。在 taskCompletionLogs 表新增 by_plantId_and_completedAt 复合索引；在 convex/tasks.ts 新增 listPlantCompletionLogs（cursor-based 分页，join users 表）和 listFamilyRecentActivity（最近 5 条，join users + plants 表）两个 query。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "taskCompletionLogs"
+            ],
+            "key_fields": {
+              "taskCompletionLogs": [
+                "plantId",
+                "completedAt",
+                "familyId",
+                "completedBy",
+                "taskType"
+              ]
+            },
+            "indexes": [
+              "taskCompletionLogs.by_plantId_and_completedAt (新增：[\"plantId\", \"completedAt\"])"
+            ],
+            "relations": "taskCompletionLogs → users（completedBy join 获取 displayName/imageStorageId）、taskCompletionLogs → plants（plantId join 获取 name，仅 listFamilyRecentActivity 使用）。",
+            "notes": "不修改任何现有表结构（PRD D4）。仅新增一个复合索引，Convex 自动后台回填，不影响服务。"
+          },
+          "queries": {
+            "read": "listPlantCompletionLogs：按 plantId 用 by_plantId_and_completedAt 索引降序分页查询，批量 db.get(completedBy) 去重 join users 表。listFamilyRecentActivity：按 familyId 用 by_familyId_and_completedAt 索引降序 take(5)，批量 join users + plants 表。",
+            "write": "N/A（只读查询，不修改数据）。"
+          },
+          "migration_strategy": "convex schema push：taskCompletionLogs 新增 .index(\"by_plantId_and_completedAt\", [\"plantId\", \"completedAt\"])，无字段变更。"
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [
+            {
+              "method": "query",
+              "path": "convex/tasks.listPlantCompletionLogs",
+              "request": {
+                "plantId": "Id<\"plants\">",
+                "paginationOpts": "paginationOptsValidator"
+              },
+              "response": {
+                "page": [
+                  {
+                    "logId": "Id<\"taskCompletionLogs\">",
+                    "taskType": "CareTaskType",
+                    "customLabel": "string | null",
+                    "completedByName": "string",
+                    "completedByImageStorageId": "Id<\"_storage\"> | null",
+                    "completedAt": "number"
+                  }
+                ],
+                "totalCount": "number",
+                "isDone": "boolean",
+                "continueCursor": "string"
+              },
+              "auth_required": true
+            },
+            {
+              "method": "query",
+              "path": "convex/tasks.listFamilyRecentActivity",
+              "request": {},
+              "response": [
+                {
+                  "logId": "Id<\"taskCompletionLogs\">",
+                  "taskType": "CareTaskType",
+                  "customLabel": "string | null",
+                  "completedByName": "string",
+                  "completedByImageStorageId": "Id<\"_storage\"> | null",
+                  "plantName": "string",
+                  "plantId": "Id<\"plants\">",
+                  "completedAt": "number"
+                }
+              ],
+              "auth_required": true
+            }
+          ],
+          "notes": "两个 query 都必须通过 requireCurrentFamilyMember(ctx) 校验家庭归属。listPlantCompletionLogs 额外验证 plantId 对应植物属于当前家庭。已归档植物仍可查看历史记录。completedBy 对应用户已离开家庭时，仍显示其昵称/头像（db.get 返回 null 时兜底「未知成员」）。listFamilyRecentActivity 中植物已删除时 plantName 降级为「已删除的植物」。totalCount 初版使用 .collect().length 实现，数据量大时迁移到 aggregate。"
+        },
+        "component_tree": {
+          "entry_component": "N/A（纯后端 Task）",
+          "children": [],
+          "notes": "本 Task 只涉及后端 Convex 函数，不涉及前端组件。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "N/A",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "session",
+          "rls_or_rbac": "两个 query 入口必须调用 requireCurrentFamilyMember(ctx)；listPlantCompletionLogs 额外校验 plantId 归属本家庭；只返回 displayName 和 imageStorageId，不返回 email/phone 等敏感字段。"
+        },
+        "design_contract": {
+          "ui_spec_ref": "N/A（纯后端）",
+          "intent": "N/A",
+          "tokens_new": [],
+          "tokens_reuse": [],
+          "layout": "N/A",
+          "motion": "N/A",
+          "reduced_motion": "N/A",
+          "constraints": "N/A"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npx convex dev --once --typecheck enable",
+        "data": "Convex Dashboard 验证：by_plantId_and_completedAt 索引已创建且回填完成；listPlantCompletionLogs 按 plantId 返回正确分页数据；listFamilyRecentActivity 返回最近 5 条且 join 正确。",
+        "visual": "N/A（纯后端）。",
+        "manual": "在 Convex Dashboard 手动调用两个 query：传入有效 plantId 确认分页返回正确且 completedByName 有值；传入跨家庭 plantId 确认报错；确认 familyId 隔离有效。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/convex/schema.ts",
+          "app/convex/tasks.ts"
+        ],
+        "modules": [
+          "care-history-timeline-v0.9"
+        ],
+        "layer": "backend",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "taskCompletionLogs 新增 by_plantId_and_completedAt 索引，schema typecheck 通过。",
+        "listPlantCompletionLogs 按 plantId 分页降序返回养护记录，含 completedByName/completedByImageStorageId。",
+        "listPlantCompletionLogs 返回 totalCount（该植物总完成次数）。",
+        "listPlantCompletionLogs 校验 plantId 归属当前家庭，跨家庭 plantId 报错。",
+        "listFamilyRecentActivity 按 familyId 返回最近 5 条，含 plantName/plantId。",
+        "已离开家庭的用户历史记录仍正常展示（兜底「未知成员」）。",
+        "已删除的植物在家庭动态中显示「已删除的植物」。"
+      ]
+    },
+    {
+      "task_id": "CARE-HIST-002",
+      "description": "前端类型定义 + 相对时间工具函数。在 src/types/domain.ts 新增 PlantCompletionLogEntry / FamilyActivityEntry 类型定义；在 src/lib/formatters.ts 新增 formatRelativeTime() 工具函数（四档：刚刚 / N分钟前 / N小时前 / 日期格式）。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "纯前端类型与工具函数，不触碰后端。",
+            "notes": "formatRelativeTime 的分档逻辑：≤60s → 「刚刚」；≤60min → 「N 分钟前」；≤24h → 「N 小时前」；同年 → 「M月D日」；跨年 → 「YYYY年M月D日」。"
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "none",
+          "endpoints": [],
+          "notes": "纯前端，无新接口。"
+        },
+        "component_tree": {
+          "entry_component": "N/A（工具层）",
+          "children": [],
+          "notes": "formatRelativeTime 将被 CARE-HIST-003 / CARE-HIST-004 的组件消费。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "N/A",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        },
+        "design_contract": {
+          "ui_spec_ref": "N/A（工具层）",
+          "intent": "N/A",
+          "tokens_new": [],
+          "tokens_reuse": [],
+          "layout": "N/A",
+          "motion": "N/A",
+          "reduced_motion": "N/A",
+          "constraints": "不引入 date-fns / dayjs 等外部日期库，保持项目零新增依赖原则。"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "N/A",
+        "visual": "N/A（无 UI 输出）。",
+        "manual": "formatRelativeTime 单元测试覆盖边界：刚刚（≤60s）、N分钟前（1-59min）、N小时前（1-23h）、同年日期、跨年日期。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/types/domain.ts",
+          "app/src/lib/formatters.ts"
+        ],
+        "modules": [
+          "care-history-timeline-v0.9"
+        ],
+        "layer": "frontend",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "domain.ts 新增 PlantCompletionLogEntry 和 FamilyActivityEntry 类型定义，与后端 API 返回值对齐。",
+        "formatRelativeTime(timestamp, now?) 实现四档相对时间格式化。",
+        "formatRelativeTime 中文输出（「刚刚」「N 分钟前」「N 小时前」「M月D日」「YYYY年M月D日」）。",
+        "不引入新外部依赖。",
+        "TypeScript 编译无 error。"
+      ]
+    },
+    {
+      "task_id": "CARE-HIST-003",
+      "description": "植物详情页养护记录折叠区组件。新增 CareHistorySection（折叠容器，含标题「养护记录（N）」+ 分页逻辑）和 CompletionLogRow（单条记录行），集成 usePaginatedQuery 调用 listPlantCompletionLogs，嵌入 PlantDetailPage。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "消费 CARE-HIST-001 的 listPlantCompletionLogs query。",
+            "notes": "折叠区展开时才挂载 usePaginatedQuery（条件渲染），收起时卸载以释放 Convex 订阅，优化性能。"
+          },
+          "queries": {
+            "read": "usePaginatedQuery(api.tasks.listPlantCompletionLogs, {plantId}, {initialNumItems: 20})",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "baas-sdk",
+          "endpoints": [],
+          "notes": "消费 CARE-HIST-001 创建的 listPlantCompletionLogs，无新后端接口。"
+        },
+        "component_tree": {
+          "entry_component": "PlantDetailPage",
+          "children": [
+            "CareHistorySection",
+            "CompletionLogRow"
+          ],
+          "notes": "CareHistorySection 放在 PlanSection 与 PlantManagementSection 之间（L3.5 位置）。CareHistorySection 内部含折叠/展开逻辑、分页加载更多按钮、空状态文案。CompletionLogRow 为纯展示组件，接收单条 log 数据渲染一行。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "usePaginatedQuery listPlantCompletionLogs（Convex reactive 自动订阅）",
+          "local_state": "折叠区展开/收起 useState、加载更多 loading 态 useState"
+        },
+        "routing": {
+          "path": "/plants/:plantId（植物详情页）",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "session",
+          "rls_or_rbac": "后端 query 已做 familyId 隔离与 plantId 归属校验。"
+        },
+        "design_contract": {
+          "ui_spec_ref": "care-history-timeline-spec §3.1 / §5",
+          "intent": "养护记录折叠区是「已发生的养护行为」的可回溯档案，语义上承接养护计划（当前任务）、前驱植物档案（静态资料）。默认折叠减少信息负载，展开后按时间倒序浏览。",
+          "tokens_new": [],
+          "tokens_reuse": [
+            "--color-ink（成员名）",
+            "--color-muted（相对时间文案、「加载更多」按钮）",
+            "--color-leaf-light（任务名文案）",
+            "--color-task-*（任务类型图标颜色，复用 taskTypeColorVar()）",
+            "--space-md = 16px（行左右 padding）",
+            "--space-sm = 8px（图标与头像间距）"
+          ],
+          "layout": "折叠触发器：左侧 ChevronRight/ChevronDown 图标 + 标题「养护记录（N）」。记录行高度 48px，格式：[TaskIcon 20×20] [Avatar 24×24] 成员名 完成了 任务名 · 相对时间。底部居中「加载更多」ghost 按钮。空状态居中显示「还没有养护记录」。",
+          "motion": "折叠/展开：max-height 过渡 + opacity 渐入。",
+          "reduced_motion": "退化为即时显示/隐藏。",
+          "constraints": "复用 MemberAvatar 组件（24×24 尺寸）；图标走 getTaskTypeIcon() + taskTypeColorVar()（ICON-003 约束）；禁止硬编码 #hex。"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "N/A",
+        "visual": "植物详情页在养护计划区下方展示「养护记录（N）」折叠区；展开后按时间倒序展示完成日志，每条含任务类型图标、成员头像、成员名、任务名、相对时间；初始 20 条，「加载更多」追加 20 条；无记录时展示友好空状态。375px 宽度下布局不溢出。",
+        "manual": "展开折叠区确认数据正确加载；点击「加载更多」确认追加渲染；撤销一次完成后确认记录实时消失；无记录植物确认空状态文案。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/plants/CareHistorySection.tsx",
+          "app/src/features/plants/CompletionLogRow.tsx",
+          "app/src/features/plants/PlantDetailPage.tsx"
+        ],
+        "modules": [
+          "care-history-timeline-v0.9"
+        ],
+        "layer": "frontend",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "植物详情页在 PlanSection 与 PlantManagementSection 之间新增「养护记录（N）」折叠区。",
+        "默认折叠，展开后按时间倒序展示完成记录。",
+        "每条记录含任务类型图标、成员头像（MemberAvatar 24×24）、成员名、任务名、相对时间。",
+        "初始加载 20 条，底部「加载更多」按钮追加 20 条。",
+        "所有记录加载完后隐藏「加载更多」按钮。",
+        "无记录时折叠标题显示「养护记录（0）」，展开显示「还没有养护记录」。",
+        "撤销完成后记录实时消失（Convex reactive）。",
+        "折叠区收起时卸载分页 query 以释放订阅。",
+        "375px 宽度下布局正常可用。"
+      ]
+    },
+    {
+      "task_id": "CARE-HIST-004",
+      "description": "待办页家庭动态区组件。新增 FamilyRecentActivity 组件，通过 useQuery 调用 listFamilyRecentActivity 展示最近 5 条全家庭养护活动流，嵌入 TodoPage 底部。空数据时整个区域不渲染。",
+      "priority": "2-Medium",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "消费 CARE-HIST-001 的 listFamilyRecentActivity query。",
+            "notes": "固定 5 条，无分页需求。空数组时前端不渲染区域（不占空间）。"
+          },
+          "queries": {
+            "read": "useQuery(api.tasks.listFamilyRecentActivity)",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "baas-sdk",
+          "endpoints": [],
+          "notes": "消费 CARE-HIST-001 创建的 listFamilyRecentActivity，无新后端接口。"
+        },
+        "component_tree": {
+          "entry_component": "TodoPage",
+          "children": [
+            "FamilyRecentActivity"
+          ],
+          "notes": "FamilyRecentActivity 放在 TodoPage 底部（今日任务和即将到期任务之后）。内部复用 CompletionLogRow 的行布局模式，但多一个植物名维度。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "useQuery listFamilyRecentActivity（Convex reactive 自动订阅）",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "/todo",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "session",
+          "rls_or_rbac": "后端 query 已做 familyId 隔离。"
+        },
+        "design_contract": {
+          "ui_spec_ref": "care-history-timeline-spec §3.2 / §5",
+          "intent": "在待办页底部提供家庭协作的「在场感」——知道其他人也在参与养护。轻量区域，不喧宾夺主，待办页核心仍是任务执行。",
+          "tokens_new": [],
+          "tokens_reuse": [
+            "--color-ink（成员名）",
+            "--color-muted（相对时间文案、植物名）",
+            "--color-leaf-light（任务名文案）",
+            "--color-task-*（任务类型图标颜色）",
+            "--space-md = 16px（行左右 padding）",
+            "--space-sm = 8px（图标与头像间距）",
+            "--font-heading（区域标题「家庭动态」）"
+          ],
+          "layout": "区域标题「家庭动态」，下方 5 条记录行。每条格式：[TaskIcon 20×20] [Avatar 24×24] 成员名 给 植物名 完成了 任务名 · 相对时间。",
+          "motion": "N/A（静态展示，随页面自然渲染）。",
+          "reduced_motion": "N/A。",
+          "constraints": "复用 MemberAvatar 组件（24×24 尺寸）；图标走 getTaskTypeIcon() + taskTypeColorVar()（ICON-003 约束）；空数据时整个区域不渲染（不保留标题+空白）；禁止硬编码 #hex。"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "N/A",
+        "visual": "待办页底部展示「家庭动态」区域，最近 5 条全家庭养护记录；每条含植物名维度（谁给什么植物做了什么）；家庭无记录时该区域不渲染（不占空间）。375px 宽度下布局正常可用。",
+        "manual": "完成一次任务后家庭动态区实时新增一条；撤销后实时移除；确认植物名正确显示；已删除植物显示「已删除的植物」。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/tasks/FamilyRecentActivity.tsx",
+          "app/src/features/tasks/TodoPage.tsx"
+        ],
+        "modules": [
+          "care-history-timeline-v0.9"
+        ],
+        "layer": "frontend",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "待办页底部展示「家庭动态」区域，最近 5 条全家庭养护完成记录。",
+        "每条记录含任务类型图标、成员头像、成员名、植物名、任务名、相对时间。",
+        "家庭无完成记录时整个区域不渲染（不占空间）。",
+        "已删除的植物显示「已删除的植物」。",
+        "完成/撤销任务后动态区实时更新（Convex reactive）。",
+        "375px 宽度下布局正常可用。"
+      ]
+    },
+    {
+      "task_id": "CARE-HIST-005",
+      "description": "植物详情页集成 + PlantDetailPage 布局调整。将 CareHistorySection 嵌入 PlantDetailPage 的 L3.5 位置（PlanSection 之后、PlantManagementSection 之前），确保与上下区域的间距/视觉一致性，并验证折叠区展开后的滚动体验。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "消费 CARE-HIST-003 的 CareHistorySection 组件。",
+            "notes": "PlantDetailPage 已有 plantId，直接作为 prop 传入 CareHistorySection。"
+          },
+          "queries": {
+            "read": "N/A（CareHistorySection 内部管理 query）",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "none",
+          "endpoints": [],
+          "notes": "无新接口，纯前端布局集成。"
+        },
+        "component_tree": {
+          "entry_component": "PlantDetailPage",
+          "children": [
+            "CareHistorySection"
+          ],
+          "notes": "在 PlantDetailPage 的 JSX 中，PlanSection 之后、PlantManagementSection 之前插入 <CareHistorySection plantId={plantId} />。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A（由 CareHistorySection 内部管理）",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "/plants/:plantId",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "session",
+          "rls_or_rbac": "N/A（权限由内部 query 处理）。"
+        },
+        "design_contract": {
+          "ui_spec_ref": "care-history-timeline-spec §3.1 / §5.1",
+          "intent": "养护记录区在详情页中的位置对——养护计划（当前任务）和植物档案（静态资料）之间。展开后页面可滚动，不导致布局跳动。",
+          "tokens_new": [],
+          "tokens_reuse": [
+            "--space-lg（区域间距，与上下 section 一致）"
+          ],
+          "layout": "CareHistorySection 上下与相邻 section 的间距保持一致（沿用 PlantDetailPage 现有间距模式）。",
+          "motion": "折叠/展开过渡与 PlantManagementSection 一致。",
+          "reduced_motion": "退化为即时显示/隐藏。",
+          "constraints": "不破坏详情页现有布局；已归档植物仍展示养护记录区（只读态）。"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "N/A",
+        "visual": "植物详情页在养护计划区下方、植物管理区上方出现养护记录折叠区；展开后页面可正常滚动，无布局跳动；已归档植物详情页也展示养护记录区。375px 宽度下布局正常。",
+        "manual": "进入有记录的植物详情页，确认折叠区位置正确；展开折叠区，确认与上下 section 间距一致；进入已归档植物详情页，确认养护记录区可见。"
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/plants/PlantDetailPage.tsx"
+        ],
+        "modules": [
+          "care-history-timeline-v0.9"
+        ],
+        "layer": "frontend",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "CareHistorySection 嵌入 PlantDetailPage 的 L3.5 位置。",
+        "与上下 section 的间距保持一致。",
+        "折叠/展开后页面滚动正常，无布局跳动。",
+        "已归档植物详情页也展示养护记录区。",
+        "375px 宽度下布局正常可用。"
+      ]
+    },
+    {
+      "task_id": "CARE-HIST-006",
+      "description": "回归验证 + 端到端验收。全链路验证：完成任务 → 植物详情页时间线新增记录 + 待办页动态新增记录 → 撤销任务 → 两处实时移除。验证 familyId 隔离、空状态、加载更多、已归档植物、已离开成员等边界场景。TypeScript / Convex 类型检查通过。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "验证前序所有 Task 的集成效果。",
+            "notes": "回归验证，不新增代码。如有缺陷修复在本 Task 中处理。"
+          },
+          "queries": {
+            "read": "全链路调用验证。",
+            "write": "N/A"
+          },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": {
+          "type": "none",
+          "endpoints": [],
+          "notes": "回归验证，不新增接口。"
+        },
+        "component_tree": {
+          "entry_component": "N/A（回归验证）",
+          "children": [],
+          "notes": "验证所有前端组件的集成表现。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "N/A",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        },
+        "design_contract": {
+          "ui_spec_ref": "N/A",
+          "intent": "N/A",
+          "tokens_new": [],
+          "tokens_reuse": [],
+          "layout": "N/A",
+          "motion": "N/A",
+          "reduced_motion": "N/A",
+          "constraints": "N/A"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test && npx convex dev --once --typecheck enable",
+        "data": "Convex Dashboard 验证：by_plantId_and_completedAt 索引正常；两个 query 在有数据/无数据/边界数据场景下均返回正确结果。",
+        "visual": "iPhone 375px 宽度下检查：植物详情页养护记录折叠区、展开态、加载更多、空状态；待办页家庭动态区、空状态。",
+        "manual": "端到端场景验证：①完成任务 → 植物详情页时间线新增一条 + 待办页动态新增一条。②撤销任务 → 两处实时移除。③无记录植物 → 折叠标题「养护记录（0）」，展开显示空状态文案。④家庭无记录 → 待办页不渲染动态区。⑤加载更多 → 追加 20 条。⑥已归档植物 → 详情页仍展示养护记录区。⑦已离开家庭成员 → 历史记录正常显示。"
+      },
+      "metadata": {
+        "files_affected": [],
+        "modules": [
+          "care-history-timeline-v0.9"
+        ],
+        "layer": "fullstack",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "TypeScript 编译无 error。",
+        "Convex schema typecheck 通过。",
+        "完成任务后植物详情页时间线 + 待办页动态实时更新。",
+        "撤销任务后两处实时移除对应记录。",
+        "familyId 隔离有效，不展示跨家庭数据。",
+        "无记录植物展示友好空状态。",
+        "家庭无记录时待办页不渲染动态区。",
+        "加载更多功能正常，所有记录加载完后隐藏按钮。",
+        "已归档植物仍展示养护记录区。",
+        "375px 宽度下所有新增 UI 可用。"
+      ]
+    }
+  ]
+}
