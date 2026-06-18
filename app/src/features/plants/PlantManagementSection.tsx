@@ -65,23 +65,23 @@ export function PlantManagementSection({
   return (
     <>
       <section style={sectionStyle}>
-        <p style={sectionTitleStyle}>管理</p>
-        <div style={buttonsStyle}>
+        <div style={linkRowStyle}>
           <button
             onClick={() => setConfirmAction("archive")}
-            style={archiveButtonStyle}
+            style={linkButtonStyle}
             type="button"
           >
-            <Icon icon={Archive} size={18} colorVar="--color-muted" />
-            <span>{isArchived ? "恢复到看板" : "归档这株植物"}</span>
+            <Icon icon={Archive} size={14} colorVar="--color-muted" />
+            <span>{isArchived ? "恢复到看板" : "归档"}</span>
           </button>
+          <span style={linkDividerStyle}>|</span>
           <button
             onClick={() => setConfirmAction("delete")}
-            style={deleteButtonStyle}
+            style={linkButtonDangerStyle}
             type="button"
           >
-            <Icon icon={Trash2} size={18} colorVar="--color-error" />
-            <span>删除这株植物</span>
+            <Icon icon={Trash2} size={14} />
+            <span>删除</span>
           </button>
         </div>
       </section>
@@ -122,49 +122,35 @@ export function PlantManagementSection({
 
 const sectionStyle: React.CSSProperties = {
   display: "flex",
-  flexDirection: "column",
-  gap: "var(--space-sm)",
+  justifyContent: "center",
 };
 
-const sectionTitleStyle: React.CSSProperties = {
-  margin: 0,
-  fontFamily: "var(--font-body)",
-  fontSize: "12px",
-  fontWeight: 600,
-  color: "var(--color-muted)",
-  letterSpacing: "0.04em",
-};
-
-const buttonsStyle: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "var(--space-sm)",
-};
-
-const buttonBaseStyle: React.CSSProperties = {
-  appearance: "none",
+const linkRowStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
-  gap: "var(--space-sm)",
-  width: "100%",
-  minHeight: "48px",
-  padding: "0 var(--space-md)",
-  borderRadius: "var(--radius-button)",
-  fontSize: "14px",
+  gap: "12px",
+};
+
+const linkButtonStyle: React.CSSProperties = {
+  appearance: "none",
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "4px",
+  padding: "6px 0",
+  border: "none",
+  background: "transparent",
+  fontSize: "13px",
   fontWeight: 500,
+  color: "var(--color-muted)",
   cursor: "pointer",
 };
 
-const archiveButtonStyle: React.CSSProperties = {
-  ...buttonBaseStyle,
-  background: "var(--color-surface)",
-  color: "var(--color-leaf)",
-  border: "1px solid var(--color-line)",
+const linkButtonDangerStyle: React.CSSProperties = {
+  ...linkButtonStyle,
+  color: "var(--color-error, #E53935)",
 };
 
-const deleteButtonStyle: React.CSSProperties = {
-  ...buttonBaseStyle,
-  background: "transparent",
-  color: "var(--color-error)",
-  border: "1px solid var(--color-line)",
+const linkDividerStyle: React.CSSProperties = {
+  color: "var(--color-line)",
+  fontSize: "13px",
 };

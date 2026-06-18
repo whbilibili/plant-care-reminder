@@ -22,7 +22,6 @@ import { navigate } from "../../app/router";
 import { Button } from "../../components/ui/Button";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { ScreenNav } from "../../components/ui/ScreenNav";
-import { ObjectSummaryBand } from "../../components/ui/ObjectSummaryBand";
 import { GroupedSurface, GroupedSurfaceDivider } from "../../components/ui/GroupedSurface";
 import { TaskActionRow } from "../../components/ui/TaskActionRow";
 import { StorageImage } from "../../components/ui/StorageImage";
@@ -268,44 +267,53 @@ export function PlantDetailPage({ plantId }: PlantDetailPageProps) {
         }
       />
 
-      {/* ObjectSummaryBand: 植物摘要（卡片包裹） */}
-      <div style={sectionSpacingStyle}>
-        <GroupedSurface>
-          <ObjectSummaryBand
-            thumbnail={
-              <StorageImage
-                alt={plant.name}
-                fallback={<div style={thumbnailPlaceholderStyle}>🌿</div>}
-                initialUrl={plant.imageUrl}
-                storageId={plant.imageStorageId as any}
-                style={thumbnailImgStyle}
-              />
-            }
-            title={plant.name}
-            subtitle={
-              plant.location ? (
-                <span style={subtitleWithIconStyle}>
-                  <Icon icon={MapPin} size={13} colorVar="--color-muted" />
-                  {plant.location}
-                </span>
-              ) : undefined
-            }
-            statusBadge={
-              hasActionable && !plant.isArchived ? (
-                <span style={statusBadgeStyle}>
-                  <Icon icon={Sprout} size={13} colorVar="--color-leaf" />
-                  今天有任务待完成
-                </span>
-              ) : undefined
-            }
-            onThumbnailClick={plant.imageUrl ? () => setShowImagePreview(true) : undefined}
-          />
-        </GroupedSurface>
+      {/* Hero 区：大图 + 植物名称叠加 */}
+      <div style={heroWrapperStyle}>
+      <div style={heroContainerStyle}>
+        {plant.imageUrl ? (
+          <button
+            type="button"
+            onClick={() => setShowImagePreview(true)}
+            style={heroImageButtonStyle}
+            aria-label="查看大图"
+          >
+            <StorageImage
+              alt={plant.name}
+              fallback={<div style={heroPlaceholderStyle}><Icon icon={Sprout} size={48} colorVar="--color-leaf" /></div>}
+              initialUrl={plant.imageUrl}
+              storageId={plant.imageStorageId as any}
+              style={heroImageStyle}
+            />
+          </button>
+        ) : (
+          <div style={heroPlaceholderStyle}>
+            <Icon icon={Sprout} size={48} colorVar="--color-leaf" />
+          </div>
+        )}
+        {/* 底部渐变遮罩 + 文字 */}
+        <div style={heroOverlayStyle}>
+          <h2 style={heroNameStyle}>{plant.name}</h2>
+          <div style={heroMetaStyle}>
+            {plant.location && (
+              <span style={heroLocationStyle}>
+                <Icon icon={MapPin} size={13} />
+                {plant.location}
+              </span>
+            )}
+            {hasActionable && !plant.isArchived && (
+              <span style={heroStatusStyle}>
+                <Icon icon={Sprout} size={13} />
+                今天有任务
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
       </div>
 
       {/* 需要处理 section */}
       {!plant.isArchived && actionableTasks.length > 0 && (
-        <div style={sectionSpacingStyle}>
+        <div style={{ ...sectionSpacingStyle, ...sectionAnimStyle(0) }}>
           <GroupedSurface titleIcon={Info} title={`需要处理（${actionableTasks.length}）`}>
             {actionableTasks.map((task, index) => {
               const label = formatTaskTypeLabel(task.taskType, task.customLabel);
@@ -352,7 +360,7 @@ export function PlantDetailPage({ plantId }: PlantDetailPageProps) {
       )}
 
       {/* 养护计划 section */}
-      <div style={sectionSpacingStyle}>
+      <div style={{ ...sectionSpacingStyle, ...sectionAnimStyle(1) }}>
         <GroupedSurface
           titleIcon={ClipboardList}
           title={`养护计划（${totalPlanCount}）`}
@@ -369,10 +377,17 @@ export function PlantDetailPage({ plantId }: PlantDetailPageProps) {
           }
         >
           {sortedTasks.length === 0 ? (
-            <div style={emptyPlanStyle}>
-              <span style={{ fontSize: "24px" }}>🌱</span>
-              <p style={emptyPlanTextStyle}>暂无养护计划，点击添加</p>
-            </div>
+            <button
+              type="button"
+              onClick={() => navigate(`/plants/${plant.id}/tasks/new`)}
+              style={emptyPlanButtonStyle}
+            >
+              <span style={emptyPlanIconStyle}>
+                <Icon icon={Plus} size={24} colorVar="--color-leaf" />
+              </span>
+              <span style={emptyPlanTitleStyle}>添加第一个养护计划</span>
+              <span style={emptyPlanDescStyle}>设置浇水、施肥等提醒，不再错过养护时机</span>
+            </button>
           ) : (
             <>
               {visiblePlanTasks.map((task, index) => {
@@ -431,12 +446,12 @@ export function PlantDetailPage({ plantId }: PlantDetailPageProps) {
       </div>
 
       {/* 养护记录折叠区（CARE-HIST-003 / CARE-HIST-005：L3.5 位置） */}
-      <div style={sectionSpacingStyle}>
+      <div style={{ ...sectionSpacingStyle, ...sectionAnimStyle(2) }}>
         <CareHistorySection plantId={plant.id as Id<"plants">} />
       </div>
 
       {/* 植物档案 section */}
-      <div style={sectionSpacingStyle}>
+      <div style={{ ...sectionSpacingStyle, ...sectionAnimStyle(3) }}>
         <GroupedSurface title="植物档案">
           {/* 简介 */}
           {plant.description && (
@@ -471,7 +486,7 @@ export function PlantDetailPage({ plantId }: PlantDetailPageProps) {
       </div>
 
       {/* 管理区（归档/删除） */}
-      <div style={managementSpacingStyle}>
+      <div style={{ ...managementSpacingStyle, ...sectionAnimStyle(4) }}>
         <PlantManagementSection
           isArchived={plant.isArchived}
           onArchivedStateChange={setArchivedStateOverride}
@@ -541,48 +556,102 @@ const editButtonStyle: React.CSSProperties = {
   cursor: "pointer",
 };
 
-const thumbnailImgStyle: React.CSSProperties = {
-  width: "56px",
-  height: "56px",
-  objectFit: "cover",
-  borderRadius: "var(--radius-button)",
+/* Hero 区样式 */
+
+const heroWrapperStyle: React.CSSProperties = {
+  padding: "0 var(--space-md)",
+  marginTop: "var(--space-xs)",
 };
 
-const thumbnailPlaceholderStyle: React.CSSProperties = {
-  width: "56px",
-  height: "56px",
+const heroContainerStyle: React.CSSProperties = {
+  position: "relative",
+  width: "100%",
+  height: "220px",
+  borderRadius: "16px",
+  overflow: "hidden",
+  background: "linear-gradient(135deg, rgba(45,140,100,0.08) 0%, rgba(45,140,100,0.15) 100%)",
+};
+
+const heroImageButtonStyle: React.CSSProperties = {
+  appearance: "none",
+  border: "none",
+  padding: 0,
+  width: "100%",
+  height: "100%",
+  cursor: "pointer",
+  display: "block",
+};
+
+const heroImageStyle: React.CSSProperties = {
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+  display: "block",
+};
+
+const heroPlaceholderStyle: React.CSSProperties = {
+  width: "100%",
+  height: "100%",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  background: "var(--color-mist)",
-  borderRadius: "var(--radius-button)",
-  fontSize: "24px",
+  background: "linear-gradient(135deg, rgba(45,140,100,0.06) 0%, rgba(45,140,100,0.14) 100%)",
 };
 
-const subtitleWithIconStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "3px",
-};
-
-const statusBadgeStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  alignSelf: "flex-start",
+const heroOverlayStyle: React.CSSProperties = {
+  position: "absolute",
+  bottom: 0,
+  left: 0,
+  right: 0,
+  padding: "32px 20px 16px",
+  background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%)",
+  display: "flex",
+  flexDirection: "column",
   gap: "4px",
-  padding: "2px 10px",
-  borderRadius: "var(--radius-pill)",
-  background: "var(--color-mist)",
-  color: "var(--color-leaf)",
+};
+
+const heroNameStyle: React.CSSProperties = {
+  margin: 0,
+  fontSize: "22px",
+  fontWeight: 800,
+  color: "#ffffff",
+  textShadow: "0 1px 3px rgba(0,0,0,0.3)",
+};
+
+const heroMetaStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: "12px",
+};
+
+const heroLocationStyle: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "4px",
+  fontSize: "13px",
+  color: "rgba(255,255,255,0.85)",
+};
+
+const heroStatusStyle: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "4px",
   fontSize: "12px",
-  fontWeight: 500,
-  lineHeight: 1.6,
+  fontWeight: 600,
+  color: "#a8e6cf",
 };
 
 const sectionSpacingStyle: React.CSSProperties = {
   padding: "0 var(--space-md)",
   marginTop: "var(--space-md)",
 };
+
+function sectionAnimStyle(index: number): React.CSSProperties {
+  return {
+    animation: "taskFadeSlideIn 360ms ease both",
+    animationDelay: `${80 + index * 60}ms`,
+  };
+}
 
 const completeButtonStyle: React.CSSProperties = {
   appearance: "none",
@@ -615,19 +684,43 @@ const addPlanButtonStyle: React.CSSProperties = {
   cursor: "pointer",
 };
 
-const emptyPlanStyle: React.CSSProperties = {
+const emptyPlanButtonStyle: React.CSSProperties = {
+  appearance: "none",
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
   justifyContent: "center",
-  padding: "var(--space-lg) var(--space-md)",
-  gap: "var(--space-xs)",
+  gap: "8px",
+  width: "calc(100% - 32px)",
+  margin: "16px auto",
+  padding: "24px 16px",
+  border: "2px dashed rgba(45, 140, 100, 0.3)",
+  borderRadius: "14px",
+  background: "rgba(45, 140, 100, 0.03)",
+  cursor: "pointer",
+  transition: "border-color 200ms ease, background 200ms ease",
 };
 
-const emptyPlanTextStyle: React.CSSProperties = {
-  margin: 0,
+const emptyPlanIconStyle: React.CSSProperties = {
+  width: "44px",
+  height: "44px",
+  borderRadius: "50%",
+  background: "rgba(45, 140, 100, 0.1)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+};
+
+const emptyPlanTitleStyle: React.CSSProperties = {
+  fontSize: "15px",
+  fontWeight: 600,
+  color: "var(--color-ink)",
+};
+
+const emptyPlanDescStyle: React.CSSProperties = {
   fontSize: "13px",
   color: "var(--color-muted)",
+  textAlign: "center",
 };
 
 const expandButtonStyle: React.CSSProperties = {
