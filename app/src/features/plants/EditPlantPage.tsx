@@ -5,7 +5,6 @@ import { Leaf } from "lucide-react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { FormError } from "../../components/ui/FormError";
-import { GroupedSurface } from "../../components/ui/GroupedSurface";
 import { Icon } from "../../components/ui/Icon";
 import { ObjectSummaryBand } from "../../components/ui/ObjectSummaryBand";
 import { ScreenNav } from "../../components/ui/ScreenNav";
@@ -103,9 +102,9 @@ export function EditPlantPage({ plantId }: EditPlantPageProps) {
         }
       />
 
-      {/* ObjectSummaryBand — 上下文摘要 */}
+      {/* ObjectSummaryBand — 渐变背景 */}
       <div style={summaryWrapStyle}>
-        <GroupedSurface>
+        <div style={summaryCardInnerStyle}>
           <ObjectSummaryBand
             thumbnail={
               <StorageImage
@@ -123,10 +122,10 @@ export function EditPlantPage({ plantId }: EditPlantPageProps) {
             title={form.values.name || "未命名植物"}
             subtitle={form.values.location ? `📍 ${form.values.location}` : undefined}
           />
-        </GroupedSurface>
+        </div>
       </div>
 
-      {/* 安静表单 — 字段直接平铺 */}
+      {/* 精致表单 — 字段分组卡片化 */}
       <PlantForm form={form} submitLabel="更新植物" locationSuggestions={locationSuggestions} />
 
       <div style={bottomErrorStyle}>
@@ -177,17 +176,27 @@ const pageStyle: React.CSSProperties = {
 const saveButtonStyle: React.CSSProperties = {
   appearance: "none",
   border: "none",
-  background: "transparent",
-  color: "var(--color-leaf)",
-  fontSize: "16px",
+  background: "var(--color-leaf)",
+  color: "#fff",
+  fontSize: "14px",
   fontWeight: 600,
-  padding: "var(--space-xs) var(--space-sm)",
+  padding: "6px 16px",
+  borderRadius: "var(--radius-pill)",
+  boxShadow: "0 2px 6px rgba(31,71,61,0.18)",
   cursor: "pointer",
 };
 
 const summaryWrapStyle: React.CSSProperties = {
   padding: "0 var(--space-md)",
   marginTop: "var(--space-sm)",
+};
+
+const summaryCardInnerStyle: React.CSSProperties = {
+  background: "linear-gradient(135deg, var(--color-mist) 0%, rgba(237,245,241,0.4) 100%)",
+  borderRadius: "var(--radius-card)",
+  border: "1px solid var(--color-line)",
+  padding: "var(--space-md)",
+  boxShadow: "0 2px 8px rgba(31,71,61,0.06)",
 };
 
 const thumbFallbackStyle: React.CSSProperties = {
@@ -205,6 +214,8 @@ const thumbImageStyle: React.CSSProperties = {
   height: "56px",
   objectFit: "cover",
   borderRadius: "var(--radius-button)",
+  border: "2px solid #fff",
+  boxShadow: "0 2px 6px rgba(31,71,61,0.12)",
 };
 
 const bottomErrorStyle: React.CSSProperties = {

@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>植物看板设计稿 - 搜索与房间分组</title>
+    <style>
+      :root {
+        --ink: #16342f;
+        --muted: #637b71;
+        --leaf: #1f473d;
+        --leaf-soft: #467061;
+        --paper: #fbfcf7;
+        --mist: #edf5f1;
+        --surface: #ffffff;
+        --line: #d8e4da;
+        --line-strong: #c7d9cd;
+        --water: #3b82c4;
+        --misting: #2f9c8a;
+        --ok: #2f855a;
+        --warning: #dd6b20;
+        --shadow: 0 24px 60px rgba(22, 52, 47, 0.11);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at 12% 0%, rgba(216, 228, 218, 0.65), transparent 28%),
+          #eef4ee;
+        color: var(--ink);
+        font-family: Raleway, Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      .stage {
+        min-height: 100vh;
+        display: grid;
+        place-items: start center;
+        padding: 28px 14px;
+      }
+
+      .phone {
+        width: min(100%, 414px);
+        min-height: 896px;
+        position: relative;
+        overflow: hidden;
+        background:
+          linear-gradient(180deg, rgba(228, 240, 222, 0.88), rgba(251, 252, 247, 0.98) 280px),
+          var(--paper);
+        border: 1px solid rgba(216, 228, 218, 0.9);
+        border-radius: 34px 34px 0 0;
+        box-shadow: var(--shadow);
+      }
+
+      .content {
+        padding: 30px 24px 112px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 18px;
+      }
+
+      h1 {
+        margin: 0;
+        font-family: Lora, Georgia, "Times New Roman", serif;
+        font-size: 38px;
+        line-height: 1.08;
+        letter-spacing: 0;
+      }
+
+      .subtitle {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 16px;
+        font-weight: 650;
+      }
+
+      .add-button {
+        width: 50px;
+        height: 50px;
+        display: grid;
+        place-items: center;
+        border: 1px solid rgba(216, 228, 218, 0.68);
+        border-radius: 17px;
+        background: rgba(255, 255, 255, 0.78);
+        color: var(--leaf);
+        font-size: 28px;
+        font-weight: 750;
+        line-height: 1;
+        cursor: pointer;
+        box-shadow: 0 12px 28px rgba(22, 52, 47, 0.07);
+      }
+
+      .search {
+        margin-top: 26px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        height: 54px;
+        padding: 0 18px;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.82);
+        color: var(--muted);
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.72);
+      }
+
+      .search-mark {
+        width: 19px;
+        height: 19px;
+        border: 2px solid var(--muted);
+        border-radius: 50%;
+        position: relative;
+        flex: 0 0 auto;
+      }
+
+      .search-mark::after {
+        content: "";
+        width: 9px;
+        height: 2px;
+        position: absolute;
+        right: -7px;
+        bottom: -4px;
+        border-radius: 2px;
+        background: var(--muted);
+        transform: rotate(45deg);
+      }
+
+      .search input {
+        width: 100%;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: var(--ink);
+        font-size: 16px;
+        font-weight: 650;
+      }
+
+      .search input::placeholder {
+        color: rgba(99, 123, 113, 0.75);
+      }
+
+      .view-switch {
+        width: 100%;
+        margin-top: 18px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px;
+        padding: 4px;
+        border: 1px solid rgba(216, 228, 218, 0.42);
+        border-radius: 18px;
+        background: rgba(237, 245, 241, 0.7);
+      }
+
+      .view-button {
+        min-height: 42px;
+        border: 0;
+        border-radius: 15px;
+        background: transparent;
+        color: var(--muted);
+        font-size: 15px;
+        font-weight: 850;
+        cursor: pointer;
+      }
+
+      .view-button.active {
+        background: rgba(255, 255, 255, 0.94);
+        color: var(--leaf);
+        box-shadow: 0 9px 20px rgba(22, 52, 47, 0.06);
+      }
+
+      .digest {
+        margin-top: 16px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 14px;
+        padding: 13px 15px;
+        border: 1px solid rgba(216, 228, 218, 0.88);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.62);
+      }
+
+      .digest-title {
+        color: var(--leaf);
+        font-size: 15px;
+        font-weight: 900;
+      }
+
+      .digest-copy {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .digest-badge {
+        min-width: 72px;
+        padding: 8px 10px;
+        border-radius: 999px;
+        background: rgba(229, 242, 250, 0.94);
+        color: #2c78ba;
+        text-align: center;
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .rooms {
+        margin-top: 18px;
+        display: grid;
+        gap: 14px;
+      }
+
+      .room {
+        --room-bg: rgba(237, 245, 241, 0.78);
+        --room-border: rgba(216, 228, 218, 0.86);
+      }
+
+      .room.sun {
+        --room-bg: rgba(243, 239, 203, 0.54);
+        --room-border: rgba(224, 218, 168, 0.5);
+      }
+
+      .room.living {
+        --room-bg: rgba(237, 245, 241, 0.76);
+        --room-border: rgba(198, 219, 207, 0.64);
+      }
+
+      .room.bedroom {
+        --room-bg: rgba(231, 240, 239, 0.74);
+        --room-border: rgba(196, 215, 214, 0.58);
+      }
+
+      .room.kitchen {
+        --room-bg: rgba(226, 244, 235, 0.58);
+        --room-border: rgba(186, 220, 202, 0.54);
+      }
+
+      .room-head {
+        width: 100%;
+        min-height: 56px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 14px;
+        border: 1px solid var(--room-border);
+        border-radius: 17px;
+        background: var(--room-bg);
+        color: var(--ink);
+        cursor: pointer;
+        text-align: left;
+      }
+
+      .room-title {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        font-size: 17px;
+        font-weight: 900;
+      }
+
+      .room-count {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 850;
+      }
+
+      .room-note {
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .room-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.5);
+        flex: 0 0 auto;
+        color: var(--leaf-soft);
+      }
+
+      .chevron {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-right: 2px solid currentColor;
+        border-bottom: 2px solid currentColor;
+        transform: rotate(45deg);
+        transition: transform 160ms ease;
+      }
+
+      .room.open .room-action .chevron {
+        transform: rotate(225deg) translate(-2px, -2px);
+      }
+
+      .plant-list {
+        margin-top: 10px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .room:not(.open) .plant-list {
+        display: none;
+      }
+
+      .plant-card {
+        display: grid;
+        grid-template-columns: 58px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 12px;
+        min-height: 82px;
+        padding: 12px 14px;
+        border: 1px solid var(--line-strong);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 1px 0 rgba(22, 52, 47, 0.04);
+      }
+
+      .plant-photo {
+        width: 58px;
+        height: 58px;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        border: 1px solid rgba(216, 228, 218, 0.88);
+        border-radius: 16px;
+        background:
+          linear-gradient(135deg, rgba(237, 245, 241, 0.96), rgba(246, 250, 244, 0.96)),
+          var(--mist);
+      }
+
+      .photo-initial {
+        display: grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: rgba(31, 71, 61, 0.08);
+        color: var(--leaf);
+        font-family: Lora, Georgia, "Times New Roman", serif;
+        font-size: 20px;
+        font-weight: 800;
+      }
+
+      .plant-copy {
+        min-width: 0;
+      }
+
+      .plant-name {
+        margin: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 17px;
+        line-height: 1.2;
+        font-weight: 900;
+      }
+
+      .last-care {
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .task-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        min-height: 30px;
+        padding: 0 10px;
+        border-radius: 999px;
+        background: rgba(229, 242, 250, 0.94);
+        color: #2c78ba;
+        font-size: 12px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+
+      .task-pill.ok {
+        background: rgba(229, 240, 224, 0.95);
+        color: var(--ok);
+      }
+
+      .task-pill.late {
+        background: rgba(252, 237, 225, 0.95);
+        color: var(--warning);
+      }
+
+      .task-icon {
+        width: 12px;
+        height: 12px;
+        display: inline-block;
+        border: 2px solid currentColor;
+        border-radius: 7px 7px 7px 2px;
+        transform: rotate(-12deg);
+      }
+
+      .all-list {
+        display: none;
+        margin-top: 18px;
+        gap: 10px;
+      }
+
+      .phone.all-mode .rooms,
+      .phone.all-mode .digest {
+        display: none;
+      }
+
+      .phone.all-mode .all-list {
+        display: grid;
+      }
+
+      .bottom-nav {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 88px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        align-items: center;
+        padding: 8px 24px 14px;
+        border-top: 1px solid var(--line);
+        background: rgba(251, 252, 247, 0.96);
+        backdrop-filter: blur(18px);
+      }
+
+      .nav-item {
+        min-height: 60px;
+        display: grid;
+        place-items: center;
+        gap: 3px;
+        border-radius: 16px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .nav-item.active {
+        background: var(--leaf);
+        color: #fff;
+        box-shadow: 0 14px 30px rgba(31, 71, 61, 0.16);
+      }
+
+      .nav-icon {
+        width: 22px;
+        height: 22px;
+        display: grid;
+        place-items: center;
+      }
+
+      @media (max-width: 390px) {
+        .content {
+          padding-inline: 18px;
+        }
+
+        h1 {
+          font-size: 34px;
+        }
+
+        .plant-card {
+          grid-template-columns: 54px minmax(0, 1fr) auto;
+          padding-inline: 12px;
+        }
+
+        .plant-photo {
+          width: 54px;
+          height: 54px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="stage">
+      <section class="phone" id="phone" aria-label="植物看板设计稿">
+        <div class="content">
+          <header class="topbar">
+            <div>
+              <h1>我的植物</h1>
+              <div class="subtitle">8 盆植物 · 5 个位置</div>
+            </div>
+            <button class="add-button" type="button" aria-label="添加植物">+</button>
+          </header>
+
+          <label class="search">
+            <span class="search-mark" aria-hidden="true"></span>
+            <input type="search" placeholder="搜索植物名称或位置" />
+          </label>
+
+          <div class="view-switch" role="tablist" aria-label="植物视图">
+            <button class="view-button" type="button" data-mode="all" role="tab" aria-selected="false">全部</button>
+            <button class="view-button active" type="button" data-mode="rooms" role="tab" aria-selected="true">按房间</button>
+          </div>
+
+          <section class="digest" aria-label="房间摘要">
+            <div>
+              <div class="digest-title">房间分组</div>
+              <div class="digest-copy">阳台、客厅和卧室有即将到期的养护</div>
+            </div>
+            <div class="digest-badge">明天 4 项</div>
+          </section>
+
+          <section class="rooms" aria-label="房间分组列表">
+            <article class="room sun open">
+              <button class="room-head" type="button" aria-expanded="true">
+                <span>
+                  <span class="room-title">阳台 <span class="room-count">3 盆</span></span>
+                  <span class="room-note">最早今天 · 龟背竹需要浇水</span>
+                </span>
+                <span class="room-action"><span class="chevron" aria-hidden="true"></span></span>
+              </button>
+              <div class="plant-list">
+                <article class="plant-card">
+                  <div class="plant-photo" aria-hidden="true"><span class="photo-initial">龟</span></div>
+                  <div class="plant-copy">
+                    <h2 class="plant-name">龟背竹</h2>
+                    <div class="last-care">上次浇水 2 天前</div>
+                  </div>
+                  <div class="task-pill"><span class="task-icon"></span>今天</div>
+                </article>
+                <article class="plant-card">
+                  <div class="plant-photo" aria-hidden="true"><span class="photo-initial">虎</span></div>
+                  <div class="plant-copy">
+                    <h2 class="plant-name">虎皮兰</h2>
+                    <div class="last-care">上次浇水 3 天前</div>
+                  </div>
+                  <div class="task-pill ok">✓ 正常</div>
+                </article>
+                <article class="plant-card">
+                  <div class="plant-photo" aria-hidden="true"><span class="photo-initial">仙</span></div>
+                  <div class="plant-copy">
+                    <h2 class="plant-name">仙人掌</h2>
+                    <div class="last-care">上次浇水 12 天前</div>
+                  </div>
+                  <div class="task-pill"><span class="task-icon"></span>明天</div>
+                </article>
+              </div>
+            </article>
+
+            <article class="room living open">
+              <button class="room-head" type="button" aria-expanded="true">
+                <span>
+                  <span class="room-title">客厅 <span class="room-count">2 盆</span></span>
+                  <span class="room-note">绿萝和铜钱草状态正常</span>
+                </span>
+                <span class="room-action"><span class="chevron" aria-hidden="true"></span></span>
+              </button>
+              <div class="plant-list">
+                <article class="plant-card">
+                  <div class="plant-photo" aria-hidden="true"><span class="photo-initial">绿</span></div>
+                  <div class="plant-copy">
+                    <h2 class="plant-name">绿萝</h2>
+                    <div class="last-care">上次浇水 1 天前</div>
+                  </div>
+                  <div class="task-pill ok">✓ 正常</div>
+                </article>
+                <article class="plant-card">
+                  <div class="plant-photo" aria-hidden="true"><span class="photo-initial">铜</span></div>
+                  <div class="plant-copy">
+                    <h2 class="plant-name">铜钱草</h2>
+                    <div class="last-care">上次浇水 1 天前</div>
+                  </div>
+                  <div class="task-pill ok">✓ 正常</div>
+                </article>
+              </div>
+            </article>
+
+            <article class="room bedroom">
+              <button class="room-head" type="button" aria-expanded="false">
+                <span>
+                  <span class="room-title">卧室 <span class="room-count">1 盆</span></span>
+                  <span class="room-note">明天 · 文竹需要喷雾</span>
+                </span>
+                <span class="room-action"><span class="chevron" aria-hidden="true"></span></span>
+              </button>
+              <div class="plant-list">
+                <article class="plant-card">
+                  <div class="plant-photo" aria-hidden="true"><span class="photo-initial">文</span></div>
+                  <div class="plant-copy">
+                    <h2 class="plant-name">文竹</h2>
+                    <div class="last-care">上次喷雾 1 天前</div>
+                  </div>
+                  <div class="task-pill"><span class="task-icon"></span>明天</div>
+                </article>
+              </div>
+            </article>
+
+            <article class="room kitchen">
+              <button class="room-head" type="button" aria-expanded="false">
+                <span>
+                  <span class="room-title">厨房 <span class="room-count">1 盆</span></span>
+                  <span class="room-note">明天 · 薄荷需要浇水</span>
+                </span>
+                <span class="room-action"><span class="chevron" aria-hidden="true"></span></span>
+              </button>
+              <div class="plant-list">
+                <article class="plant-card">
+                  <div class="plant-photo" aria-hidden="true"><span class="photo-initial">薄</span></div>
+                  <div class="plant-copy">
+                    <h2 class="plant-name">薄荷</h2>
+                    <div class="last-care">上次浇水 2 天前</div>
+                  </div>
+                  <div class="task-pill"><span class="task-icon"></span>明天</div>
+                </article>
+              </div>
+            </article>
+          </section>
+
+          <section class="all-list" aria-label="全部植物">
+            <article class="plant-card">
+              <div class="plant-photo" aria-hidden="true"><span class="photo-initial">龟</span></div>
+              <div class="plant-copy">
+                <h2 class="plant-name">龟背竹</h2>
+                <div class="last-care">阳台 · 上次浇水 2 天前</div>
+              </div>
+              <div class="task-pill"><span class="task-icon"></span>今天</div>
+            </article>
+            <article class="plant-card">
+              <div class="plant-photo" aria-hidden="true"><span class="photo-initial">绿</span></div>
+              <div class="plant-copy">
+                <h2 class="plant-name">绿萝</h2>
+                <div class="last-care">客厅 · 上次浇水 1 天前</div>
+              </div>
+              <div class="task-pill ok">✓ 正常</div>
+            </article>
+            <article class="plant-card">
+              <div class="plant-photo" aria-hidden="true"><span class="photo-initial">薄</span></div>
+              <div class="plant-copy">
+                <h2 class="plant-name">薄荷</h2>
+                <div class="last-care">厨房 · 上次浇水 2 天前</div>
+              </div>
+              <div class="task-pill"><span class="task-icon"></span>明天</div>
+            </article>
+          </section>
+        </div>
+
+        <nav class="bottom-nav" aria-label="主导航">
+          <div class="nav-item">
+            <div class="nav-icon">□</div>
+            <div>待办</div>
+          </div>
+          <div class="nav-item active">
+            <div class="nav-icon">♧</div>
+            <div>植物</div>
+          </div>
+          <div class="nav-item">
+            <div class="nav-icon">⚙</div>
+            <div>设置</div>
+          </div>
+        </nav>
+      </section>
+    </main>
+
+    <script>
+      const phone = document.querySelector("#phone");
+      const buttons = Array.from(document.querySelectorAll(".view-button"));
+
+      buttons.forEach((button) => {
+        button.addEventListener("click", () => {
+          const mode = button.dataset.mode;
+          phone.classList.toggle("all-mode", mode === "all");
+          buttons.forEach((item) => {
+            const active = item === button;
+            item.classList.toggle("active", active);
+            item.setAttribute("aria-selected", String(active));
+          });
+        });
+      });
+
+      document.querySelectorAll(".room-head").forEach((head) => {
+        head.addEventListener("click", () => {
+          const room = head.closest(".room");
+          const open = !room.classList.contains("open");
+          room.classList.toggle("open", open);
+          head.setAttribute("aria-expanded", String(open));
+        });
+      });
+    </script>
+  </body>
+</html>

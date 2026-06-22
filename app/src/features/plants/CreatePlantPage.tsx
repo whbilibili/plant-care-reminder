@@ -85,11 +85,13 @@ const pageStyle: React.CSSProperties = {
 const saveButtonStyle: React.CSSProperties = {
   appearance: "none",
   border: "none",
-  background: "transparent",
-  color: "var(--color-leaf)",
-  fontSize: "16px",
+  background: "var(--color-leaf)",
+  color: "#fff",
+  fontSize: "14px",
   fontWeight: 600,
-  padding: "var(--space-xs) var(--space-sm)",
+  padding: "6px 16px",
+  borderRadius: "var(--radius-pill)",
+  boxShadow: "0 2px 6px rgba(31,71,61,0.18)",
   cursor: "pointer",
 };
 

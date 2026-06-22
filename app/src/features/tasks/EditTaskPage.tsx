@@ -13,7 +13,6 @@ import { ScreenNav } from "../../components/ui/ScreenNav";
 import { StorageImage } from "../../components/ui/StorageImage";
 import { FormError } from "../../components/ui/FormError";
 import { ConfirmSheet } from "../../components/ui/ConfirmSheet";
-import { GroupedSurface } from "../../components/ui/GroupedSurface";
 import { ToggleSwitch } from "../../components/ui/ToggleSwitch";
 import {
   careTaskTypeOptions,
@@ -205,9 +204,9 @@ export function EditTaskPage({ plantId, taskId }: EditTaskPageProps) {
         }
       />
 
-      {/* ObjectSummaryBand in card */}
+      {/* ObjectSummaryBand — 渐变背景 */}
       <div style={summaryCardWrapStyle}>
-        <GroupedSurface>
+        <div style={summaryCardInnerStyle}>
           <ObjectSummaryBand
             thumbnail={
               <StorageImage
@@ -231,99 +230,110 @@ export function EditTaskPage({ plantId, taskId }: EditTaskPageProps) {
               ) : undefined
             }
           />
-        </GroupedSurface>
+        </div>
       </div>
 
-      {/* Form fields */}
+      {/* Form fields — 分组卡片 */}
       <div style={formAreaStyle}>
-        {/* 任务类型 */}
-        <div style={fieldGroupStyle}>
-          <label style={fieldLabelStyle}><Icon icon={Droplet} size={14} colorVar="--color-leaf" /> 任务类型</label>
-          <div style={selectWrapStyle}>
-            <select
-              value={taskType}
-              onChange={(e) => setTaskType(e.target.value as CareTaskType)}
-              style={selectInputStyle}
-            >
-              {careTaskTypeOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-            <span style={selectArrowStyle}>
-              <Icon icon={ChevronDown} size={18} colorVar="--color-muted" />
-            </span>
-          </div>
-        </div>
-
-        {/* 自定义任务名称 (conditional) */}
-        {requiresCustomTaskName(taskType) ? (
+        {/* 第一组：任务类型 */}
+        <div style={cardGroupStyle} className="form-card-stagger">
           <div style={fieldGroupStyle}>
-            <label style={fieldLabelStyle}>自定义任务名称</label>
-            <input
-              type="text"
-              value={customTaskName}
-              onChange={(e) => setCustomTaskName(e.target.value)}
-              placeholder="擦拭叶片"
-              style={{
-                ...textInputStyle,
-                ...(errors.customTaskName ? inputErrorBorderStyle : undefined),
-              }}
-            />
-            {errors.customTaskName ? (
-              <span style={errorTextStyle}>{errors.customTaskName}</span>
-            ) : null}
+            <label style={fieldLabelWithBarStyle}><Icon icon={Droplet} size={14} colorVar="--color-leaf" /> 任务类型</label>
+            <div style={selectWrapStyle}>
+              <select
+                value={taskType}
+                onChange={(e) => setTaskType(e.target.value as CareTaskType)}
+                style={selectInputStyle}
+                className="form-input-enhanced"
+              >
+                {careTaskTypeOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <span style={selectArrowStyle}>
+                <Icon icon={ChevronDown} size={18} colorVar="--color-muted" />
+              </span>
+            </div>
           </div>
-        ) : null}
 
-        {/* 提醒间隔天数 */}
-        <div style={fieldGroupStyle}>
-          <label style={fieldLabelStyle}>提醒间隔天数</label>
-          <div style={inputBoxWrapStyle}>
-            <input
-              type="number"
-              inputMode="numeric"
-              min={1}
-              value={intervalDays}
-              onChange={(e) => setIntervalDays(e.target.value)}
-              style={{
-                ...inboxInputStyle,
-                ...(errors.intervalDays ? inputErrorBorderStyle : undefined),
-              }}
-            />
-            <span style={inboxSuffixStyle}>天</span>
-          </div>
-          {errors.intervalDays ? (
-            <span style={errorTextStyle}>{errors.intervalDays}</span>
-          ) : (
-            <span style={helperStyle}>每 {intervalDays || "?"} 天提醒一次</span>
-          )}
+          {/* 自定义任务名称 (conditional) */}
+          {requiresCustomTaskName(taskType) ? (
+            <div style={fieldGroupStyle}>
+              <label style={fieldLabelWithBarStyle}>自定义任务名称</label>
+              <input
+                type="text"
+                value={customTaskName}
+                onChange={(e) => setCustomTaskName(e.target.value)}
+                placeholder="擦拭叶片"
+                className="form-input-enhanced"
+                style={{
+                  ...textInputStyle,
+                  ...(errors.customTaskName ? inputErrorBorderStyle : undefined),
+                }}
+              />
+              {errors.customTaskName ? (
+                <span style={errorTextStyle}>{errors.customTaskName}</span>
+              ) : null}
+            </div>
+          ) : null}
         </div>
 
-        {/* 上次完成日期 */}
-        <div style={fieldGroupStyle}>
-          <label style={fieldLabelStyle}>上次完成日期</label>
-          <div style={inputBoxWrapStyle}>
-            <input
-              type="date"
-              value={baseCompletedOn}
-              onChange={(e) => setBaseCompletedOn(e.target.value)}
-              style={inboxInputStyle}
-            />
-            <span style={inboxIconStyle}>
-              <Icon icon={Calendar} size={18} colorVar="--color-muted" />
-            </span>
+        {/* 第二组：间隔与日期 */}
+        <div style={cardGroupStyle} className="form-card-stagger">
+          {/* 提醒间隔天数 */}
+          <div style={fieldGroupStyle}>
+            <label style={fieldLabelWithBarStyle}>提醒间隔天数</label>
+            <div style={inputBoxWrapStyle}>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={1}
+                value={intervalDays}
+                onChange={(e) => setIntervalDays(e.target.value)}
+                className="form-input-enhanced"
+                style={{
+                  ...inboxInputStyle,
+                  ...(errors.intervalDays ? inputErrorBorderStyle : undefined),
+                }}
+              />
+              <span style={inboxSuffixStyle}>天</span>
+            </div>
+            {errors.intervalDays ? (
+              <span style={errorTextStyle}>{errors.intervalDays}</span>
+            ) : (
+              <span style={helperStyle}>每 {intervalDays || "?"} 天提醒一次</span>
+            )}
           </div>
-          <span style={helperStyle}>用于计算下次提醒日期</span>
+
+          {/* 上次完成日期 */}
+          <div style={fieldGroupStyle}>
+            <label style={fieldLabelWithBarStyle}>上次完成日期</label>
+            <div style={inputBoxWrapStyle}>
+              <input
+                type="date"
+                value={baseCompletedOn}
+                onChange={(e) => setBaseCompletedOn(e.target.value)}
+                className="form-input-enhanced"
+                style={inboxInputStyle}
+              />
+              <span style={inboxIconStyle}>
+                <Icon icon={Calendar} size={18} colorVar="--color-muted" />
+              </span>
+            </div>
+            <span style={helperStyle}>用于计算下次提醒日期</span>
+          </div>
         </div>
 
-        {/* 下次任务预览 */}
-        <div style={fieldGroupStyle}>
-          <label style={fieldLabelStyle}>下次任务预览</label>
-          <div style={previewCardStyle}>
+        {/* 第三组：预览 */}
+        <div style={previewCardStyle} className="form-card-stagger">
+          <label style={fieldLabelWithBarStyle}>下次任务预览</label>
+          <div style={previewContentStyle}>
             <div style={previewCardInnerStyle}>
-              <Icon icon={Leaf} size={18} colorVar="--color-leaf" />
+              <div style={previewIconWrapStyle}>
+                <Icon icon={Leaf} size={18} colorVar="--color-leaf" />
+              </div>
               <div>
                 <span style={previewCardTitleStyle}>{duePreview.label}</span>
                 <span style={previewCardDescStyle}>{duePreview.description}</span>
@@ -332,23 +342,25 @@ export function EditTaskPage({ plantId, taskId }: EditTaskPageProps) {
           </div>
         </div>
 
-        {/* 提醒状态 */}
-        <div style={fieldGroupStyle}>
-          <label style={fieldLabelStyle}>提醒状态</label>
-          <div style={toggleCardStyle}>
-            <div style={toggleCardInnerStyle}>
-              <span style={toggleCardDotStyle(enabled)} />
-              <span style={toggleCardLabelStyle}>{enabled ? "已启用" : "已停用"}</span>
-              <ToggleSwitch
-                checked={enabled}
-                onChange={setEnabled}
-                aria-label={enabled ? "停用提醒" : "启用提醒"}
-              />
+        {/* 第四组：提醒状态 */}
+        <div style={cardGroupStyle} className="form-card-stagger">
+          <div style={fieldGroupStyle}>
+            <label style={fieldLabelWithBarStyle}>提醒状态</label>
+            <div style={toggleCardStyle}>
+              <div style={toggleCardInnerStyle}>
+                <span style={toggleCardDotStyle(enabled)} />
+                <span style={toggleCardLabelStyle}>{enabled ? "已启用" : "已停用"}</span>
+                <ToggleSwitch
+                  checked={enabled}
+                  onChange={setEnabled}
+                  aria-label={enabled ? "停用提醒" : "启用提醒"}
+                />
+              </div>
             </div>
+            <span style={helperStyle}>
+              关闭后将不会在待办中显示，也不会收到提醒
+            </span>
           </div>
-          <span style={helperStyle}>
-            关闭后将不会在待办中显示，也不会收到提醒
-          </span>
         </div>
 
         <FormError message={formError} />
@@ -379,6 +391,9 @@ export function EditTaskPage({ plantId, taskId }: EditTaskPageProps) {
           onCancel={() => setShowDeleteConfirm(false)}
         />
       )}
+
+      {/* 全局 CSS for focus 态和入场动画 */}
+      <style>{formEnhancementCSS}</style>
     </div>
   );
 }
@@ -432,6 +447,39 @@ function parseDateInputToTimestamp(value: string) {
   return Date.UTC(year, month - 1, day, 12, 0, 0);
 }
 
+/* ─── Enhanced CSS ─── */
+
+const formEnhancementCSS = `
+  .form-input-enhanced:focus {
+    outline: none;
+    border-color: var(--color-leaf) !important;
+    box-shadow: 0 0 0 3px rgba(31, 71, 61, 0.10), 0 1px 3px rgba(31, 71, 61, 0.06) !important;
+  }
+
+  @keyframes formCardStagger {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .form-card-stagger {
+    animation: formCardStagger 0.4s ease-out both;
+  }
+  .form-card-stagger:nth-child(1) { animation-delay: 0.05s; }
+  .form-card-stagger:nth-child(2) { animation-delay: 0.12s; }
+  .form-card-stagger:nth-child(3) { animation-delay: 0.19s; }
+  .form-card-stagger:nth-child(4) { animation-delay: 0.26s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .form-card-stagger { animation: none; opacity: 1; transform: none; }
+  }
+`;
+
 /* ─── Styles ─── */
 
 const pageStyle: React.CSSProperties = {
@@ -456,16 +504,26 @@ const loadingTextStyle: React.CSSProperties = {
 const saveButtonStyle: React.CSSProperties = {
   appearance: "none",
   border: "none",
-  background: "transparent",
-  color: "var(--color-leaf)",
-  fontSize: "16px",
+  background: "var(--color-leaf)",
+  color: "#fff",
+  fontSize: "14px",
   fontWeight: 600,
-  padding: "var(--space-xs) var(--space-sm)",
+  padding: "6px 16px",
+  borderRadius: "var(--radius-pill)",
+  boxShadow: "0 2px 6px rgba(31,71,61,0.18)",
 };
 
 const summaryCardWrapStyle: React.CSSProperties = {
   padding: "0 var(--space-md)",
   marginTop: "var(--space-sm)",
+};
+
+const summaryCardInnerStyle: React.CSSProperties = {
+  background: "linear-gradient(135deg, var(--color-mist) 0%, rgba(237,245,241,0.4) 100%)",
+  borderRadius: "var(--radius-card)",
+  border: "1px solid var(--color-line)",
+  padding: "var(--space-md)",
+  boxShadow: "0 2px 8px rgba(31,71,61,0.06)",
 };
 
 const thumbFallbackStyle: React.CSSProperties = {
@@ -483,13 +541,27 @@ const thumbImageStyle: React.CSSProperties = {
   height: "56px",
   objectFit: "cover",
   borderRadius: "var(--radius-button)",
+  border: "2px solid #fff",
+  boxShadow: "0 2px 6px rgba(31,71,61,0.12)",
 };
 
 const formAreaStyle: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  gap: "var(--space-lg)",
+  gap: "var(--space-md)",
   padding: "var(--space-md) var(--space-md) 0",
+};
+
+/** 白色卡片分组容器 */
+const cardGroupStyle: React.CSSProperties = {
+  background: "var(--color-surface)",
+  borderRadius: "var(--radius-card)",
+  border: "1px solid var(--color-line)",
+  padding: "var(--space-md)",
+  display: "flex",
+  flexDirection: "column",
+  gap: "var(--space-lg)",
+  boxShadow: "0 1px 4px rgba(31,71,61,0.04)",
 };
 
 const fieldGroupStyle: React.CSSProperties = {
@@ -498,11 +570,17 @@ const fieldGroupStyle: React.CSSProperties = {
   gap: "var(--space-xs)",
 };
 
-const fieldLabelStyle: React.CSSProperties = {
+/** label 带左侧绿色竖线 */
+const fieldLabelWithBarStyle: React.CSSProperties = {
   color: "var(--color-ink)",
   fontSize: "14px",
   fontWeight: 600,
   margin: 0,
+  paddingLeft: "10px",
+  borderLeft: "3px solid var(--color-leaf)",
+  display: "flex",
+  alignItems: "center",
+  gap: "6px",
 };
 
 const selectWrapStyle: React.CSSProperties = {
@@ -517,10 +595,11 @@ const selectInputStyle: React.CSSProperties = {
   minHeight: "48px",
   borderRadius: "var(--radius-input)",
   border: "1px solid var(--color-line)",
-  background: "var(--color-surface)",
+  background: "var(--color-paper)",
   color: "var(--color-ink)",
   padding: "0 40px 0 14px",
   fontSize: "14px",
+  transition: "border-color 0.2s, box-shadow 0.2s",
 };
 
 const selectArrowStyle: React.CSSProperties = {
@@ -535,10 +614,11 @@ const textInputStyle: React.CSSProperties = {
   minHeight: "48px",
   borderRadius: "var(--radius-input)",
   border: "1px solid var(--color-line)",
-  background: "var(--color-surface)",
+  background: "var(--color-paper)",
   color: "var(--color-ink)",
   padding: "0 14px",
   fontSize: "14px",
+  transition: "border-color 0.2s, box-shadow 0.2s",
 };
 
 const inputErrorBorderStyle: React.CSSProperties = {
@@ -546,7 +626,7 @@ const inputErrorBorderStyle: React.CSSProperties = {
   boxShadow: "0 0 0 3px rgba(197,48,48,0.12)",
 };
 
-/* ── 输入框内嵌后缀/图标（设计稿要求辅助元素在框内） ── */
+/* ── 输入框内嵌后缀/图标 ── */
 
 const inputBoxWrapStyle: React.CSSProperties = {
   position: "relative",
@@ -589,9 +669,21 @@ const errorTextStyle: React.CSSProperties = {
   lineHeight: 1.5,
 };
 
-/* ── 下次任务预览卡片（设计稿要求独立容器） ── */
+/* ── 预览卡片（带左侧彩色边条） ── */
 
 const previewCardStyle: React.CSSProperties = {
+  background: "var(--color-surface)",
+  borderRadius: "var(--radius-card)",
+  border: "1px solid var(--color-line)",
+  padding: "var(--space-md)",
+  display: "flex",
+  flexDirection: "column",
+  gap: "var(--space-sm)",
+  boxShadow: "0 1px 4px rgba(31,71,61,0.04)",
+};
+
+const previewContentStyle: React.CSSProperties = {
+  borderLeft: "3px solid var(--color-leaf)",
   borderRadius: "var(--radius-input)",
   background: "var(--color-mist)",
   padding: "14px 16px",
@@ -601,6 +693,17 @@ const previewCardInnerStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: "10px",
+};
+
+const previewIconWrapStyle: React.CSSProperties = {
+  width: "36px",
+  height: "36px",
+  borderRadius: "50%",
+  background: "rgba(31,71,61,0.08)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
 };
 
 const previewCardTitleStyle: React.CSSProperties = {
@@ -616,12 +719,11 @@ const previewCardDescStyle: React.CSSProperties = {
   fontSize: "12px",
 };
 
-/* ── 提醒状态卡片（设计稿要求有独立容器） ── */
+/* ── 提醒状态卡片 ── */
 
 const toggleCardStyle: React.CSSProperties = {
   borderRadius: "var(--radius-input)",
-  border: "1px solid var(--color-line)",
-  background: "var(--color-surface)",
+  background: "var(--color-paper)",
   padding: "12px 16px",
 };
 
@@ -638,6 +740,8 @@ function toggleCardDotStyle(active: boolean): React.CSSProperties {
     borderRadius: "50%",
     background: active ? "var(--color-leaf)" : "var(--color-line)",
     flexShrink: 0,
+    boxShadow: active ? "0 0 6px rgba(31,71,61,0.3)" : "none",
+    transition: "background 0.2s, box-shadow 0.2s",
   };
 }
 
@@ -663,10 +767,11 @@ const deleteButtonStyle: React.CSSProperties = {
   width: "100%",
   minHeight: "48px",
   borderRadius: "var(--radius-button)",
-  border: "1px solid var(--color-error)",
-  background: "transparent",
+  border: "1px solid rgba(197,48,48,0.3)",
+  background: "rgba(197,48,48,0.04)",
   color: "var(--color-error)",
   fontSize: "15px",
   fontWeight: 600,
   cursor: "pointer",
+  transition: "background 0.2s, border-color 0.2s",
 };
