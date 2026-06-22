@@ -257,8 +257,7 @@ const overlayStyle: CSSProperties = {
   display: "flex",
   alignItems: "flex-end",
   justifyContent: "center",
-  padding:
-    "0 var(--space-md) calc(var(--space-md) + env(safe-area-inset-bottom, 0px))",
+  padding: 0,
   background: "var(--color-overlay-scrim)",
   backdropFilter: "blur(2px)",
 };
@@ -267,8 +266,8 @@ const sheetStyle: CSSProperties = {
   width: "100%",
   maxWidth: "440px",
   background: "var(--color-surface)",
-  borderRadius: "var(--radius-card)",
-  padding: "var(--space-md) var(--space-lg) var(--space-lg)",
+  borderRadius: "var(--radius-card) var(--radius-card) 0 0",
+  padding: "var(--space-md) var(--space-lg) calc(var(--space-lg) + env(safe-area-inset-bottom, 0px))",
   display: "grid",
   justifyItems: "stretch",
   gap: "var(--space-sm)",
