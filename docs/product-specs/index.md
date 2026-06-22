@@ -42,6 +42,8 @@
   - P0 PRD：养护历史时间线——基于已有 taskCompletionLogs 构建植物级时间线 + 家庭动态流，让完成记录可见可回溯，含索引方案、分页策略与验收标准
 - [2026-06-17-push-notification-enhancement-spec.md](./2026-06-17-push-notification-enhancement-spec.md)
   - P0 PRD：推送通知体验增强——通知深链跳转（点击直达植物详情）、推送时间偏好（每天几点提醒）、到期任务聚合推送，从"能推"到"推得准"
+- [2026-06-17-push-notification-enhancement-task-breakdown.md](./2026-06-17-push-notification-enhancement-task-breakdown.md)
+  - P0 功能规格：推送通知体验增强——数据流设计、Schema 变更（users.notificationPreferences）、后端 action 重构（按用户分组+时间窗口+聚合推送）、前端偏好设置 UI、12 个任务拆分（PUSH-001~012）含依赖拓扑与执行顺序
 - [2026-06-17-plant-grouping-room-filter-spec.md](./2026-06-17-plant-grouping-room-filter-spec.md)
   - P0 PRD：植物分组与房间筛选——利用已有 location 字段构建按房间分组视图 + 待办页房间筛选标签 + 位置自动补全，纯前端实现
 - [2026-06-17-plant-grouping-room-filter-task-breakdown.md](./2026-06-17-plant-grouping-room-filter-task-breakdown.md)

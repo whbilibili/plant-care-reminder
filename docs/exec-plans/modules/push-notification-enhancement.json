@@ -1,0 +1,747 @@
+{
+  "project": "plant-care-reminder",
+  "prd": "docs/product-specs/2026-06-17-push-notification-enhancement-spec.md",
+  "task_breakdown": "docs/product-specs/2026-06-17-push-notification-enhancement-task-breakdown.md",
+  "created_at": "2026-06-22",
+  "module_intent": "推送通知体验增强：三大能力——①通知深链（单任务跳植物详情、聚合跳待办页）、②推送时间偏好（用户设置每天几点提醒，cron 窗口匹配）、③聚合推送（同一用户多任务合并为一条通知）。后端重构 processDueTaskNotifications 为按用户分组+时间窗口+聚合 payload；Schema 新增 users.notificationPreferences；前端新增 NotificationPreferencesSheet + 设置入口集成。SW 无需改动。",
+  "design_baseline": {
+    "token_source": "app/src/styles/tokens.css",
+    "hard_rule": "禁止硬编码 #hex；所有色值/间距/圆角/阴影一律引用 token 变量；本次迭代不新增 token（现有 token 已覆盖全部需求）。",
+    "reduced_motion": "所有动效在 prefers-reduced-motion: reduce 下退化为即时状态切换（tokens.css 已有全局兜底）。"
+  },
+  "tasks": [
+    {
+      "task_id": "PUSH-001",
+      "description": "Schema 新增 users.notificationPreferences 可选字段（preferredHour + timezone），向后兼容无需数据迁移。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": ["users"],
+            "key_fields": {
+              "users": "_id, familyId, nickname, notificationPreferences"
+            },
+            "indexes": ["无需新增索引（通过 _id 主键查询）"],
+            "relations": "users 1:N pushSubscriptions（已有）",
+            "notes": "在 userFields 中新增 notificationPreferences: v.optional(v.object({ preferredHour: v.number(), timezone: v.string() }))。v.optional 保证向后兼容，无需数据迁移。"
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "N/A"
+          },
+          "migration_strategy": "No migration needed. v.optional field addition is backward compatible."
+        },
+        "api_layer": {
+          "type": "none",
+          "endpoints": [],
+          "notes": "纯 Schema 变更，不涉及接口。"
+        },
+        "component_tree": {
+          "entry_component": "N/A",
+          "children": [],
+          "notes": "纯后端 Schema 变更。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "N/A",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        },
+        "design_contract": {
+          "ui_spec_ref": "N/A",
+          "intent": "为推送时间偏好功能提供数据模型基础。",
+          "tokens_new": [],
+          "tokens_reuse": [],
+          "visual_change": "无直接视觉变化。",
+          "acceptance": "Convex schema 类型检查通过；users 表支持 notificationPreferences 可选字段；已有用户文档不受影响。"
+        }
+      }
+    },
+    {
+      "task_id": "PUSH-002",
+      "description": "实现 updateNotificationPreferences mutation：校验 preferredHour [0,23] 或 null、timezone 非空，写入/清除 users.notificationPreferences。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": ["users"],
+            "key_fields": {
+              "users": "_id, notificationPreferences"
+            },
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "patch users 文档的 notificationPreferences 字段。preferredHour=null 时清除偏好（设为 undefined）。"
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "updateNotificationPreferences：patch users.notificationPreferences"
+          },
+          "migration_strategy": "No schema change beyond PUSH-001."
+        },
+        "api_layer": {
+          "type": "convex-mutation",
+          "endpoints": ["users.updateNotificationPreferences"],
+          "notes": "args: { preferredHour: v.union(v.number(), v.null()), timezone: v.string() }。校验：preferredHour 为 null 或 [0,23] 整数；timezone 非空字符串。返回 { ok: true }。"
+        },
+        "component_tree": {
+          "entry_component": "N/A",
+          "children": [],
+          "notes": "纯后端 mutation，前端在 PUSH-010 消费。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "N/A",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "ctx.auth.getUserIdentity()",
+          "rls_or_rbac": "登录用户只能修改自己的偏好（通过 getUser helper 获取当前用户 _id）"
+        },
+        "design_contract": {
+          "ui_spec_ref": "N/A",
+          "intent": "提供偏好写入能力，供前端设置页调用。",
+          "tokens_new": [],
+          "tokens_reuse": [],
+          "visual_change": "无。",
+          "acceptance": "mutation 可正确写入 preferredHour+timezone；传 null 可清除偏好；非法值（<0, >23, 空 timezone）抛出友好错误；未登录时拒绝。"
+        }
+      }
+    },
+    {
+      "task_id": "PUSH-003",
+      "description": "实现 getNotificationPreferences query：返回当前用户的 notificationPreferences 或 null。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": ["users"],
+            "key_fields": {
+              "users": "_id, notificationPreferences"
+            },
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "读取当前用户文档的 notificationPreferences 字段。"
+          },
+          "queries": {
+            "read": "getNotificationPreferences：返回 user.notificationPreferences ?? null",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "convex-query",
+          "endpoints": ["users.getNotificationPreferences"],
+          "notes": "args: {}。返回 { preferredHour: number, timezone: string } | null。"
+        },
+        "component_tree": {
+          "entry_component": "N/A",
+          "children": [],
+          "notes": "纯后端 query，前端在 PUSH-010 和 PUSH-011 消费。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "N/A",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "Convex Auth",
+          "strategy": "ctx.auth.getUserIdentity()",
+          "rls_or_rbac": "登录用户只能读取自己的偏好"
+        },
+        "design_contract": {
+          "ui_spec_ref": "N/A",
+          "intent": "提供偏好读取能力，供前端展示当前设置状态。",
+          "tokens_new": [],
+          "tokens_reuse": [],
+          "visual_change": "无。",
+          "acceptance": "已设置偏好的用户返回 { preferredHour, timezone }；未设置的用户返回 null；未登录时拒绝。"
+        }
+      }
+    },
+    {
+      "task_id": "PUSH-004",
+      "description": "实现 getUserNotificationPreferences internalQuery：批量查询用户通知偏好，供 processDueTaskNotifications action 调用。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": ["users"],
+            "key_fields": {
+              "users": "_id, notificationPreferences"
+            },
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "按 userIds 批量查询用户文档，提取 notificationPreferences。"
+          },
+          "queries": {
+            "read": "getUserNotificationPreferences：批量返回 Record<userId, { preferredHour, timezone } | null>",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "convex-internalQuery",
+          "endpoints": ["notifications.getUserNotificationPreferences"],
+          "notes": "args: { userIds: v.array(v.id('users')) }。返回 Record<string, { preferredHour: number, timezone: string } | null>。仅供 internal action 调用，不暴露给客户端。"
+        },
+        "component_tree": {
+          "entry_component": "N/A",
+          "children": [],
+          "notes": "纯后端 internalQuery。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "N/A",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "internalQuery（系统内部调用，无需用户认证）",
+          "rls_or_rbac": "N/A"
+        },
+        "design_contract": {
+          "ui_spec_ref": "N/A",
+          "intent": "为 processDueTaskNotifications 提供批量偏好查询能力，避免逐个 db.get 的 N+1 问题。",
+          "tokens_new": [],
+          "tokens_reuse": [],
+          "visual_change": "无。",
+          "acceptance": "传入 userIds 数组，返回每个用户的偏好或 null；用户不存在时对应值为 null；空数组返回空对象。"
+        }
+      }
+    },
+    {
+      "task_id": "PUSH-005",
+      "description": "重构 processDueTaskNotifications：从逐任务逐设备推送改为按 userId 分组 + 时间窗口判断，不在偏好窗口内的用户跳过本轮。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": ["users", "plantTasks", "pushSubscriptions"],
+            "key_fields": {
+              "users": "_id, notificationPreferences",
+              "plantTasks": "_id, plantId, lastNotifiedAt",
+              "pushSubscriptions": "_id, userId, subscription"
+            },
+            "indexes": [],
+            "relations": "plantTasks N:1 plants；pushSubscriptions N:1 users",
+            "notes": "重构 action 内部逻辑，不改变 schema。核心变化：从 for-task-for-sub 循环改为 for-user 循环。"
+          },
+          "queries": {
+            "read": "调用 listNotifiableDueTasks + getUserNotificationPreferences",
+            "write": "调用 markTaskNotified"
+          },
+          "migration_strategy": "No schema change. Logic refactor only."
+        },
+        "api_layer": {
+          "type": "convex-internalAction",
+          "endpoints": ["notificationsNode.processDueTaskNotifications"],
+          "notes": "接口签名不变（internalAction, args: {}），内部逻辑重构。新增 isWithinPreferredWindow 纯函数。"
+        },
+        "component_tree": {
+          "entry_component": "N/A",
+          "children": [],
+          "notes": "纯后端逻辑重构。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "N/A",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "internalAction（cron 触发）",
+          "rls_or_rbac": "N/A"
+        },
+        "design_contract": {
+          "ui_spec_ref": "N/A",
+          "intent": "实现按用户粒度的推送决策，支持时间窗口过滤。",
+          "tokens_new": [],
+          "tokens_reuse": [],
+          "visual_change": "无直接视觉变化（影响推送时机）。",
+          "acceptance": "无偏好用户维持到期即推行为；有偏好用户仅在 preferredHour±30min 窗口内收到推送；同一用户多设备收到相同内容；cron 触发后不报错。"
+        }
+      }
+    },
+    {
+      "task_id": "PUSH-006",
+      "description": "实现聚合推送 payload 生成逻辑：同一用户 ≥2 个任务时合并为一条通知，body 列出前 3 个任务名+类型，超出追加'等 N 个任务'。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "纯逻辑函数，不触碰 schema。"
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "none",
+          "endpoints": [],
+          "notes": "内部纯函数 buildNotificationPayload，在 processDueTaskNotifications 中调用。不暴露为独立 endpoint。"
+        },
+        "component_tree": {
+          "entry_component": "N/A",
+          "children": [],
+          "notes": "纯后端逻辑。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "N/A",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        },
+        "design_contract": {
+          "ui_spec_ref": "push-notification-enhancement-task-breakdown §1.2",
+          "intent": "减少通知轰炸，多任务合并为一条有信息量的摘要通知。",
+          "tokens_new": [],
+          "tokens_reuse": [],
+          "visual_change": "影响推送通知内容（非 app 内 UI）。",
+          "payload_spec": {
+            "single_task": {
+              "title": "{plantName} · {taskLabel}",
+              "body": "「{plantName}」的{taskLabel}任务已到期，记得去处理哦！",
+              "tag": "task-{taskId}"
+            },
+            "aggregated_2_3": {
+              "title": "你有 {count} 个养护任务待完成",
+              "body": "{plant1}（{type1}）、{plant2}（{type2}）、{plant3}（{type3}）",
+              "tag": "daily-summary"
+            },
+            "aggregated_gt_3": {
+              "title": "你有 {count} 个养护任务待完成",
+              "body": "{前3个}等 {count} 个任务",
+              "tag": "daily-summary"
+            }
+          },
+          "acceptance": "单任务生成单条通知 payload；2-3 个任务列出全部名称+类型；>3 个任务追加'等 N 个任务'；tag 正确区分单条和聚合。"
+        }
+      }
+    },
+    {
+      "task_id": "PUSH-007",
+      "description": "实现深链 url 动态生成：单任务通知 url 为 /plants/{plantId}，聚合通知 url 为 /todo。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "纯逻辑，集成在 buildNotificationPayload 中。"
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "none",
+          "endpoints": [],
+          "notes": "url 字段作为 payload 的一部分，由 buildNotificationPayload 生成。SW 已支持 data.url 跳转，无需改动。"
+        },
+        "component_tree": {
+          "entry_component": "N/A",
+          "children": [],
+          "notes": "纯后端逻辑。SW (sw.js) 无需改动——已有 event.notification.data?.url 跳转逻辑。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "N/A",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        },
+        "design_contract": {
+          "ui_spec_ref": "push-notification-enhancement-task-breakdown §1.2",
+          "intent": "让用户点击通知后直达相关页面，减少跳转步骤。",
+          "tokens_new": [],
+          "tokens_reuse": [],
+          "visual_change": "影响通知点击后的跳转目标。",
+          "url_rules": {
+            "single_task": "/plants/{plantId}（跳转植物详情页）",
+            "aggregated": "/todo（跳转待办页）"
+          },
+          "acceptance": "单任务通知 payload.url 为 /plants/{plantId}；聚合通知 payload.url 为 /todo；点击通知后正确跳转（依赖 SW 已有逻辑）。"
+        }
+      }
+    },
+    {
+      "task_id": "PUSH-008",
+      "description": "前端类型定义补充：domain.ts 新增 NotificationPreferences 接口（preferredHour + timezone）。",
+      "priority": "2-Medium",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "纯前端类型定义，不触碰后端。"
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "none",
+          "endpoints": [],
+          "notes": "类型定义与 PUSH-001 后端 schema 对齐。"
+        },
+        "component_tree": {
+          "entry_component": "N/A",
+          "children": [],
+          "notes": "类型文件变更，供后续组件消费。文件：app/src/types/domain.ts。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "N/A",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        },
+        "design_contract": {
+          "ui_spec_ref": "N/A",
+          "intent": "为 NotificationPreferencesSheet 和设置页提供类型安全基础。",
+          "tokens_new": [],
+          "tokens_reuse": [],
+          "visual_change": "无。",
+          "acceptance": "TypeScript 编译通过；NotificationPreferences 接口可被 NotificationPreferencesSheet 消费。"
+        }
+      }
+    },
+    {
+      "task_id": "PUSH-009",
+      "description": "实现 NotificationPreferencesSheet 组件：时间选择 Sheet，含 11 个预设小时选项 + '立即推送'选项，单选 radio 样式，底部保存按钮。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "纯前端 UI 组件。"
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "none",
+          "endpoints": [],
+          "notes": "组件内部调用 useMutation(api.users.updateNotificationPreferences)。"
+        },
+        "component_tree": {
+          "entry_component": "NotificationPreferencesSheet",
+          "children": [],
+          "notes": "放置于 src/features/notifications/NotificationPreferencesSheet.tsx。Props: open: boolean, onClose: () => void, currentHour: number | null, onSave: (hour: number | null) => void。复用现有 Sheet 组件。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "selectedHour: number | null（本地选中状态，保存时提交）"
+        },
+        "routing": {
+          "path": "N/A",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        },
+        "design_contract": {
+          "ui_spec_ref": "push-notification-enhancement-task-breakdown §9.1",
+          "intent": "让用户选择每天几点接收推送提醒，操作简单直观。",
+          "tokens_new": [],
+          "tokens_reuse": ["--color-leaf", "--color-ink", "--color-line", "--color-surface"],
+          "spec": {
+            "title": "设置提醒时间",
+            "options": ["任务到期时立即提醒", "每天 6:00", "每天 7:00", "每天 8:00", "每天 9:00", "每天 10:00", "每天 12:00", "每天 18:00", "每天 20:00", "每天 21:00", "每天 22:00"],
+            "item_height": "48px",
+            "selected_text_color": "--color-leaf",
+            "selected_indicator": "右侧实心圆点 --color-leaf",
+            "unselected_text_color": "--color-ink",
+            "unselected_indicator": "右侧空心圆点 --color-line",
+            "save_button": "Button variant=primary 全宽",
+            "timezone_detection": "Intl.DateTimeFormat().resolvedOptions().timeZone（自动检测，不需用户选择）",
+            "success_toast": "提醒时间已更新",
+            "error_toast": "保存失败，请重试"
+          },
+          "acceptance": "Sheet 展示 11 个时间选项 + 立即推送；选中态为 --color-leaf 文案+实心圆点；保存调用 mutation 并 toast 反馈；时区自动检测。"
+        }
+      }
+    },
+    {
+      "task_id": "PUSH-010",
+      "description": "NotificationPromptCard 集成偏好设置入口：已开启状态下增加'提醒时间'行（展示当前偏好 + 点击打开 NotificationPreferencesSheet）。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "消费 PUSH-003 的 getNotificationPreferences query。"
+          },
+          "queries": {
+            "read": "useQuery(api.users.getNotificationPreferences)",
+            "write": "useMutation(api.users.updateNotificationPreferences)"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "none",
+          "endpoints": [],
+          "notes": "消费已有 query/mutation，不新增接口。"
+        },
+        "component_tree": {
+          "entry_component": "NotificationPromptCard",
+          "children": ["NotificationPreferencesSheet"],
+          "notes": "在 visualState === 'enabled' 分支下，新增一行'提醒时间'入口。点击打开 NotificationPreferencesSheet。文件：src/features/notifications/NotificationPromptCard.tsx。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "useQuery(api.users.getNotificationPreferences)",
+          "local_state": "isSheetOpen: boolean"
+        },
+        "routing": {
+          "path": "N/A（组件嵌入设置页）",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        },
+        "design_contract": {
+          "ui_spec_ref": "push-notification-enhancement-task-breakdown §9.2",
+          "intent": "在通知已开启的上下文中自然引导用户设置偏好时间。",
+          "tokens_new": [],
+          "tokens_reuse": ["--color-ink", "--color-muted", "--color-line"],
+          "spec": {
+            "position": "在'当前设备已经可以接收家庭植物提醒通知'文案下方",
+            "layout": "左侧'提醒时间' label (--color-ink, 14px) + 右侧当前值 (--color-muted, 14px) + ChevronRight 图标",
+            "row_height": "44px",
+            "clickable": "整行可点击",
+            "separator": "上方 1px solid var(--color-line)",
+            "display_text_with_pref": "每天 {hour}:00 提醒",
+            "display_text_no_pref": "任务到期时立即提醒"
+          },
+          "acceptance": "通知已开启状态下展示'提醒时间'行；点击打开 Sheet；展示当前偏好值或'立即提醒'；保存后行内文案同步更新。"
+        }
+      }
+    },
+    {
+      "task_id": "PUSH-011",
+      "description": "FamilySettingsPage 通知区域展示偏好状态文案（如'每天 8:00 提醒'或'任务到期时立即提醒'）。",
+      "priority": "2-Medium",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "纯前端展示，消费 getNotificationPreferences query。"
+          },
+          "queries": {
+            "read": "useQuery(api.users.getNotificationPreferences)",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "convex-query",
+          "endpoints": ["users.getNotificationPreferences"],
+          "notes": "复用 PUSH-003 实现的 query。"
+        },
+        "component_tree": {
+          "entry_component": "FamilySettingsPage",
+          "children": [],
+          "notes": "通知区域（NotificationPromptCard 所在区块）下方或内部增加偏好状态文案行。展示格式：有偏好时'每天 {hour}:00 提醒'，无偏好时'任务到期时立即提醒'。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "useQuery(api.users.getNotificationPreferences)",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "/settings",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "登录用户"
+        },
+        "design_contract": {
+          "ui_spec_ref": "push-notification-enhancement-task-breakdown §5.2",
+          "intent": "让用户在设置页一眼看到当前推送偏好状态，无需进入通知详情。",
+          "tokens_new": [],
+          "tokens_reuse": ["--color-muted", "--font-body-sm"],
+          "visual_change": "通知区域增加一行偏好状态文案（--color-muted, 14px）。",
+          "acceptance": "设置页通知区域展示当前偏好状态文案；有偏好时显示具体时间；无偏好时显示'立即提醒'。"
+        }
+      }
+    },
+    {
+      "task_id": "PUSH-012",
+      "description": "植物详情页增加'植物已删除'兜底 UI：通知深链到已删除植物时展示友好提示并引导回待办页。",
+      "priority": "2-Medium",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": ["plants"],
+            "key_fields": {
+              "plants": "_id"
+            },
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "检测 plant 查询返回 null 时触发兜底 UI。"
+          },
+          "queries": {
+            "read": "useQuery(api.plants.getPlantDetail) 返回 null 时触发",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "convex-query",
+          "endpoints": ["plants.getPlantDetail"],
+          "notes": "复用已有 query，仅前端增加 null 态处理。"
+        },
+        "component_tree": {
+          "entry_component": "PlantDetailPage",
+          "children": [],
+          "notes": "在 PlantDetailPage 中增加 plant === null 的条件分支，渲染兜底 UI：图标 + '这株植物已不存在' 文案 + '返回待办' 按钮。"
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "useQuery(api.plants.getPlantDetail)",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "/plants/:plantId",
+          "guard": "authenticated family members",
+          "middleware": "inside the app shell"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "familyId scope（已有）"
+        },
+        "design_contract": {
+          "ui_spec_ref": "push-notification-enhancement-task-breakdown §8",
+          "intent": "通知深链到已删除植物时，给用户友好提示而非白屏或报错。",
+          "tokens_new": [],
+          "tokens_reuse": ["--color-muted", "--color-leaf", "--space-xl"],
+          "spec": {
+            "layout": "垂直居中：图标 + 文案 + 按钮",
+            "icon": "Lucide Leaf 或 Plant，48px，--color-muted",
+            "title": "'这株植物已不存在'，--color-ink，16px，font-weight 600",
+            "subtitle": "'可能已被家庭成员删除'，--color-muted，14px",
+            "button": "'返回待办' Button variant=primary，点击 navigate('/todo')"
+          },
+          "acceptance": "访问已删除植物的详情页时展示兜底 UI 而非白屏；点击按钮可跳转待办页；375px 宽度下布局正常。"
+        }
+      }
+    }
+  ]
+}

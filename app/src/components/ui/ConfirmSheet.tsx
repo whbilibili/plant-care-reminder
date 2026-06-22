@@ -187,7 +187,7 @@ const overlayStyle: CSSProperties = {
   alignItems: "flex-end",
   justifyContent: "center",
   padding:
-    "0 var(--space-md) calc(var(--space-md) + 64px + env(safe-area-inset-bottom, 0px))",
+    "0 var(--space-md) calc(var(--space-md) + env(safe-area-inset-bottom, 0px))",
   background: "var(--color-overlay-scrim)",
   backdropFilter: "blur(2px)",
 };

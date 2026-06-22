@@ -260,6 +260,19 @@
         "plant-list-v2",
         "todo-page-v2"
       ]
+    },
+    {
+      "module": "push-notification-enhancement",
+      "file": "docs/exec-plans/modules/push-notification-enhancement.json",
+      "description": "推送通知体验增强：通知深链（单任务跳植物详情、聚合跳待办页）、推送时间偏好（用户设置每天几点提醒）、聚合推送（同一用户多任务合并为一条通知）。后端重构 processDueTaskNotifications 为按用户分组+时间窗口+聚合 payload；Schema 新增 users.notificationPreferences；前端新增 NotificationPreferencesSheet。",
+      "prd": "docs/product-specs/2026-06-17-push-notification-enhancement-spec.md",
+      "task_breakdown": "docs/product-specs/2026-06-17-push-notification-enhancement-task-breakdown.md",
+      "task_count": 12,
+      "completed": 0,
+      "depends_on": [
+        "care-reminders",
+        "settings-page-v2"
+      ]
     }
   ],
   "tasks_summary": [
@@ -1508,6 +1521,90 @@
       "description": "端到端验收：分组/筛选/自动补全全链路 + 空状态 + 视图偏好持久化 + 375px 响应式。",
       "status": "pending",
       "priority": "1-High"
+    },
+    {
+      "task_id": "PUSH-001",
+      "module": "push-notification-enhancement",
+      "description": "Schema 新增 users.notificationPreferences 可选字段（preferredHour + timezone）。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "PUSH-002",
+      "module": "push-notification-enhancement",
+      "description": "实现 updateNotificationPreferences mutation：校验并写入/清除用户通知偏好。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "PUSH-003",
+      "module": "push-notification-enhancement",
+      "description": "实现 getNotificationPreferences query：返回当前用户通知偏好或 null。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "PUSH-004",
+      "module": "push-notification-enhancement",
+      "description": "实现 getUserNotificationPreferences internalQuery：批量查询用户通知偏好供 action 调用。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "PUSH-005",
+      "module": "push-notification-enhancement",
+      "description": "重构 processDueTaskNotifications：按 userId 分组 + 时间窗口判断。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "PUSH-006",
+      "module": "push-notification-enhancement",
+      "description": "实现聚合推送 payload 生成逻辑（单任务/2-3任务/>3任务三种文案模板）。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "PUSH-007",
+      "module": "push-notification-enhancement",
+      "description": "实现深链 url 动态生成：单任务 → /plants/{plantId}，聚合 → /todo。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "PUSH-008",
+      "module": "push-notification-enhancement",
+      "description": "前端类型定义补充：domain.ts 新增 NotificationPreferences 接口。",
+      "status": "pending",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "PUSH-009",
+      "module": "push-notification-enhancement",
+      "description": "实现 NotificationPreferencesSheet 组件：时间选择 Sheet（11 个预设选项 + 立即推送）。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "PUSH-010",
+      "module": "push-notification-enhancement",
+      "description": "NotificationPromptCard 集成偏好设置入口 + 状态展示行。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "PUSH-011",
+      "module": "push-notification-enhancement",
+      "description": "FamilySettingsPage 通知区域展示偏好状态文案。",
+      "status": "pending",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "PUSH-012",
+      "module": "push-notification-enhancement",
+      "description": "植物详情页增加'植物已删除'兜底 UI（通知深链到已删除植物时）。",
+      "status": "pending",
+      "priority": "2-Medium"
     }
   ],
   "cross_module_dependencies": [
@@ -2130,6 +2227,66 @@
       "from": "ROLE-005",
       "to": "SET3-012",
       "reason": "leaveFamily 改造基于 v0.3 的 SET3-012 实现（删除 D5 临时逻辑，替换为 owner 禁退）。"
+    },
+    {
+      "from": "PUSH-002",
+      "to": "PUSH-001",
+      "reason": "updateNotificationPreferences mutation 依赖 PUSH-001 在 schema 中定义的 notificationPreferences 字段。"
+    },
+    {
+      "from": "PUSH-003",
+      "to": "PUSH-001",
+      "reason": "getNotificationPreferences query 依赖 PUSH-001 的 schema 字段定义。"
+    },
+    {
+      "from": "PUSH-004",
+      "to": "PUSH-001",
+      "reason": "getUserNotificationPreferences internalQuery 依赖 PUSH-001 的 schema 字段定义。"
+    },
+    {
+      "from": "PUSH-005",
+      "to": "PUSH-004",
+      "reason": "processDueTaskNotifications 重构调用 getUserNotificationPreferences 获取用户偏好。"
+    },
+    {
+      "from": "PUSH-005",
+      "to": "CARE-007",
+      "reason": "processDueTaskNotifications 重构基于 care-reminders CARE-007 建立的 listNotifiableDueTasks 和 markTaskNotified 接口。"
+    },
+    {
+      "from": "PUSH-006",
+      "to": "PUSH-005",
+      "reason": "聚合 payload 生成逻辑嵌入 PUSH-005 重构后的按用户分组循环中。"
+    },
+    {
+      "from": "PUSH-007",
+      "to": "PUSH-006",
+      "reason": "深链 url 作为 payload 的一部分，由 buildNotificationPayload 统一生成。"
+    },
+    {
+      "from": "PUSH-009",
+      "to": "PUSH-008",
+      "reason": "NotificationPreferencesSheet 消费 PUSH-008 定义的 NotificationPreferences 类型。"
+    },
+    {
+      "from": "PUSH-010",
+      "to": "PUSH-003",
+      "reason": "NotificationPromptCard 集成依赖 getNotificationPreferences query 读取当前偏好。"
+    },
+    {
+      "from": "PUSH-010",
+      "to": "PUSH-009",
+      "reason": "NotificationPromptCard 点击入口打开 NotificationPreferencesSheet。"
+    },
+    {
+      "from": "PUSH-011",
+      "to": "PUSH-003",
+      "reason": "FamilySettingsPage 偏好展示依赖 getNotificationPreferences query。"
+    },
+    {
+      "from": "PUSH-010",
+      "to": "SET2-011",
+      "reason": "NotificationPromptCard 偏好入口行嵌入 settings-page-v2 SET2-011 建立的通知卡外壳结构中。"
     }
   ]
 }
