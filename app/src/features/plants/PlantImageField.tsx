@@ -23,7 +23,7 @@ interface PlantImageFieldProps {
 
 export function PlantImageField({
   disabled = false,
-  hint = "建议上传方图或竖图。系统保存的是 Convex 存储 ID。",
+  hint = "建议上传方图或竖图，后续在卡片和详情页里都会优先展示。",
   label = "植物封面图",
   onChange,
   value,
@@ -151,10 +151,9 @@ export function PlantImageField({
           {uploadState === "uploading"
             ? `正在上传 ${pendingFileName ?? "图片"}`
             : value.storageId
-              ? "已保存到 Convex"
+              ? "✓ 图片已保存"
               : "等待上传"}
         </span>
-        {value.storageId ? <span style={storageIdStyle}>存储 ID：{value.storageId}</span> : null}
       </div>
 
       <input
@@ -198,9 +197,11 @@ const headerStyle: React.CSSProperties = {
 };
 
 const labelStyle: React.CSSProperties = {
-  fontSize: "0.95rem",
-  fontWeight: 700,
+  fontSize: "14px",
+  fontWeight: 600,
   color: "var(--color-ink)",
+  paddingLeft: "10px",
+  borderLeft: "3px solid var(--color-leaf)",
 };
 
 const hintStyle: React.CSSProperties = {
@@ -266,13 +267,6 @@ const metaPillStyle: React.CSSProperties = {
   color: "var(--color-leaf)",
   fontSize: "0.82rem",
   fontWeight: 700,
-};
-
-const storageIdStyle: React.CSSProperties = {
-  color: "var(--color-muted)",
-  fontSize: "0.84rem",
-  lineHeight: 1.5,
-  wordBreak: "break-all",
 };
 
 const hiddenInputStyle: React.CSSProperties = {
