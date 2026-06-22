@@ -146,15 +146,13 @@ export function PlantImageField({
         )}
       </div>
 
-      <div style={statusRowStyle}>
-        <span style={metaPillStyle}>
-          {uploadState === "uploading"
-            ? `正在上传 ${pendingFileName ?? "图片"}`
-            : value.storageId
-              ? "✓ 图片已保存"
-              : "等待上传"}
-        </span>
-      </div>
+      {uploadState === "uploading" && (
+        <div style={statusRowStyle}>
+          <span style={metaPillStyle}>
+            正在上传 {pendingFileName ?? "图片"}
+          </span>
+        </div>
+      )}
 
       <input
         id={fieldId}
