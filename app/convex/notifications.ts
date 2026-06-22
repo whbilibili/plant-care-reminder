@@ -236,3 +236,23 @@ export const removeMySubscriptions = mutation({
     return { ok: true as const, removed: subscriptions.length };
   },
 });
+
+/**
+ * 批量查询用户通知偏好（PUSH-004）。
+ * 供 processDueTaskNotifications action 调用，避免逐个 db.get 的 N+1 问题。
+ */
+export const getUserNotificationPreferences = internalQuery({
+  args: {
+    userIds: v.array(v.id("users")),
+  },
+  handler: async (ctx, args) => {
+    const result: Record<string, { preferredHour: number; timezone: string } | null> = {};
+
+    for (const userId of args.userIds) {
+      const user = await ctx.db.get(userId);
+      result[userId] = user?.notificationPreferences ?? null;
+    }
+
+    return result;
+  },
+});

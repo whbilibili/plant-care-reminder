@@ -95,6 +95,16 @@ export interface PushSubscriptionRecord {
   createdAt: TimestampMs;
 }
 
+// ─── 推送时间偏好（PUSH-008）─────────────────────────────────
+
+/** 用户推送时间偏好。 */
+export interface NotificationPreferences {
+  /** 偏好推送小时（0-23）。 */
+  preferredHour: number;
+  /** IANA 时区标识（如 "Asia/Shanghai"）。 */
+  timezone: string;
+}
+
 // ─── 植物分组与房间筛选（GRP-002）─────────────────────────────
 
 /** 按位置分组后的植物组。 */

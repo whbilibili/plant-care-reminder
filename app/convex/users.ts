@@ -2,6 +2,7 @@ import { v } from "convex/values";
 
 import { mutation, query } from "./_generated/server";
 import { getCurrentUserContext as loadCurrentUserContext } from "./lib/auth";
+import { notificationPreferencesValidator } from "./lib/validators";
 
 const DISPLAY_NAME_MAX_LENGTH = 40;
 
@@ -106,5 +107,77 @@ export const updateMyAvatar = mutation({
     });
 
     return { ok: true as const };
+  },
+});
+
+// ─── 推送时间偏好（PUSH-002 / PUSH-003）────────────────────────
+
+/**
+ * 更新当前用户的推送时间偏好。
+ * preferredHour 为 null 时清除偏好（恢复为"到期即推"）。
+ */
+export const updateNotificationPreferences = mutation({
+  args: {
+    preferredHour: v.union(v.number(), v.null()),
+    timezone: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const currentUserContext = await loadCurrentUserContext(ctx);
+
+    if (!currentUserContext.userId) {
+      throw new Error("You must be signed in to update notification preferences.");
+    }
+
+    // 校验 timezone 非空
+    if (args.timezone.trim().length === 0) {
+      throw new Error("时区不能为空。");
+    }
+
+    // preferredHour 为 null 时清除偏好
+    if (args.preferredHour === null) {
+      await ctx.db.patch(currentUserContext.userId, {
+        notificationPreferences: undefined,
+        updatedAt: Date.now(),
+      });
+      return { ok: true as const };
+    }
+
+    // 校验 preferredHour 为 [0, 23] 整数
+    if (
+      !Number.isInteger(args.preferredHour) ||
+      args.preferredHour < 0 ||
+      args.preferredHour > 23
+    ) {
+      throw new Error("提醒时间必须是 0 到 23 之间的整数。");
+    }
+
+    await ctx.db.patch(currentUserContext.userId, {
+      notificationPreferences: {
+        preferredHour: args.preferredHour,
+        timezone: args.timezone.trim(),
+      },
+      updatedAt: Date.now(),
+    });
+
+    return { ok: true as const };
+  },
+});
+
+/** 获取当前用户的推送时间偏好，未设置时返回 null。 */
+export const getNotificationPreferences = query({
+  args: {},
+  handler: async (ctx) => {
+    const currentUserContext = await loadCurrentUserContext(ctx);
+
+    if (!currentUserContext.userId) {
+      throw new Error("You must be signed in to view notification preferences.");
+    }
+
+    const user = currentUserContext.user;
+    if (!user) {
+      return null;
+    }
+
+    return user.notificationPreferences ?? null;
   },
 });

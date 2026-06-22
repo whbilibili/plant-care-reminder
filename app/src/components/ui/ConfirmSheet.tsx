@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { CSSProperties, ReactNode } from "react";
 
 import { prefersReducedMotion } from "../../lib/motion";
@@ -110,7 +111,7 @@ export function ConfirmSheet({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [requestClose]);
 
-  return (
+  return createPortal(
     <div
       aria-label={ariaLabel ?? title}
       aria-modal="true"
@@ -157,7 +158,8 @@ export function ConfirmSheet({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

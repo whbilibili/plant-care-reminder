@@ -36,6 +36,11 @@ export const utcTimestampValidator = v.number();
 export const optionalUtcTimestampValidator = v.optional(utcTimestampValidator);
 export const optionalTrimmedTextValidator = v.optional(v.string());
 
+export const notificationPreferencesValidator = v.object({
+  preferredHour: v.number(),
+  timezone: v.string(),
+});
+
 export const userFields = {
   name: v.optional(v.string()),
   image: v.optional(v.string()),
@@ -48,6 +53,9 @@ export const userFields = {
   // 用户级头像（D6）：不复用 authTables 自带 image(URL 语义)，统一用 storageId 方案，
   // 与 plantFields.imageStorageId 一致；optional 向后兼容，老用户无需回填。
   imageStorageId: v.optional(v.id("_storage")),
+  // 推送时间偏好（PUSH-001）：用户可选择每天几点接收推送提醒。
+  // v.optional 保证向后兼容，无需数据迁移；未设置时按"到期即推"处理。
+  notificationPreferences: v.optional(notificationPreferencesValidator),
   createdAt: utcTimestampValidator,
   updatedAt: utcTimestampValidator,
 };
