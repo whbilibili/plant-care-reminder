@@ -79,10 +79,10 @@ export function LocationAutocomplete({
           value={value}
           onChange={handleInputChange}
           onFocus={handleFocus}
+          className="form-input-enhanced"
           style={{
             ...inputStyle,
             ...(errorMessage ? inputErrorStyle : null),
-            ...(isFocused ? inputFocusStyle : null),
           }}
         />
         {shouldShowDropdown && (
@@ -120,6 +120,8 @@ const labelStyle: CSSProperties = {
   color: "var(--color-ink)",
   fontSize: "14px",
   fontWeight: 600,
+  paddingLeft: "10px",
+  borderLeft: "3px solid var(--color-leaf)",
 };
 
 const inputWrapperStyle: CSSProperties = {
@@ -131,7 +133,7 @@ const inputStyle: CSSProperties = {
   height: "48px",
   borderRadius: "var(--radius-input)",
   border: "1px solid var(--color-line)",
-  background: "var(--color-surface)",
+  background: "var(--color-paper)",
   color: "var(--color-ink)",
   padding: "0 14px",
   fontSize: "14px",
@@ -139,11 +141,6 @@ const inputStyle: CSSProperties = {
   outline: "none",
   boxSizing: "border-box",
   transition: "border-color 150ms ease, box-shadow 150ms ease",
-};
-
-const inputFocusStyle: CSSProperties = {
-  borderColor: "var(--color-leaf)",
-  boxShadow: "0 0 0 3px rgba(76,175,80,0.12)",
 };
 
 const inputErrorStyle: CSSProperties = {

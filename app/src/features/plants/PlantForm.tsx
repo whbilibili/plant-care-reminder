@@ -74,8 +74,8 @@ export function PlantForm({ form, submitLabel, locationSuggestions }: PlantFormP
         />
       </div>
 
-      {/* 第三组：位置 */}
-      <div style={cardGroupStyle} className="plant-form-card-stagger">
+      {/* 第三组：位置（需要高 z-index 让下拉不被遮挡） */}
+      <div style={{ ...cardGroupStyle, position: "relative", zIndex: 10 }} className="plant-form-card-stagger">
         {locationSuggestions && locationSuggestions.length > 0 ? (
           <LocationAutocomplete
             suggestions={locationSuggestions}
@@ -106,15 +106,12 @@ export function PlantForm({ form, submitLabel, locationSuggestions }: PlantFormP
         )}
       </div>
 
-      {/* 第四组：封面图 */}
+      {/* 第四组：封面图（去掉外层 label，PlantImageField 自带标题） */}
       <div style={cardGroupStyle} className="plant-form-card-stagger">
-        <div style={fieldWrapStyle}>
-          <span style={fieldLabelWithBarStyle}>封面图片</span>
-          <PlantImageField
-            onChange={form.setImageValue}
-            value={form.values.image}
-          />
-        </div>
+        <PlantImageField
+          onChange={form.setImageValue}
+          value={form.values.image}
+        />
       </div>
 
       {/* 隐藏的提交按钮：测试兼容 + 键盘 Enter 提交。

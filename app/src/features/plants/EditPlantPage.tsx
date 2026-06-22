@@ -1,12 +1,11 @@
 import { useMutation, useQuery } from "convex/react";
 import { useMemo, useState } from "react";
-import { Leaf } from "lucide-react";
+import { Leaf, MapPin } from "lucide-react";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { FormError } from "../../components/ui/FormError";
 import { Icon } from "../../components/ui/Icon";
-import { ObjectSummaryBand } from "../../components/ui/ObjectSummaryBand";
 import { ScreenNav } from "../../components/ui/ScreenNav";
 import { StorageImage } from "../../components/ui/StorageImage";
 import { navigate } from "../../app/router";
@@ -102,26 +101,31 @@ export function EditPlantPage({ plantId }: EditPlantPageProps) {
         }
       />
 
-      {/* ObjectSummaryBand — 渐变背景 */}
+      {/* 摘要卡片 — 精致圆角卡片 */}
       <div style={summaryWrapStyle}>
         <div style={summaryCardInnerStyle}>
-          <ObjectSummaryBand
-            thumbnail={
-              <StorageImage
-                alt={form.values.name || "植物"}
-                fallback={
-                  <div style={thumbFallbackStyle}>
-                    <Icon icon={Leaf} size={24} colorVar="--color-leaf" />
-                  </div>
-                }
-                initialUrl={plant.imagePreviewUrl ?? null}
-                storageId={plant.imageStorageId ?? null}
-                style={thumbImageStyle}
-              />
-            }
-            title={form.values.name || "未命名植物"}
-            subtitle={form.values.location ? `📍 ${form.values.location}` : undefined}
-          />
+          <div style={summaryThumbWrapStyle}>
+            <StorageImage
+              alt={form.values.name || "植物"}
+              fallback={
+                <div style={thumbFallbackStyle}>
+                  <Icon icon={Leaf} size={28} colorVar="--color-leaf" />
+                </div>
+              }
+              initialUrl={plant.imagePreviewUrl ?? null}
+              storageId={plant.imageStorageId ?? null}
+              style={thumbImageStyle}
+            />
+          </div>
+          <div style={summaryInfoStyle}>
+            <span style={summaryTitleStyle}>{form.values.name || "未命名植物"}</span>
+            {form.values.location ? (
+              <span style={summarySubtitleStyle}>
+                <Icon icon={MapPin} size={13} colorVar="--color-muted" />
+                {form.values.location}
+              </span>
+            ) : null}
+          </div>
         </div>
       </div>
 
@@ -192,17 +196,49 @@ const summaryWrapStyle: React.CSSProperties = {
 };
 
 const summaryCardInnerStyle: React.CSSProperties = {
-  background: "linear-gradient(135deg, var(--color-mist) 0%, rgba(237,245,241,0.4) 100%)",
+  display: "flex",
+  alignItems: "center",
+  gap: "var(--space-md)",
+  background: "var(--color-surface)",
   borderRadius: "var(--radius-card)",
   border: "1px solid var(--color-line)",
   padding: "var(--space-md)",
   boxShadow: "0 2px 8px rgba(31,71,61,0.06)",
 };
 
+const summaryThumbWrapStyle: React.CSSProperties = {
+  flexShrink: 0,
+};
+
+const summaryInfoStyle: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "4px",
+  flex: 1,
+  minWidth: 0,
+};
+
+const summaryTitleStyle: React.CSSProperties = {
+  fontSize: "17px",
+  fontWeight: 700,
+  color: "var(--color-ink)",
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+};
+
+const summarySubtitleStyle: React.CSSProperties = {
+  fontSize: "13px",
+  color: "var(--color-muted)",
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "3px",
+};
+
 const thumbFallbackStyle: React.CSSProperties = {
-  width: "56px",
-  height: "56px",
-  borderRadius: "var(--radius-button)",
+  width: "64px",
+  height: "64px",
+  borderRadius: "16px",
   background: "var(--color-mist)",
   display: "flex",
   alignItems: "center",
@@ -210,12 +246,12 @@ const thumbFallbackStyle: React.CSSProperties = {
 };
 
 const thumbImageStyle: React.CSSProperties = {
-  width: "56px",
-  height: "56px",
+  width: "64px",
+  height: "64px",
   objectFit: "cover",
-  borderRadius: "var(--radius-button)",
+  borderRadius: "16px",
   border: "2px solid #fff",
-  boxShadow: "0 2px 6px rgba(31,71,61,0.12)",
+  boxShadow: "0 2px 8px rgba(31,71,61,0.15)",
 };
 
 const bottomErrorStyle: React.CSSProperties = {
