@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { api } from "../../../convex/_generated/api";
 import { Button } from "../../components/ui/Button";
 import { FormError } from "../../components/ui/FormError";
+import { showToast } from "../../components/ui/GlobalToast";
 import type { StorageId } from "../../types/domain";
 import { normalizeImageFile } from "./normalizeImageFile";
 import { uploadPlantImage } from "./uploadPlantImage";
@@ -102,6 +103,7 @@ export function PlantImageField({
 
       setLocalPreviewUrl(null);
       setUploadState("uploaded");
+      showToast("图片上传成功");
       onChange(uploadedImage);
     } catch (error) {
       if (localPreviewUrlRef.current) {

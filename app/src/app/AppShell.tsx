@@ -15,6 +15,7 @@ import { CreateTaskPage } from "../features/tasks/CreateTaskPage";
 import { EditTaskPage } from "../features/tasks/EditTaskPage";
 import { TodoPage } from "../features/tasks/TodoPage";
 import { BottomNav } from "../components/navigation/BottomNav";
+import { GlobalToast } from "../components/ui/GlobalToast";
 import { RouteGate } from "./RouteGate";
 import type { AppPath, AppRoute, RouteContext } from "./router";
 
@@ -47,6 +48,7 @@ export function AppShell({ pathname, routeContext, routeParams }: AppShellProps)
   return (
     <RouteGate pathname={pathname} routeContext={routeContext}>
       <div style={frameStyle}>
+        <GlobalToast />
         <main style={showBottomNav ? mainStyle : mainStyleNoNav}>
           {pathname === "/login" ? <AuthPage /> : null}
           {pathname === "/onboarding" ? (
