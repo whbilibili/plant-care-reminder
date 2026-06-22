@@ -250,7 +250,7 @@ export function TodoPage() {
           {/* Overdue Group */}
           {filterByRoom(result.overdue).length > 0 && (
             <div style={groupBlockStyle}>
-              <h2 style={groupTitleOverdueStyle}><span style={groupTitleBarOverdueStyle} />逾期（{filterByRoom(result.overdue).length}）</h2>
+              <h2 style={groupTitleOverdueStyle}><span style={groupTitleBarOverdueStyle} />逾期（{filterByRoom(result.overdue).length}）<span style={groupTitleLineStyle} /></h2>
               <GroupedSurface style={overdueGroupStyle}>
                 {filterByRoom(result.overdue).map((task, index) => (
                   <div key={task.taskId} style={getStaggerStyle(index)}>
@@ -270,7 +270,7 @@ export function TodoPage() {
           {/* Today Group */}
           {filterByRoom(result.today).length > 0 && (
             <div style={groupBlockStyle}>
-              <h2 style={groupTitleDefaultStyle}><span style={groupTitleBarDefaultStyle} />今天（{filterByRoom(result.today).length}）</h2>
+              <h2 style={groupTitleDefaultStyle}><span style={groupTitleBarDefaultStyle} />今天（{filterByRoom(result.today).length}）<span style={groupTitleLineStyle} /></h2>
               <GroupedSurface style={todayGroupStyle}>
                 {filterByRoom(result.today).map((task, index) => (
                   <div key={task.taskId} style={getStaggerStyle(index)}>
@@ -290,7 +290,7 @@ export function TodoPage() {
           {/* Upcoming Group */}
           {filterByRoom(result.upcoming).length > 0 && (
             <div style={groupBlockStyle}>
-              <h2 style={groupTitleDefaultStyle}><span style={groupTitleBarDefaultStyle} />即将到期（{filterByRoom(result.upcoming).length}）</h2>
+              <h2 style={groupTitleDefaultStyle}><span style={groupTitleBarDefaultStyle} />即将到期（{filterByRoom(result.upcoming).length}）<span style={groupTitleLineStyle} /></h2>
               <GroupedSurface>
               {(showAllUpcoming ? filterByRoom(result.upcoming) : filterByRoom(result.upcoming).slice(0, 3)).map(
                 (task, index) => (
@@ -333,6 +333,11 @@ export function TodoPage() {
 
       {/* 家庭动态（CARE-HIST-004）——空数据时整个区域不渲染 */}
       <FamilyRecentActivity />
+
+      {/* Footer */}
+      <div style={footerStyle}>
+        <p style={footerTextStyle}>用心照顾，让每一株植物都被温柔以待</p>
+      </div>
 
       {/* Undo Toast */}
       {undoPayload ? (
@@ -472,9 +477,10 @@ const statusBandStyle: React.CSSProperties = {
   justifyContent: "space-between",
   gap: "var(--space-sm)",
   padding: "var(--space-md)",
-  borderRadius: "var(--radius-card)",
-  background: "var(--color-surface)",
-  border: "1px solid var(--color-line)",
+  borderRadius: "16px",
+  background: "linear-gradient(135deg, rgba(45,140,100,0.06) 0%, rgba(45,140,100,0.02) 100%)",
+  border: "1px solid rgba(45,140,100,0.1)",
+  boxShadow: "0 2px 8px rgba(45,140,100,0.06)",
 };
 
 const statusLeftStyle: React.CSSProperties = {
@@ -540,12 +546,19 @@ const groupBlockStyle: React.CSSProperties = {
 
 const groupTitleBaseStyle: React.CSSProperties = {
   margin: 0,
-  fontSize: "15px",
+  fontSize: "14px",
   fontWeight: 700,
   lineHeight: 1.3,
   display: "flex",
   alignItems: "center",
   gap: "8px",
+};
+
+/* 分组标题后的延伸横线 */
+const groupTitleLineStyle: React.CSSProperties = {
+  flex: 1,
+  height: "1px",
+  background: "linear-gradient(to right, var(--color-line), transparent)",
 };
 
 const groupTitleOverdueStyle: React.CSSProperties = {
@@ -577,11 +590,13 @@ const groupTitleBarDefaultStyle: React.CSSProperties = {
 };
 
 const overdueGroupStyle: React.CSSProperties = {
-  borderColor: "rgba(221,107,32,0.3)",
+  borderColor: "rgba(229,57,53,0.2)",
+  background: "linear-gradient(135deg, rgba(229,57,53,0.03) 0%, var(--color-surface) 60%)",
 };
 
 const todayGroupStyle: React.CSSProperties = {
-  borderColor: "rgba(76,175,80,0.3)",
+  borderColor: "rgba(45,140,100,0.15)",
+  boxShadow: "0 2px 10px rgba(45,140,100,0.06)",
 };
 
 /* Stagger animation helper */
@@ -619,17 +634,18 @@ const overdueAccentBarStyle: React.CSSProperties = {
 const plantThumbButtonStyle: React.CSSProperties = {
   appearance: "none",
   flexShrink: 0,
-  width: "56px",
-  height: "56px",
+  width: "48px",
+  height: "48px",
   padding: 0,
   borderRadius: "12px",
-  border: "1px solid var(--color-line)",
+  border: "2px solid #fff",
   overflow: "hidden",
   background: "var(--color-mist)",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
   cursor: "pointer",
+  boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
 };
 
 const plantThumbImageStyle: React.CSSProperties = {
@@ -733,3 +749,18 @@ const viewAllButtonStyle: React.CSSProperties = {
   fontWeight: 500,
 };
 
+/* Footer */
+
+const footerStyle: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "center",
+  padding: "var(--space-md) 0 var(--space-sm)",
+};
+
+const footerTextStyle: React.CSSProperties = {
+  margin: 0,
+  fontSize: "12px",
+  color: "var(--color-muted)",
+  fontStyle: "italic",
+  opacity: 0.7,
+};
