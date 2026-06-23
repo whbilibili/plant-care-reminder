@@ -184,7 +184,7 @@ const CONFIRM_VARIANT_STYLES: Record<ConfirmSheetVariant, CSSProperties> = {
 const overlayStyle: CSSProperties = {
   position: "fixed",
   inset: 0,
-  zIndex: 100,
+  zIndex: 10100,
   display: "flex",
   alignItems: "center",
   justifyContent: "center",

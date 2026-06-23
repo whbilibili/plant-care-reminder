@@ -1,11 +1,12 @@
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { useMemo, useState } from "react";
-import { Bell } from "lucide-react";
+import { Bell, ChevronRight } from "lucide-react";
 
 import { api } from "../../../convex/_generated/api";
 import { Button } from "../../components/ui/Button";
 import { Icon } from "../../components/ui/Icon";
 import { normalizeSubscription } from "./normalizeSubscription";
+import { NotificationPreferencesSheet } from "./NotificationPreferencesSheet";
 
 interface PushSubscriptionLike {
   toJSON: () => {
@@ -54,10 +55,11 @@ function deriveDeviceLabel() {
 }
 
 function toApplicationServerKey(value: string) {
-  const paddedValue = value.padEnd(Math.ceil(value.length / 4) * 4, "=").replace(/-/g, "+").replace(/_/g, "/");
-  const decodedValue = window.atob(paddedValue);
-
-  return Uint8Array.from(decodedValue, (character) => character.charCodeAt(0));
+  // base64url → base64: 先替换字符，再补 padding
+  const base64 = value.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+  const decoded = window.atob(padded);
+  return Uint8Array.from(decoded, (c) => c.charCodeAt(0));
 }
 
 export function NotificationPromptCard() {
@@ -200,9 +202,12 @@ export function NotificationPromptCard() {
       ) : null}
 
       {visualState === "enabled" ? (
-        <p role="status" style={successStyle}>
-          当前设备已经可以接收家庭植物提醒通知。
-        </p>
+        <>
+          <p role="status" style={successStyle}>
+            当前设备已经可以接收家庭植物提醒通知。
+          </p>
+          <PreferenceEntryRow />
+        </>
       ) : null}
 
       {errorMessage ? (
@@ -358,4 +363,74 @@ const errorStyle: React.CSSProperties = {
   color: "var(--color-error)",
   fontSize: "14px",
   lineHeight: 1.6,
+};
+
+// ─── 提醒时间偏好入口行（PUSH-010）─────────────────────────────
+
+function PreferenceEntryRow() {
+  const preferences = useQuery(api.users.getNotificationPreferences, {});
+  const updatePreferences = useMutation(api.users.updateNotificationPreferences);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+
+  const displayText =
+    preferences && preferences.preferredHour !== undefined
+      ? `每天 ${preferences.preferredHour}:00 提醒`
+      : "任务到期时立即提醒";
+
+  async function handleSave(hour: number | null) {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    await updatePreferences({ preferredHour: hour, timezone });
+  }
+
+  return (
+    <>
+      <div style={prefSeparatorStyle} />
+      <button
+        onClick={() => setIsSheetOpen(true)}
+        style={prefRowStyle}
+        type="button"
+      >
+        <span style={prefLabelStyle}>提醒时间</span>
+        <span style={prefValueStyle}>{displayText}</span>
+        <Icon icon={ChevronRight} size={16} colorVar="--color-muted" />
+      </button>
+      <NotificationPreferencesSheet
+        open={isSheetOpen}
+        onClose={() => setIsSheetOpen(false)}
+        currentHour={preferences?.preferredHour ?? null}
+        onSave={handleSave}
+      />
+    </>
+  );
+}
+
+const prefSeparatorStyle: React.CSSProperties = {
+  height: "1px",
+  background: "var(--color-line)",
+};
+
+const prefRowStyle: React.CSSProperties = {
+  appearance: "none",
+  display: "flex",
+  alignItems: "center",
+  width: "100%",
+  height: "44px",
+  padding: "0",
+  border: "none",
+  background: "transparent",
+  cursor: "pointer",
+  gap: "var(--space-sm)",
+};
+
+const prefLabelStyle: React.CSSProperties = {
+  fontSize: "14px",
+  fontWeight: 500,
+  color: "var(--color-ink)",
+};
+
+const prefValueStyle: React.CSSProperties = {
+  flex: 1,
+  fontSize: "14px",
+  color: "var(--color-muted)",
+  textAlign: "right",
 };

@@ -1,0 +1,700 @@
+{
+  "project": "plant-care-reminder",
+  "prd": "docs/product-specs/2026-06-22-multi-image-gallery-spec.md",
+  "task_breakdown": "docs/product-specs/2026-06-22-multi-image-gallery-task-breakdown.md",
+  "created_at": "2026-06-22",
+  "module_intent": "多图上传与养护图集：让植物从单张封面进化为生长日记。核心能力——(1)植物详情页图集横向滚动区(缩略图浏览+全屏模式+删除+设为封面)、(2)任务完成后可选附图(非阻塞后置动作,照片同时写入图集和养护日志)、(3)前端双图存储(原图+canvas压缩缩略图)。Schema新增plants.gallery内嵌数组(max20)+taskCompletionLogs.imageStorageId可选字段；后端新增3个gallery mutation+1个附图mutation+改造getPlantDetail/deletePlant/listPlantCompletionLogs；前端抽取imageCompression/imageUpload工具函数,新增PlantGalleryStrip/GalleryFullscreenViewer/TaskCompletionPhotoPrompt/GalleryAddButton组件。",
+  "design_baseline": {
+    "token_source": "app/src/styles/tokens.css",
+    "hard_rule": "禁止硬编码 #hex；所有色值/间距/圆角/阴影一律引用 token 变量；本次迭代不新增 token。",
+    "reduced_motion": "所有动效在 prefers-reduced-motion: reduce 下退化为即时状态切换。"
+  },
+  "tasks": [
+    {
+      "task_id": "GAL-001",
+      "description": "Schema 扩展：plantFields 新增 gallery 可选数组字段(imageStorageId/thumbnailStorageId/uploadedBy/uploadedAt) + taskCompletionLogFields 新增可选 imageStorageId。向后兼容无需数据迁移。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": ["plants", "taskCompletionLogs"],
+            "key_fields": {
+              "plants": "_id, familyId, gallery",
+              "taskCompletionLogs": "_id, imageStorageId"
+            },
+            "indexes": ["无需新增索引"],
+            "relations": "plants 1:N gallery items(内嵌数组); taskCompletionLogs 可选引用 _storage",
+            "notes": "plantFields 新增 gallery: v.optional(v.array(v.object({ imageStorageId: v.id('_storage'), thumbnailStorageId: v.id('_storage'), uploadedBy: v.id('users'), uploadedAt: v.number() })))。taskCompletionLogFields 新增 imageStorageId: v.optional(v.id('_storage'))。"
+          },
+          "queries": { "read": "N/A", "write": "N/A" },
+          "migration_strategy": "No migration needed. v.optional additions are backward compatible."
+        },
+        "api_layer": { "type": "none", "endpoints": [], "notes": "纯 Schema 变更。" },
+        "component_tree": { "entry_component": "N/A", "children": [], "notes": "纯后端 Schema 变更。" },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "N/A", "guard": "N/A", "middleware": "N/A" },
+        "auth": { "provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A" },
+        "design_contract": {
+          "ui_spec_ref": "N/A",
+          "intent": "为图集功能和任务附图功能提供数据模型基础。",
+          "tokens_new": [],
+          "tokens_reuse": [],
+          "visual_change": "无。",
+          "acceptance": "Convex schema 类型检查通过; plants 表支持 gallery 可选数组字段; taskCompletionLogs 表支持 imageStorageId 可选字段; 已有文档不受影响。"
+        }
+      }
+    },
+    {
+      "task_id": "GAL-002",
+      "description": "实现 addPlantGalleryImage mutation：校验家庭归属+植物未归档+gallery长度<20，追加图片到 gallery 数组头部。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": ["plants"],
+            "key_fields": { "plants": "_id, familyId, gallery, isArchived" },
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "构造 gallery 项 { imageStorageId, thumbnailStorageId, uploadedBy: userId, uploadedAt: Date.now() }, unshift 到 gallery 数组头部。"
+          },
+          "queries": { "read": "N/A", "write": "addPlantGalleryImage: 追加到 plants.gallery 头部" },
+          "migration_strategy": "No schema change beyond GAL-001."
+        },
+        "api_layer": {
+          "type": "convex-mutation",
+          "endpoints": ["plants.addPlantGalleryImage"],
+          "notes": "args: { plantId: v.id('plants'), imageStorageId: v.id('_storage'), thumbnailStorageId: v.id('_storage') }。校验: 植物存在且属于当前家庭、未归档、gallery < 20。返回 { ok: true }。"
+        },
+        "component_tree": { "entry_component": "N/A", "children": [], "notes": "纯后端 mutation, 前端在 GAL-015 消费。" },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "N/A", "guard": "N/A", "middleware": "N/A" },
+        "auth": { "provider": "Convex Auth", "strategy": "requireCurrentFamilyMember", "rls_or_rbac": "家庭成员可为本家庭植物添加图片" },
+        "design_contract": {
+          "ui_spec_ref": "N/A",
+          "intent": "提供图集添加能力。",
+          "tokens_new": [],
+          "tokens_reuse": [],
+          "visual_change": "无。",
+          "acceptance": "mutation 可追加图片到 gallery 头部; gallery>=20 时抛出友好错误; 归档植物拒绝添加; 非家庭成员拒绝。"
+        }
+      }
+    },
+    {
+      "task_id": "GAL-003",
+      "description": "实现 removePlantGalleryImage mutation：从 gallery 移除指定照片，级联删除 _storage 中的原图和缩略图。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": ["plants"],
+            "key_fields": { "plants": "_id, familyId, gallery, isArchived" },
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "filter 移除匹配项, ctx.storage.delete 删除原图和缩略图。"
+          },
+          "queries": { "read": "N/A", "write": "removePlantGalleryImage: 移除 gallery 项 + 删除 storage" },
+          "migration_strategy": "No schema change beyond GAL-001."
+        },
+        "api_layer": {
+          "type": "convex-mutation",
+          "endpoints": ["plants.removePlantGalleryImage"],
+          "notes": "args: { plantId: v.id('plants'), imageStorageId: v.id('_storage') }。校验: 植物存在且属于当前家庭、未归档、imageStorageId 存在于 gallery。返回 { ok: true }。"
+        },
+        "component_tree": { "entry_component": "N/A", "children": [], "notes": "纯后端 mutation, 前端在 GAL-014/015 消费。" },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "N/A", "guard": "N/A", "middleware": "N/A" },
+        "auth": { "provider": "Convex Auth", "strategy": "requireCurrentFamilyMember", "rls_or_rbac": "家庭成员可删除本家庭植物图集照片" },
+        "design_contract": {
+          "ui_spec_ref": "N/A",
+          "intent": "提供图集删除能力，供全屏浏览模式调用。",
+          "tokens_new": [],
+          "tokens_reuse": [],
+          "visual_change": "无。",
+          "acceptance": "mutation 可移除指定照片; storage 文件被清理; 不存在的 imageStorageId 抛错; 归档植物拒绝。"
+        }
+      }
+    },
+    {
+      "task_id": "GAL-004",
+      "description": "实现 setPlantCoverFromGallery mutation：将图集中某张照片设为植物封面(更新 plants.imageStorageId)。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": ["plants"],
+            "key_fields": { "plants": "_id, familyId, gallery, imageStorageId" },
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "校验 imageStorageId 存在于 gallery, 然后 patch plants.imageStorageId。"
+          },
+          "queries": { "read": "N/A", "write": "setPlantCoverFromGallery: 更新 plants.imageStorageId" },
+          "migration_strategy": "No schema change beyond GAL-001."
+        },
+        "api_layer": {
+          "type": "convex-mutation",
+          "endpoints": ["plants.setPlantCoverFromGallery"],
+          "notes": "args: { plantId: v.id('plants'), imageStorageId: v.id('_storage') }。校验: 植物存在且属于当前家庭、imageStorageId 在 gallery 中。返回 { ok: true }。"
+        },
+        "component_tree": { "entry_component": "N/A", "children": [], "notes": "纯后端 mutation, 前端在 GAL-014/015 消费。" },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "N/A", "guard": "N/A", "middleware": "N/A" },
+        "auth": { "provider": "Convex Auth", "strategy": "requireCurrentFamilyMember", "rls_or_rbac": "家庭成员可设置本家庭植物封面" },
+        "design_contract": {
+          "ui_spec_ref": "N/A",
+          "intent": "让用户将图集中满意的照片设为植物代表封面。",
+          "tokens_new": [],
+          "tokens_reuse": [],
+          "visual_change": "无直接变化(影响封面展示)。",
+          "acceptance": "mutation 可更新 plants.imageStorageId; 不在 gallery 中的 imageStorageId 抛错; 植物列表和详情页封面随之更新。"
+        }
+      }
+    },
+    {
+      "task_id": "GAL-005",
+      "description": "改造 getPlantDetail query：返回数据新增 gallery 数组(每项含 thumbnailUrl)和 galleryCount。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": ["plants"],
+            "key_fields": { "plants": "_id, gallery" },
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "遍历 plant.gallery ?? [], 对每项 ctx.storage.getUrl(item.thumbnailStorageId) 获取缩略图 URL。"
+          },
+          "queries": { "read": "getPlantDetail 新增 gallery(含 thumbnailUrl) + galleryCount", "write": "N/A" },
+          "migration_strategy": "No schema change. Query output extension only."
+        },
+        "api_layer": {
+          "type": "convex-query",
+          "endpoints": ["plants.getPlantDetail"],
+          "notes": "改造已有 query, 返回结构新增 gallery 和 galleryCount。gallery 每项: imageStorageId/thumbnailStorageId/thumbnailUrl/uploadedBy/uploadedAt。"
+        },
+        "component_tree": { "entry_component": "N/A", "children": [], "notes": "后端改造, 前端在 GAL-015 消费。" },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "N/A", "guard": "N/A", "middleware": "N/A" },
+        "auth": { "provider": "Convex Auth", "strategy": "requireCurrentFamilyMember(已有)", "rls_or_rbac": "familyId 隔离(已有)" },
+        "design_contract": {
+          "ui_spec_ref": "N/A",
+          "intent": "为前端图集 UI 提供数据源。",
+          "tokens_new": [],
+          "tokens_reuse": [],
+          "visual_change": "无。",
+          "acceptance": "有 gallery 的植物返回完整数组含 thumbnailUrl; 无 gallery 的老数据返回空数组+galleryCount=0; 类型检查通过。"
+        }
+      }
+    },
+    {
+      "task_id": "GAL-006",
+      "description": "改造 deletePlant mutation：级联删除时清理 gallery 中所有图片的 _storage 文件(原图+缩略图)。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": ["plants"],
+            "key_fields": { "plants": "_id, gallery" },
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "遍历 plant.gallery, 对每项 ctx.storage.delete(imageStorageId) + ctx.storage.delete(thumbnailStorageId)。"
+          },
+          "queries": { "read": "N/A", "write": "deletePlant 改造: 增加 gallery 图片清理" },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "convex-mutation",
+          "endpoints": ["plants.deletePlant"],
+          "notes": "改造已有 mutation, 在删除植物封面图片逻辑附近新增 gallery 图片批量删除。"
+        },
+        "component_tree": { "entry_component": "N/A", "children": [], "notes": "纯后端逻辑改造。" },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "N/A", "guard": "N/A", "middleware": "N/A" },
+        "auth": { "provider": "Convex Auth", "strategy": "requireCurrentFamilyMember(已有)", "rls_or_rbac": "N/A" },
+        "design_contract": {
+          "ui_spec_ref": "N/A",
+          "intent": "防止删除植物后遗留孤立 storage 文件。",
+          "tokens_new": [],
+          "tokens_reuse": [],
+          "visual_change": "无。",
+          "acceptance": "删除植物后 gallery 中所有原图和缩略图 storage 被清理; 无 gallery 的老植物删除不受影响。"
+        }
+      }
+    },
+    {
+      "task_id": "GAL-007",
+      "description": "实现 addTaskCompletionImage mutation：任务完成后追加附图，同时写入 taskCompletionLogs.imageStorageId 和 plants.gallery(gallery满时仅写log)。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": ["taskCompletionLogs", "plants"],
+            "key_fields": {
+              "taskCompletionLogs": "_id, imageStorageId",
+              "plants": "_id, gallery"
+            },
+            "indexes": [],
+            "relations": "taskCompletionLogs N:1 plants",
+            "notes": "patch log.imageStorageId; 若 gallery<20 则追加到头部。gallery 满时只更新 log。"
+          },
+          "queries": { "read": "N/A", "write": "addTaskCompletionImage: patch log + 可选追加 gallery" },
+          "migration_strategy": "No schema change beyond GAL-001."
+        },
+        "api_layer": {
+          "type": "convex-mutation",
+          "endpoints": ["tasks.addTaskCompletionImage"],
+          "notes": "args: { logId: v.id('taskCompletionLogs'), plantId: v.id('plants'), imageStorageId: v.id('_storage'), thumbnailStorageId: v.id('_storage') }。返回 { ok: true, addedToGallery: boolean }。"
+        },
+        "component_tree": { "entry_component": "N/A", "children": [], "notes": "纯后端 mutation, 前端在 GAL-017 消费。" },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "N/A", "guard": "N/A", "middleware": "N/A" },
+        "auth": { "provider": "Convex Auth", "strategy": "requireCurrentFamilyMember", "rls_or_rbac": "家庭成员可为完成的任务追加附图" },
+        "design_contract": {
+          "ui_spec_ref": "N/A",
+          "intent": "将完成附图同时关联到养护日志和植物图集。",
+          "tokens_new": [],
+          "tokens_reuse": [],
+          "visual_change": "无。",
+          "acceptance": "可写入 log.imageStorageId; gallery 未满时追加并返回 addedToGallery:true; gallery 满时仅写 log 并返回 false; 非家庭成员拒绝。"
+        }
+      }
+    },
+    {
+      "task_id": "GAL-008",
+      "description": "改造 listPlantCompletionLogs query：返回的每条 log 新增 imageStorageId 字段(可选)。",
+      "priority": "2-Medium",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": ["taskCompletionLogs"],
+            "key_fields": { "taskCompletionLogs": "_id, imageStorageId" },
+            "indexes": [],
+            "relations": "N/A",
+            "notes": "每条 log 新增 imageStorageId: log.imageStorageId ?? null。"
+          },
+          "queries": { "read": "listPlantCompletionLogs 新增 imageStorageId", "write": "N/A" },
+          "migration_strategy": "No schema change. Query output extension only."
+        },
+        "api_layer": {
+          "type": "convex-query",
+          "endpoints": ["tasks.listPlantCompletionLogs"],
+          "notes": "改造已有 query, 每条 log 新增 imageStorageId 字段。"
+        },
+        "component_tree": { "entry_component": "N/A", "children": [], "notes": "后端改造, 前端在 GAL-018 消费。" },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "N/A", "guard": "N/A", "middleware": "N/A" },
+        "auth": { "provider": "Convex Auth", "strategy": "requireCurrentFamilyMember(已有)", "rls_or_rbac": "familyId 隔离(已有)" },
+        "design_contract": {
+          "ui_spec_ref": "N/A",
+          "intent": "为养护历史时间线展示附图提供数据。",
+          "tokens_new": [],
+          "tokens_reuse": [],
+          "visual_change": "无。",
+          "acceptance": "有附图的 log 返回 imageStorageId; 无附图的返回 null; 类型检查通过。"
+        }
+      }
+    },
+    {
+      "task_id": "GAL-009",
+      "description": "抽取 compressImage 工具函数：前端 canvas 图片压缩, 输入 File, 输出 { original: Blob, thumbnail: Blob }(缩略图短边200px, JPEG 0.7)。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": { "tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "N/A", "notes": "纯前端工具函数。" },
+          "queries": { "read": "N/A", "write": "N/A" },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": { "type": "none", "endpoints": [], "notes": "纯前端工具函数, 位于 app/src/lib/imageCompression.ts。从 PlantForm.tsx 中 canvas 压缩逻辑抽取复用。" },
+        "component_tree": { "entry_component": "N/A", "children": [], "notes": "工具函数, 供 GAL-015 和 GAL-017 消费。" },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "N/A", "guard": "N/A", "middleware": "N/A" },
+        "auth": { "provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A" },
+        "design_contract": {
+          "ui_spec_ref": "task-breakdown 4.3",
+          "intent": "封装可复用的前端图片压缩逻辑。",
+          "tokens_new": [],
+          "tokens_reuse": [],
+          "visual_change": "无。",
+          "api_contract": {
+            "input": "File",
+            "output": "Promise<{ original: Blob, thumbnail: Blob }>",
+            "options": "{ maxOriginalSizeMB?: number(default 10), thumbnailShortSide?: number(default 200), thumbnailQuality?: number(default 0.7) }",
+            "error_handling": "canvas 异常时降级: thumbnail 复用 original"
+          },
+          "acceptance": "缩略图短边200px, JPEG quality 0.7; 原图超限时压缩; canvas 异常时降级; TypeScript 通过。"
+        }
+      }
+    },
+    {
+      "task_id": "GAL-010",
+      "description": "抽取 uploadImagePair 工具函数：封装双 URL 上传流程(generateUploadUrl x2 -> 上传原图+缩略图 -> 返回两个 storageId)。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": { "tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "N/A", "notes": "纯前端工具函数。" },
+          "queries": { "read": "N/A", "write": "N/A" },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": { "type": "none", "endpoints": [], "notes": "纯前端工具函数, 位于 app/src/lib/imageUpload.ts。内部调用 generatePlantImageUploadUrl mutation。" },
+        "component_tree": { "entry_component": "N/A", "children": [], "notes": "工具函数, 供 GAL-015 和 GAL-017 消费。" },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "N/A", "guard": "N/A", "middleware": "N/A" },
+        "auth": { "provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A" },
+        "design_contract": {
+          "ui_spec_ref": "task-breakdown 4.3",
+          "intent": "封装双图上传流程为一次调用, 减少重复。",
+          "tokens_new": [],
+          "tokens_reuse": [],
+          "visual_change": "无。",
+          "api_contract": {
+            "input": "generateUploadUrl: () => Promise<string>, original: Blob, thumbnail: Blob",
+            "output": "Promise<{ imageStorageId: string, thumbnailStorageId: string }>",
+            "error_handling": "任一上传失败则整体抛出错误, 不做部分重试"
+          },
+          "acceptance": "可成功上传两张图并返回两个 storageId; 网络失败时抛出可捕获错误; TypeScript 通过。"
+        }
+      }
+    },
+    {
+      "task_id": "GAL-011",
+      "description": "前端类型定义补充：domain.ts 新增 GalleryItem 接口(imageStorageId/thumbnailStorageId/thumbnailUrl/uploadedBy/uploadedAt)。",
+      "priority": "2-Medium",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": { "tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "N/A", "notes": "纯前端类型定义。" },
+          "queries": { "read": "N/A", "write": "N/A" },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": { "type": "none", "endpoints": [], "notes": "类型与 GAL-001 后端 schema 对齐。" },
+        "component_tree": { "entry_component": "N/A", "children": [], "notes": "类型文件 app/src/types/domain.ts, 供后续 UI 组件消费。" },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "N/A", "guard": "N/A", "middleware": "N/A" },
+        "auth": { "provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A" },
+        "design_contract": {
+          "ui_spec_ref": "N/A",
+          "intent": "为图集 UI 组件提供类型安全基础。",
+          "tokens_new": [],
+          "tokens_reuse": [],
+          "visual_change": "无。",
+          "acceptance": "TypeScript 编译通过; GalleryItem 接口可被 PlantGalleryStrip/GalleryFullscreenViewer 消费。"
+        }
+      }
+    },
+    {
+      "task_id": "GAL-012",
+      "description": "实现 GalleryAddButton 组件：80x80 虚线边框卡片, 居中 Plus 图标, 支持 disabled 态(opacity 0.4)。",
+      "priority": "2-Medium",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": { "tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "N/A", "notes": "纯前端 UI 组件。" },
+          "queries": { "read": "N/A", "write": "N/A" },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": { "type": "none", "endpoints": [], "notes": "纯展示组件。" },
+        "component_tree": {
+          "entry_component": "GalleryAddButton",
+          "children": [],
+          "notes": "路径 app/src/features/plants/GalleryAddButton.tsx。Props: disabled: boolean, onClick: () => void。"
+        },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "N/A", "guard": "N/A", "middleware": "N/A" },
+        "auth": { "provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A" },
+        "design_contract": {
+          "ui_spec_ref": "task-breakdown 7.1",
+          "intent": "图集区的添加照片入口按钮。",
+          "tokens_new": [],
+          "tokens_reuse": ["--color-line", "--color-muted"],
+          "spec": {
+            "size": "80x80px",
+            "border": "2px dashed var(--color-line)",
+            "border_radius": "8px (--radius-sm)",
+            "icon": "Lucide Plus, 24px, --color-muted",
+            "disabled_opacity": "0.4"
+          },
+          "acceptance": "80x80 虚线方形按钮; 居中 Plus 图标; disabled 态 opacity 0.4 且不可点击; 使用 token 变量。"
+        }
+      }
+    },
+    {
+      "task_id": "GAL-013",
+      "description": "实现 PlantGalleryStrip 组件：横向滚动缩略图区(80x80卡片+间距8px+AddButton+查看全部入口+空状态引导文案+懒加载)。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": { "tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "N/A", "notes": "纯前端 UI 组件。" },
+          "queries": { "read": "N/A", "write": "N/A" },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": { "type": "none", "endpoints": [], "notes": "纯展示组件, 通过 props 接收数据。" },
+        "component_tree": {
+          "entry_component": "PlantGalleryStrip",
+          "children": ["GalleryAddButton"],
+          "notes": "路径 app/src/features/plants/PlantGalleryStrip.tsx。Props: gallery: GalleryItem[], isArchived: boolean, isFull: boolean, onAdd: () => void, onThumbnailPress: (index: number) => void。"
+        },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "N/A", "guard": "N/A", "middleware": "N/A" },
+        "auth": { "provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A" },
+        "design_contract": {
+          "ui_spec_ref": "task-breakdown 7.1",
+          "intent": "植物详情页图集横向滚动展示区。",
+          "tokens_new": [],
+          "tokens_reuse": ["--color-line", "--color-muted", "--color-surface-secondary", "--space-sm", "--space-md", "--radius-sm"],
+          "spec": {
+            "container": "overflow-x: auto, -webkit-scrollbar: none, padding-x: --space-md(16px)",
+            "thumbnail": "80x80px, border-radius: 8px, object-fit: cover",
+            "gap": "8px (--space-sm)",
+            "add_button_position": "最左侧(归档时不展示)",
+            "order": "uploadedAt 降序(最新紧挨+按钮)",
+            "max_visible": "最近10张, 第11位展示'查看全部(N)'",
+            "view_all_card": "80x80, --color-surface-secondary 背景, 居中文字, 12px",
+            "empty_state": "仅+按钮 + 引导文案'记录植物的成长变化'(--color-muted, 14px)",
+            "lazy_load": "IntersectionObserver 进入视口后加载"
+          },
+          "acceptance": "横向滚动展示缩略图; 最新在左; 最多展示10张+查看全部入口; 空状态有引导; 归档时无+按钮; 懒加载; 375px 宽度下可用。"
+        }
+      }
+    },
+    {
+      "task_id": "GAL-014",
+      "description": "实现 GalleryFullscreenViewer 组件：全屏浏览模式(全黑背景+swiper+双指缩放+删除确认+设为封面+预加载+底部日期)。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": { "tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "N/A", "notes": "纯前端 UI 组件。" },
+          "queries": { "read": "N/A", "write": "N/A" },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": { "type": "none", "endpoints": [], "notes": "纯 UI 组件, 通过 callbacks 触发后端操作。" },
+        "component_tree": {
+          "entry_component": "GalleryFullscreenViewer",
+          "children": [],
+          "notes": "路径 app/src/features/plants/GalleryFullscreenViewer.tsx。Props: gallery: GalleryItem[], initialIndex: number, isArchived: boolean, onClose: () => void, onDelete: (imageStorageId: string) => void, onSetCover: (imageStorageId: string) => void。"
+        },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "currentIndex: number, imageUrlCache: Map<string, string>" },
+        "routing": { "path": "N/A", "guard": "N/A", "middleware": "N/A" },
+        "auth": { "provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A" },
+        "design_contract": {
+          "ui_spec_ref": "task-breakdown 7.2",
+          "intent": "图集全屏浏览、管理(删除/设封面)的沉浸式体验。",
+          "tokens_new": [],
+          "tokens_reuse": ["--color-ink", "--color-paper", "--color-muted"],
+          "spec": {
+            "background": "--color-ink (全黑)",
+            "image": "object-fit: contain, touch-action: pinch-zoom",
+            "navigation": "CSS scroll-snap 或 touch-swipe 左右切换",
+            "preload": "当前图前后各1张原图",
+            "top_left": "返回按钮(ChevronLeft, 24px, 白色)",
+            "top_right": "删除按钮(Trash2, 20px, 白色; 归档时隐藏)",
+            "bottom_date": "--color-paper, 14px, 格式'2026年6月15日'",
+            "set_cover": "长按或底部 ActionSheet '设为封面'(归档时隐藏)",
+            "delete_confirm": "ConfirmSheet danger 样式, 文案'删除后无法恢复'",
+            "last_photo_deleted": "自动退出全屏"
+          },
+          "acceptance": "全黑背景图片居中; 左右滑动切换; 双指缩放; 删除需二次确认; 设封面后 toast; 归档无删除/设封面; 删除最后一张自动退出; 预加载前后各1张。"
+        }
+      }
+    },
+    {
+      "task_id": "GAL-015",
+      "description": "PlantDetailPage 集成图集区：插入 PlantGalleryStrip + GalleryFullscreenViewer + 图片上传流程(选图->压缩->双URL上传->addPlantGalleryImage)。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": { "tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "N/A", "notes": "消费 getPlantDetail 返回的 gallery 数据。" },
+          "queries": {
+            "read": "useQuery(api.plants.getPlantDetail) 中的 gallery/galleryCount",
+            "write": "useMutation(api.plants.addPlantGalleryImage), useMutation(api.plants.removePlantGalleryImage), useMutation(api.plants.setPlantCoverFromGallery), useMutation(api.plants.generatePlantImageUploadUrl)"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": { "type": "none", "endpoints": [], "notes": "消费已有 query/mutation, 不新增接口。" },
+        "component_tree": {
+          "entry_component": "PlantDetailPage",
+          "children": ["PlantGalleryStrip", "GalleryFullscreenViewer"],
+          "notes": "在 Hero 区下方、养护计划区上方插入图集区。集成: (1) PlantGalleryStrip 展示 (2) 点击+触发文件选择 (3) compressImage+uploadImagePair+addPlantGalleryImage (4) 点击缩略图打开 GalleryFullscreenViewer (5) 全屏删除/设封面回调。"
+        },
+        "state_management": { "global_store": "N/A", "server_state": "useQuery(api.plants.getPlantDetail)", "local_state": "isUploading: boolean, isFullscreenOpen: boolean, fullscreenInitialIndex: number" },
+        "routing": { "path": "/plants/:plantId", "guard": "authenticated family members", "middleware": "inside app shell" },
+        "auth": { "provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A" },
+        "design_contract": {
+          "ui_spec_ref": "task-breakdown 7.1, 7.2",
+          "intent": "将图集 UI 完整集成到植物详情页, 形成拍照->浏览->管理的闭环。",
+          "tokens_new": [],
+          "tokens_reuse": ["--space-md", "--space-lg"],
+          "spec": {
+            "position": "Hero 区下方, 养护计划区上方",
+            "upload_flow": "input[type=file] accept=image/* -> compressImage -> uploadImagePair -> addPlantGalleryImage",
+            "file_size_check": "File.size > 10MB 时阻止并 toast '图片过大'",
+            "uploading_state": "+按钮显示 spinner, 禁用重复点击",
+            "concurrent_prevention": "uploading flag 防止快速连续点击"
+          },
+          "acceptance": "Hero 下方展示图集区; 点击+可选图上传; 上传成功图片出现在最左; 点击缩略图进入全屏; 全屏中可删除/设封面; 上传中禁用重复操作; 10MB 预检; 375px 下布局正常。"
+        }
+      }
+    },
+    {
+      "task_id": "GAL-016",
+      "description": "实现 TaskCompletionPhotoPrompt 组件：完成任务后的附图浮层入口(pill形状, 底部slide-up, 3秒后fade-out, 不阻塞操作)。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": { "tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "N/A", "notes": "纯前端 UI 组件。" },
+          "queries": { "read": "N/A", "write": "N/A" },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": { "type": "none", "endpoints": [], "notes": "纯展示组件。" },
+        "component_tree": {
+          "entry_component": "TaskCompletionPhotoPrompt",
+          "children": [],
+          "notes": "路径 app/src/features/tasks/TaskCompletionPhotoPrompt.tsx。Props: visible: boolean, onCapture: () => void, onDismiss: () => void。"
+        },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "内部 useEffect 3秒定时器控制 fade-out" },
+        "routing": { "path": "N/A", "guard": "N/A", "middleware": "N/A" },
+        "auth": { "provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A" },
+        "design_contract": {
+          "ui_spec_ref": "task-breakdown 7.3",
+          "intent": "轻量非阻塞的附图引导入口。",
+          "tokens_new": [],
+          "tokens_reuse": ["--color-surface", "--color-ink", "--color-leaf", "--shadow-card"],
+          "spec": {
+            "shape": "pill (height 40px, border-radius 20px)",
+            "background": "--color-surface",
+            "shadow": "--shadow-card",
+            "content": "Camera 图标(16px, --color-leaf) + '记录一下?'(--color-ink, 14px)",
+            "position": "底部导航栏上方 16px 居中",
+            "animation_in": "slide-up + opacity 0->1 (200ms ease-out)",
+            "animation_out": "fade-out 300ms (3秒后触发)",
+            "z_index": "适中, 不遮挡底部导航",
+            "reduced_motion": "即时出现/消失"
+          },
+          "acceptance": "visible 时 slide-up 出现; 3秒后 fade-out; 点击触发 onCapture; 不阻塞其他操作; 使用 token; 尊重 reduced-motion。"
+        }
+      }
+    },
+    {
+      "task_id": "GAL-017",
+      "description": "任务完成流程集成附图入口：success 动画后显示 TaskCompletionPhotoPrompt, 点击后选图->压缩->上传->addTaskCompletionImage。",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": { "tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "N/A", "notes": "消费 GAL-007 的 addTaskCompletionImage mutation。" },
+          "queries": {
+            "read": "N/A",
+            "write": "useMutation(api.tasks.addTaskCompletionImage), useMutation(api.plants.generatePlantImageUploadUrl)"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": { "type": "none", "endpoints": [], "notes": "消费已有 mutation。" },
+        "component_tree": {
+          "entry_component": "TodoPage (或任务完成相关组件)",
+          "children": ["TaskCompletionPhotoPrompt"],
+          "notes": "在 completePlantTask 成功回调中: (1) 播放 success 动画 (2) 设置 showPhotoPrompt=true (3) 用户点击后触发 input[type=file] (4) compressImage+uploadImagePair+addTaskCompletionImage (5) 上传失败 toast 不影响任务完成。"
+        },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "showPhotoPrompt: boolean, lastCompletedLogId: string, lastCompletedPlantId: string, isPhotoUploading: boolean" },
+        "routing": { "path": "/todo", "guard": "authenticated family members", "middleware": "inside app shell" },
+        "auth": { "provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A" },
+        "design_contract": {
+          "ui_spec_ref": "task-breakdown 1.4, 7.3",
+          "intent": "将附图能力无缝嵌入任务完成流程, 不阻塞核心路径。",
+          "tokens_new": [],
+          "tokens_reuse": [],
+          "spec": {
+            "trigger": "completePlantTask 成功后 success 动画结束时",
+            "flow": "显示 prompt -> 用户点击 -> 选图 -> 压缩 -> 上传 -> addTaskCompletionImage",
+            "failure_handling": "上传失败 toast '照片保存失败', 任务完成不受影响",
+            "gallery_full_toast": "图集已满时 toast '图集已满, 照片仅记录在养护日志中'"
+          },
+          "acceptance": "完成任务后 prompt 出现; 点击可选图上传; 照片写入 log 和 gallery; 上传失败不影响任务; gallery 满时 toast 提示; 不点击不影响流程。"
+        }
+      }
+    },
+    {
+      "task_id": "GAL-018",
+      "description": "CareHistoryTimeline 展示附图缩略图：有 imageStorageId 的完成日志条目展示小图标/缩略图。",
+      "priority": "2-Medium",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": { "tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "N/A", "notes": "消费 GAL-008 返回的 imageStorageId 字段。" },
+          "queries": { "read": "listPlantCompletionLogs 中的 imageStorageId", "write": "N/A" },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": { "type": "none", "endpoints": [], "notes": "消费已有 query 数据。" },
+        "component_tree": {
+          "entry_component": "CareHistoryTimeline",
+          "children": [],
+          "notes": "路径 app/src/features/plants/CareHistoryTimeline.tsx。在已有时间线条目中, 若 log.imageStorageId 存在, 展示一个小缩略图(如 32x32 或 camera 图标标识)。"
+        },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "/plants/:plantId", "guard": "authenticated family members", "middleware": "inside app shell" },
+        "auth": { "provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A" },
+        "design_contract": {
+          "ui_spec_ref": "task-breakdown 4.2",
+          "intent": "在养护历史中展示附图标识, 让时间线更生动。",
+          "tokens_new": [],
+          "tokens_reuse": ["--color-muted", "--radius-sm"],
+          "spec": {
+            "indicator": "有附图的条目展示 camera 小图标(16px, --color-muted) 或 32x32 圆角缩略图",
+            "click_action": "可选: 点击缩略图打开全屏浏览(对应该张图片)"
+          },
+          "acceptance": "有附图的日志条目展示视觉标识; 无附图的不受影响; 布局不被撑乱; 375px 可用。"
+        }
+      }
+    }
+  ],
+  "dependency_graph": [
+    { "from": "GAL-002", "to": "GAL-001", "reason": "addPlantGalleryImage 依赖 gallery schema 字段存在。" },
+    { "from": "GAL-003", "to": "GAL-001", "reason": "removePlantGalleryImage 依赖 gallery schema 字段存在。" },
+    { "from": "GAL-004", "to": "GAL-001", "reason": "setPlantCoverFromGallery 依赖 gallery schema 字段存在。" },
+    { "from": "GAL-005", "to": "GAL-001", "reason": "getPlantDetail 返回 gallery 依赖 schema 字段存在。" },
+    { "from": "GAL-006", "to": "GAL-001", "reason": "deletePlant 级联清理 gallery 依赖 schema 字段存在。" },
+    { "from": "GAL-007", "to": "GAL-001", "reason": "addTaskCompletionImage 依赖两个 schema 新字段。" },
+    { "from": "GAL-008", "to": "GAL-001", "reason": "listPlantCompletionLogs 返回 imageStorageId 依赖 schema 字段。" },
+    { "from": "GAL-013", "to": "GAL-011", "reason": "PlantGalleryStrip 消费 GalleryItem 类型。" },
+    { "from": "GAL-013", "to": "GAL-012", "reason": "PlantGalleryStrip 内嵌 GalleryAddButton 组件。" },
+    { "from": "GAL-014", "to": "GAL-011", "reason": "GalleryFullscreenViewer 消费 GalleryItem 类型。" },
+    { "from": "GAL-015", "to": "GAL-005", "reason": "PlantDetailPage 集成需要 getPlantDetail 返回 gallery 数据。" },
+    { "from": "GAL-015", "to": "GAL-009", "reason": "上传流程依赖 compressImage 工具函数。" },
+    { "from": "GAL-015", "to": "GAL-010", "reason": "上传流程依赖 uploadImagePair 工具函数。" },
+    { "from": "GAL-015", "to": "GAL-013", "reason": "PlantDetailPage 渲染 PlantGalleryStrip 组件。" },
+    { "from": "GAL-015", "to": "GAL-014", "reason": "PlantDetailPage 渲染 GalleryFullscreenViewer 组件。" },
+    { "from": "GAL-017", "to": "GAL-007", "reason": "附图上传调用 addTaskCompletionImage mutation。" },
+    { "from": "GAL-017", "to": "GAL-009", "reason": "附图流程依赖 compressImage 工具函数。" },
+    { "from": "GAL-017", "to": "GAL-010", "reason": "附图流程依赖 uploadImagePair 工具函数。" },
+    { "from": "GAL-017", "to": "GAL-016", "reason": "集成依赖 TaskCompletionPhotoPrompt 组件。" },
+    { "from": "GAL-018", "to": "GAL-008", "reason": "时间线展示附图依赖 listPlantCompletionLogs 返回 imageStorageId。" }
+  ]
+}

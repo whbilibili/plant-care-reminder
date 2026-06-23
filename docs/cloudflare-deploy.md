@@ -21,9 +21,32 @@
 
 Team: `honghong`，Project: `plant-care-reminder`
 
+## 多环境策略
+
+项目采用 **双分支 + 双 Convex Deployment** 的轻量多环境方案：
+
+| 环境 | Git 分支 | Cloudflare Pages | Convex Deployment | 用途 |
+|------|---------|------------------|-------------------|------|
+| Production | `main` | 主域名（自动部署） | `unique-elk-370` | 生产环境，稳定可用 |
+| Preview | `dev` 或 feature 分支 | Preview URL（`<hash>.plant-care-reminder.pages.dev`） | `grandiose-ram-459` | 新功能测试、PWA/Push 验证 |
+
+### 环境隔离原则
+
+- Preview 前端连接 Dev Convex，数据与生产完全隔离
+- 同一套代码、同一套构建流程，只有环境变量不同
+- Preview URL 支持 HTTPS，可真实验证 Service Worker 和 Push 通知
+
+### 分支约定
+
+- `main`：生产就绪代码，推送即自动部署到生产
+- `dev`：稳定测试分支，推送后自动生成 Preview 部署
+- `feature/*`：功能开发分支，推送后也会生成独立 Preview 部署
+
 ## 日常部署（推荐）
 
-项目已接入 Cloudflare Pages 的 Git 集成，推送代码到远程仓库即可自动触发前端构建和发布。日常改动按以下步骤操作：
+项目已接入 Cloudflare Pages 的 Git 集成，推送代码到远程仓库即可自动触发前端构建和发布。
+
+### 生产部署（main 分支）
 
 ```bash
 # 1. 如果有 Convex 后端改动（schema / functions），先部署后端
@@ -34,10 +57,30 @@ git add <files>
 git commit -m "fix: 描述改动"
 
 # 3. 推送到远程，自动触发 Cloudflare Pages 部署
-git push
+git push origin main
 ```
 
 纯前端改动（组件、样式、文案等）只需步骤 2-3，跳过 Convex deploy。
+
+### Preview 部署（dev / feature 分支）
+
+```bash
+# 1. 切到 dev 分支（或 feature 分支）
+git checkout dev
+
+# 2. 如果有后端改动，先部署到 Dev Convex（注意不是 prod）
+cd app && npx convex dev --once
+
+# 3. 提交并推送，自动生成 Preview URL
+git add <files>
+git commit -m "feat: 描述改动"
+git push origin dev
+
+# 4. 在 Cloudflare Pages Dashboard 或 GitHub 评论中找到 Preview URL
+# 格式：https://<hash>.plant-care-reminder.pages.dev
+```
+
+验证通过后，将 dev 合并到 main 即可上线生产。
 
 ## 部署步骤（手动上传方式）
 
@@ -91,15 +134,20 @@ npx wrangler pages deploy app/dist --project-name=plant-care-reminder
 
 ### 前端构建时（VITE_ 前缀，注入客户端）
 
-| 变量 | 说明 | Prod 值 |
-|---|---|---|
-| `VITE_CONVEX_URL` | Convex 实时 API 端点 | `https://unique-elk-370.convex.cloud` |
+| 变量 | 说明 | Production 值 | Preview 值 |
+|---|---|---|---|
+| `VITE_CONVEX_URL` | Convex 实时 API 端点 | `https://unique-elk-370.convex.cloud` | `https://grandiose-ram-459.convex.cloud` |
+| `VITE_CONVEX_SITE_URL` | Convex HTTP 端点 | `https://unique-elk-370.convex.site` | `https://grandiose-ram-459.convex.site` |
+| `VITE_VAPID_PUBLIC_KEY` | Web Push VAPID 公钥 | 相同值 | 相同值 |
 
 ### Convex Dashboard 环境变量（服务端）
 
-| 变量 | 说明 | 值 |
+| 变量 | Deployment | 值 |
 |---|---|---|
-| `SITE_URL` | 前端部署的实际访问 URL | Cloudflare Pages 分配的域名 |
+| `SITE_URL` | Prod (`unique-elk-370`) | Cloudflare Pages 主域名 |
+| `SITE_URL` | Dev (`grandiose-ram-459`) | Preview 部署的 URL（见下方说明） |
+
+> ⚠️ Dev Deployment 的 `SITE_URL` 设置为 `https://dev.plant-care-reminder.pages.dev`（Cloudflare Pages 的分支别名），这样所有从 `dev` 分支触发的 Preview 部署都能通过此固定 URL 访问。
 
 ## 常见问题
 

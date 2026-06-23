@@ -50,6 +50,22 @@
   - P0 功能规格：植物分组与房间筛选——数据流设计、后端微调（listDueTasks 补 plantLocation）、组件契约（SegmentedControl/PlantGroupView/RoomFilterChips/LocationAutocomplete）、10 个任务拆分（GRP-001~010）含依赖拓扑与执行顺序
 - [2026-06-17-iteration-backlog-outline.md](./2026-06-17-iteration-backlog-outline.md)
   - 迭代需求储备大纲：P1（多图上传/任务灵活性/数据导出）和 P2（植物知识卡片/季节性建议/协作增强）六个方向的初步方案记录
+- [2026-06-23-plant-knowledge-card-spec.md](./2026-06-23-plant-knowledge-card-spec.md)
+  - P2 PRD：植物知识卡片——预置 80 种常见绿植品种知识库、创建植物时品种匹配与养护参数推荐、详情页可折叠知识卡片（浇水/光照/施肥/当季要点）、前端静态 JSON 方案（D1~D6 已拍板决策）
+- [2026-06-23-seasonal-care-advice-spec.md](./2026-06-23-seasonal-care-advice-spec.md)
+  - P2 PRD：季节性养护建议——待办页季节横幅（换季提醒+常规提示）、换季调整建议面板、详情页当季要点联动品种库、纯前端实现无后端变更（D1~D6 已拍板决策）
+- [2026-06-23-family-collaboration-enhancement-spec.md](./2026-06-23-family-collaboration-enhancement-spec.md)
+  - P2 PRD：家庭协作增强——任务指派（负责人选择器）、精准推送（只推负责人）、完成通知（应用内通知中心）、逾期补位提醒、notifications 新表、待办页筛选标签（D1~D8 已拍板决策）
+- [2026-06-22-multi-image-gallery-spec.md](./2026-06-22-multi-image-gallery-spec.md)
+  - P1 PRD：多图上传与养护图集——植物详情页图集区（横向滚动/全屏浏览/设为封面）、任务完成附图、前端压缩缩略图策略、gallery 内嵌 plants 文档方案（D1~D6 已拍板决策）
+- [2026-06-22-multi-image-gallery-task-breakdown.md](./2026-06-22-multi-image-gallery-task-breakdown.md)
+  - P1 功能规格：多图上传与养护图集——数据流设计、Schema 变更（plants.gallery + taskCompletionLogs.imageStorageId）、后端 4 个新 mutation 契约、前端组件契约（PlantGalleryStrip/GalleryFullscreenViewer/TaskCompletionPhotoPrompt）、图片压缩工具抽取、18 个任务拆分（GAL-001~018）含依赖拓扑与执行顺序
+- [2026-06-22-care-task-flexibility-spec.md](./2026-06-22-care-task-flexibility-spec.md)
+  - P1 PRD：养护任务灵活性——排期模式三选一（固定间隔/每周几/季节性调整）、固定类型任务唯一性约束、schema 向后兼容扩展（scheduleMode/weeklyDays/seasonalIntervals）、计算函数新增（D1~D7 已拍板决策）
+- [2026-06-22-care-task-flexibility-task-breakdown.md](./2026-06-22-care-task-flexibility-task-breakdown.md)
+  - P1 功能规格：养护任务灵活性——数据流设计、Schema 变更（plantTaskFields 三字段扩展）、后端 6 个接口改造契约（createPlantTask 唯一性校验+排期分支/updatePlantTask 模式切换/completeTaskCore 分支计算）、前端组件契约（ScheduleModeSelector/WeeklyDaysPicker/SeasonalIntervalsInput）、计算函数新增（computeNextWeeklyDueAt/computeNextSeasonalDueAt）、21 个任务拆分（FLEX-001~021）含依赖拓扑与执行顺序
+- [2026-06-22-data-export-spec.md](./2026-06-22-data-export-spec.md)
+  - P1 PRD：数据导出——CSV 养护日志导出（Excel 友好）+ JSON 全量备份、Convex action 生成文件、隐私合规（不含个人身份信息）、24h 自动清理（D1~D7 已拍板决策）
 
 ## 约定
 

@@ -7,11 +7,15 @@ import { getCurrentUserContext as loadCurrentUserContext } from "./lib/auth";
 import { plantTaskTypeValidator } from "./lib/validators";
 import {
   bucketDueTasks,
-  computeNextDueAt,
+  computeNextDueAtByMode,
   computePostponedNextDueAt,
   validateIntervalDays,
+  validateWeeklyDays,
+  validateSeasonalIntervals,
+  type ScheduleMode,
 } from "../src/features/tasks/scheduling";
 import {
+  formatTaskTypeLabel,
   normalizeCustomTaskName,
   validateCustomTaskName,
 } from "../src/features/tasks/taskTypes";
@@ -54,11 +58,22 @@ export const getTaskCreationPlant = query({
 
     const imageUrl = plant.imageStorageId ? await ctx.storage.getUrl(plant.imageStorageId) : null;
 
+    // FLEX-007: 查询当前植物已启用的非自定义任务类型列表（用于前端 uniqueness 提示）。
+    const existingTasks = await ctx.db
+      .query("plantTasks")
+      .withIndex("by_plantId", (q) => q.eq("plantId", args.plantId))
+      .collect();
+
+    const existingEnabledTypes = existingTasks
+      .filter((t) => (t.enabled ?? true) && t.taskType !== "custom")
+      .map((t) => t.taskType);
+
     return {
       plantId: plant._id,
       plantName: plant.name,
       location: plant.location ?? null,
       imageUrl,
+      existingEnabledTypes,
     };
   },
 });
@@ -70,6 +85,14 @@ export const createPlantTask = mutation({
     customTaskName: v.union(v.string(), v.null()),
     intervalDays: v.number(),
     baseCompletedAt: v.union(v.number(), v.null()),
+    // FLEX-004: 灵活排期参数
+    scheduleMode: v.optional(
+      v.union(v.literal("interval"), v.literal("weekly"), v.literal("seasonal")),
+    ),
+    weeklyDays: v.optional(v.array(v.number())),
+    seasonalIntervals: v.optional(
+      v.object({ springSummer: v.number(), autumnWinter: v.number() }),
+    ),
   },
   handler: async (ctx, args) => {
     const currentUserContext = await requireCurrentFamilyMember(ctx);
@@ -93,6 +116,44 @@ export const createPlantTask = mutation({
       throw new Error(intervalError);
     }
 
+    const mode: ScheduleMode = args.scheduleMode ?? "interval";
+
+    // FLEX-004: 校验 weekly/seasonal 模式参数
+    if (mode === "weekly") {
+      const weeklyError = validateWeeklyDays(args.weeklyDays ?? []);
+      if (weeklyError) {
+        throw new Error(weeklyError);
+      }
+    }
+    if (mode === "seasonal") {
+      if (!args.seasonalIntervals) {
+        throw new Error("季节模式必须指定春夏和秋冬间隔。");
+      }
+      const seasonalError = validateSeasonalIntervals(args.seasonalIntervals);
+      if (seasonalError) {
+        throw new Error(seasonalError);
+      }
+    }
+
+    // FLEX-004: 固定类型唯一性检查（非 custom 类型，同 plantId 下不能有另一个 enabled 同类型任务）
+    if (args.taskType !== "custom") {
+      const existingTasks = await ctx.db
+        .query("plantTasks")
+        .withIndex("by_plantId", (q) => q.eq("plantId", plant._id))
+        .collect();
+      const hasDuplicate = existingTasks.some(
+        (t) => t.taskType === args.taskType && (t.enabled ?? true),
+      );
+      if (hasDuplicate) {
+        throw new Error(`这盆植物已经有一个启用中的「${formatTaskTypeLabel(args.taskType)}」任务，不能重复创建。`);
+      }
+    }
+
+    // 准备 weeklyDays 去重排序
+    const sortedWeeklyDays = args.weeklyDays
+      ? [...new Set(args.weeklyDays)].sort((a, b) => a - b)
+      : undefined;
+
     const createdAt = Date.now();
     const taskId = await ctx.db.insert("plantTasks", {
       plantId: plant._id,
@@ -102,11 +163,17 @@ export const createPlantTask = mutation({
       intervalDays: args.intervalDays,
       enabled: true,
       lastCompletedAt: args.baseCompletedAt ?? undefined,
-      nextDueAt: computeNextDueAt({
+      nextDueAt: computeNextDueAtByMode({
+        scheduleMode: mode,
         intervalDays: args.intervalDays,
-        baseCompletedAt: args.baseCompletedAt,
+        weeklyDays: sortedWeeklyDays,
+        seasonalIntervals: args.seasonalIntervals,
+        completedAt: args.baseCompletedAt,
         now: createdAt,
       }),
+      scheduleMode: mode,
+      weeklyDays: sortedWeeklyDays,
+      seasonalIntervals: args.seasonalIntervals,
       createdBy: currentUserContext.userId,
       createdAt,
       updatedAt: createdAt,
@@ -151,6 +218,10 @@ export const getTaskForEdit = query({
         intervalDays: task.intervalDays,
         enabled: task.enabled,
         lastCompletedAt: task.lastCompletedAt ?? null,
+        // FLEX-006: 返回排期模式字段
+        scheduleMode: (task.scheduleMode ?? "interval") as ScheduleMode,
+        weeklyDays: task.weeklyDays ?? null,
+        seasonalIntervals: task.seasonalIntervals ?? null,
       },
     };
   },
@@ -163,6 +234,13 @@ export const updatePlantTask = mutation({
     customTaskName: v.union(v.string(), v.null()),
     intervalDays: v.number(),
     enabled: v.boolean(),
+    // FLEX-005: 排期模式可选参数
+    scheduleMode: v.optional(v.union(v.literal("interval"), v.literal("weekly"), v.literal("seasonal"))),
+    weeklyDays: v.optional(v.array(v.number())),
+    seasonalIntervals: v.optional(v.object({
+      springSummer: v.number(),
+      autumnWinter: v.number(),
+    })),
   },
   handler: async (ctx, args) => {
     const currentUserContext = await requireCurrentFamilyMember(ctx);
@@ -187,16 +265,53 @@ export const updatePlantTask = mutation({
       throw new Error(intervalError);
     }
 
+    // FLEX-005: 确定目标模式（默认保留原模式或 interval）
+    const mode: ScheduleMode = args.scheduleMode ?? (task.scheduleMode as ScheduleMode) ?? "interval";
+
+    // FLEX-005: 校验 weekly/seasonal 模式参数
+    if (mode === "weekly") {
+      const weeklyError = validateWeeklyDays(args.weeklyDays ?? task.weeklyDays ?? []);
+      if (weeklyError) {
+        throw new Error(weeklyError);
+      }
+    }
+    if (mode === "seasonal") {
+      const seasonalData = args.seasonalIntervals ?? task.seasonalIntervals;
+      if (!seasonalData) {
+        throw new Error("季节模式必须指定春夏和秋冬间隔。");
+      }
+      const seasonalError = validateSeasonalIntervals(seasonalData);
+      if (seasonalError) {
+        throw new Error(seasonalError);
+      }
+    }
+
+    // FLEX-005: 模式切换时清理不相关字段
+    const sortedWeeklyDays = mode === "weekly"
+      ? [...new Set(args.weeklyDays ?? task.weeklyDays ?? [])].sort((a, b) => a - b)
+      : undefined;
+    const seasonalIntervals = mode === "seasonal"
+      ? (args.seasonalIntervals ?? task.seasonalIntervals)
+      : undefined;
+
+    const now = Date.now();
     await ctx.db.patch(args.taskId, {
       taskType: args.taskType,
       customLabel: normalizeCustomTaskName(args.customTaskName) ?? undefined,
       intervalDays: args.intervalDays,
       enabled: args.enabled,
-      nextDueAt: computeNextDueAt({
+      scheduleMode: mode,
+      weeklyDays: sortedWeeklyDays,
+      seasonalIntervals: seasonalIntervals,
+      nextDueAt: computeNextDueAtByMode({
+        scheduleMode: mode,
         intervalDays: args.intervalDays,
-        baseCompletedAt: task.lastCompletedAt ?? null,
+        weeklyDays: sortedWeeklyDays,
+        seasonalIntervals: seasonalIntervals,
+        completedAt: task.lastCompletedAt ?? null,
+        now,
       }),
-      updatedAt: Date.now(),
+      updatedAt: now,
     });
 
     return {
@@ -288,6 +403,10 @@ export const listDueTasks = query({
           nextDueAt: task.nextDueAt,
           lastCompletedAt: task.lastCompletedAt ?? null,
           consecutivePostponeCount: task.consecutivePostponeCount ?? 0,
+          // FLEX-006: 返回排期模式字段供前端展示
+          scheduleMode: (task.scheduleMode ?? "interval") as ScheduleMode,
+          weeklyDays: task.weeklyDays ?? null,
+          seasonalIntervals: task.seasonalIntervals ?? null,
         };
       })
       .filter((task): task is NonNullable<typeof task> => task !== null);
@@ -310,9 +429,14 @@ async function completeTaskCore(
   },
 ) {
   const { task, userId, completedAt } = params;
-  const nextDueAt = computeNextDueAt({
+  // FLEX-006: 使用多模式调度计算下次到期时间
+  const nextDueAt = computeNextDueAtByMode({
+    scheduleMode: (task.scheduleMode as ScheduleMode) ?? "interval",
     intervalDays: task.intervalDays,
-    baseCompletedAt: completedAt,
+    weeklyDays: task.weeklyDays,
+    seasonalIntervals: task.seasonalIntervals,
+    completedAt,
+    now: completedAt,
   });
 
   // 完成前的快照，供前端缓存以支持「会话内 3–5 秒撤销」（PRD §9.1）。
@@ -492,6 +616,56 @@ export const postponePlantTask = mutation({
   },
 });
 
+// ─── 任务完成附图 mutation（GAL-007）────────────────────
+
+export const addTaskCompletionImage = mutation({
+  args: {
+    logId: v.id("taskCompletionLogs"),
+    plantId: v.id("plants"),
+    imageStorageId: v.id("_storage"),
+    thumbnailStorageId: v.id("_storage"),
+  },
+  handler: async (ctx, args) => {
+    const currentUserContext = await requireCurrentFamilyMember(ctx);
+
+    // 校验 log 归属
+    const log = await ctx.db.get(args.logId);
+    if (!log || log.familyId !== currentUserContext.familyId) {
+      throw new Error("This completion log does not belong to your current household.");
+    }
+
+    // 校验植物归属
+    const plant = await ctx.db.get(args.plantId);
+    if (!plant || plant.familyId !== currentUserContext.familyId) {
+      throw new Error("This plant does not belong to your current household.");
+    }
+
+    // 写入 log.imageStorageId
+    await ctx.db.patch(args.logId, {
+      imageStorageId: args.imageStorageId,
+    });
+
+    // 尝试追加到 gallery（满时跳过）
+    const gallery = plant.gallery ?? [];
+    let addedToGallery = false;
+    if (gallery.length < 20) {
+      const newItem = {
+        imageStorageId: args.imageStorageId,
+        thumbnailStorageId: args.thumbnailStorageId,
+        uploadedBy: currentUserContext.userId,
+        uploadedAt: Date.now(),
+      };
+      await ctx.db.patch(args.plantId, {
+        gallery: [newItem, ...gallery],
+        updatedAt: Date.now(),
+      });
+      addedToGallery = true;
+    }
+
+    return { ok: true as const, addedToGallery };
+  },
+});
+
 // ─── 养护历史时间线 queries（CARE-HIST-001）────────────────────
 
 /**
@@ -555,6 +729,8 @@ export const listPlantCompletionLogs = query({
         completedByName: userInfo.displayName,
         completedByImageStorageId: userInfo.imageStorageId,
         completedAt: log.completedAt,
+        // GAL-008: 返回附图 storageId（可选）
+        imageStorageId: log.imageStorageId ?? null,
       };
     });
 

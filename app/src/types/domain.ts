@@ -1,4 +1,7 @@
 import { careTaskTypeValues } from "../features/tasks/taskTypes";
+import type { ScheduleMode, SeasonalIntervals } from "../features/tasks/scheduling";
+
+export type { ScheduleMode, SeasonalIntervals };
 
 export const familyRoleValues = ["owner", "admin", "member"] as const;
 export type FamilyRole = (typeof familyRoleValues)[number];
@@ -69,6 +72,10 @@ export interface PlantTask {
   createdBy: UserId;
   createdAt: TimestampMs;
   updatedAt: TimestampMs;
+  // FLEX-008: 排期模式字段
+  scheduleMode: ScheduleMode;
+  weeklyDays: number[] | null;
+  seasonalIntervals: SeasonalIntervals | null;
 }
 
 export interface TaskCompletionLog {
@@ -93,6 +100,18 @@ export interface PushSubscriptionRecord {
   userAgent: string | null;
   lastSeenAt: TimestampMs;
   createdAt: TimestampMs;
+}
+
+// ─── 多图图集（GAL-011）─────────────────────────────────────
+
+/** 图集单项数据（getPlantDetail 返回 gallery 数组的单项）。 */
+export interface GalleryItem {
+  imageStorageId: StorageId;
+  thumbnailStorageId: StorageId;
+  thumbnailUrl: string | null;
+  uploadedBy: UserId;
+  uploadedAt: TimestampMs;
+  caption?: string;
 }
 
 // ─── 推送时间偏好（PUSH-008）─────────────────────────────────

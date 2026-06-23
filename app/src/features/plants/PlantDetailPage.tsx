@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import {
   Pencil,
@@ -26,20 +26,28 @@ import { GroupedSurface, GroupedSurfaceDivider } from "../../components/ui/Group
 import { TaskActionRow } from "../../components/ui/TaskActionRow";
 import { StorageImage } from "../../components/ui/StorageImage";
 import { Icon } from "../../components/ui/Icon";
+import { showToast } from "../../components/ui/GlobalToast";
 import { PlantManagementSection } from "./PlantManagementSection";
 import { CareHistorySection } from "./CareHistorySection";
 import { ImagePreviewOverlay } from "./ImagePreviewOverlay";
+import { PlantGalleryStrip } from "./PlantGalleryStrip";
+import { GalleryFullscreenViewer } from "./GalleryFullscreenViewer";
 import { UndoToast } from "../tasks/UndoToast";
 import type { CompletionUndoPayload } from "../tasks/undoComplete";
 import { buildUndoPayload } from "../tasks/undoComplete";
 import {
   formatTaskTypeLabel,
   getTaskTypeIcon,
-  type CareTaskType,
 } from "../tasks/taskTypes";
 import { taskTypeColorVar } from "../tasks/TaskTypeBadge";
 import { getUtcDayStart, computeCompletedToday } from "../tasks/scheduling";
-import { prefersReducedMotion, triggerHaptic } from "../../lib/motion";
+import { formatScheduleDescription } from "../../lib/formatters";
+import type { ScheduleMode, SeasonalIntervals } from "../../types/domain";
+import { triggerHaptic } from "../../lib/motion";
+import { compressImage } from "../../lib/imageCompression";
+import { uploadImagePair } from "../../lib/imageUpload";
+import { normalizeImageFile } from "./normalizeImageFile";
+import type { GalleryItem } from "../../types/domain";
 
 interface PlantDetailPageProps {
   plantId: string | null;
@@ -68,7 +76,13 @@ interface PlantDetailResponse {
     lastCompletedAt: number | null;
     nextDueAt: number;
     taskType: "watering" | "fertilizing" | "misting" | "repotting" | "pruning" | "custom";
+    // FLEX-013: 排期模式字段
+    scheduleMode?: ScheduleMode;
+    weeklyDays?: number[] | null;
+    seasonalIntervals?: SeasonalIntervals | null;
   }>;
+  gallery: GalleryItem[];
+  galleryCount: number;
 }
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -90,13 +104,18 @@ const PLAN_PREVIEW_COUNT = 2;
 export function PlantDetailPage({ plantId }: PlantDetailPageProps) {
   const result = useQuery(
     api.plants.getPlantDetail,
-    plantId ? { plantId: plantId as Id<"plants"> } : "skip",
+    plantId ? { plantId } : "skip",
   ) as
     | PlantDetailResponse
     | null
     | undefined;
   const completeTask = useMutation(api.tasks.completePlantTask);
   const undoComplete = useMutation(api.tasks.undoCompletePlantTask);
+  const addGalleryImage = useMutation(api.plants.addPlantGalleryImage);
+  const removeGalleryImage = useMutation(api.plants.removePlantGalleryImage);
+  const setCoverFromGallery = useMutation(api.plants.setPlantCoverFromGallery);
+  const updateGalleryCaption = useMutation(api.plants.updateGalleryCaption);
+  const generateUploadUrl = useMutation(api.plants.generatePlantImageUploadUrl);
   const [archivedStateOverride, setArchivedStateOverride] = useState<{
     archivedAt: number | null;
     isArchived: boolean;
@@ -106,6 +125,19 @@ export function PlantDetailPage({ plantId }: PlantDetailPageProps) {
   const [planExpanded, setPlanExpanded] = useState(false);
   const [completingTaskId, setCompletingTaskId] = useState<string | null>(null);
   const [completedTaskIds, setCompletedTaskIds] = useState<Set<string>>(new Set());
+  // GAL-015: 图集状态
+  const [isGalleryUploading, setIsGalleryUploading] = useState(false);
+  const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
+  const [fullscreenInitialIndex, setFullscreenInitialIndex] = useState(0);
+  const galleryFileInputRef = useRef<HTMLInputElement>(null);
+
+  // fix-3: 任务完成后拍照入口
+  const addTaskCompletionImage = useMutation(api.tasks.addTaskCompletionImage);
+  const [lastCompletedLogId, setLastCompletedLogId] = useState<string | null>(null);
+  const taskPhotoFileInputRef = useRef<HTMLInputElement>(null);
+  const handleTaskPhotoCaptureClick = useCallback(() => {
+    taskPhotoFileInputRef.current?.click();
+  }, []);
 
   useEffect(() => {
     setArchivedStateOverride(null);
@@ -143,17 +175,16 @@ export function PlantDetailPage({ plantId }: PlantDetailPageProps) {
     return (
       <main style={pageStyle}>
         <ScreenNav title="" onBack={() => navigate("/plants")} />
-        <EmptyState
-          badge="不可用"
-          title="当前家庭中找不到这盆植物"
-          description="这条植物资料可能已删除，或者属于其他家庭。"
-          actions={
-            <Button type="button" variant="secondary" onClick={() => navigate("/plants")}>
-              返回植物列表
-            </Button>
-          }
-          minHeight="240px"
-        />
+        <div style={deletedPlantContainerStyle}>
+          <div style={deletedPlantIconStyle}>
+            <Icon icon={Sprout} size={48} colorVar="--color-muted" />
+          </div>
+          <p style={deletedPlantTitleStyle}>这株植物已不存在</p>
+          <p style={deletedPlantSubtitleStyle}>可能已被家庭成员删除</p>
+          <Button type="button" variant="primary" fullWidth={false} onClick={() => navigate("/todo")}>
+            返回待办
+          </Button>
+        </div>
       </main>
     );
   }
@@ -200,14 +231,46 @@ export function PlantDetailPage({ plantId }: PlantDetailPageProps) {
       const nextDateStr = dateFormatter.format(new Date(res.nextDueAt));
       const message = `🍃 ${label}已完成，下次 ${nextDateStr}`;
 
-      setUndoPayload({
+      const undoData = {
         ...buildUndoPayload(res),
         message,
-      });
+      };
+      setUndoPayload(undoData);
+      setLastCompletedLogId(undoData.logId);
     } catch {
       // 静默处理
     } finally {
       setCompletingTaskId(null);
+    }
+  }
+
+  async function handleTaskPhotoFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const originalFile = event.target.files?.[0];
+    event.target.value = "";
+    if (!originalFile || !lastCompletedLogId || !plantId) return;
+
+    if (originalFile.size > 10 * 1024 * 1024) {
+      showToast("图片过大，请选择 10MB 以内的照片");
+      return;
+    }
+
+    try {
+      const normalizedFile = await normalizeImageFile(originalFile);
+      const { original, thumbnail } = await compressImage(normalizedFile);
+      const { imageStorageId, thumbnailStorageId } = await uploadImagePair(
+        () => generateUploadUrl({}),
+        original,
+        thumbnail,
+      );
+      await addTaskCompletionImage({
+        logId: lastCompletedLogId as Id<"taskCompletionLogs">,
+        plantId: plantId as Id<"plants">,
+        imageStorageId: imageStorageId as Id<"_storage">,
+        thumbnailStorageId: thumbnailStorageId as Id<"_storage">,
+      });
+      showToast("照片已保存");
+    } catch {
+      showToast("照片保存失败");
     }
   }
 
@@ -227,6 +290,100 @@ export function PlantDetailPage({ plantId }: PlantDetailPageProps) {
     } catch {
       // 静默处理
     }
+  }
+
+  // ─── GAL-015: 图集操作 ──────────────────────────────────────
+
+  const gallery = result.gallery ?? [];
+  const galleryIsFull = gallery.length >= 20;
+
+  function handleGalleryAddClick() {
+    if (isGalleryUploading) return;
+    galleryFileInputRef.current?.click();
+  }
+
+  async function handleGalleryFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const originalFile = event.target.files?.[0];
+    event.target.value = "";
+    if (!originalFile || !plantId) return;
+
+    // 10MB 预检
+    if (originalFile.size > 10 * 1024 * 1024) {
+      showToast("图片过大，请选择 10MB 以内的照片");
+      return;
+    }
+
+    setIsGalleryUploading(true);
+    try {
+      // HEIC 转码
+      const normalizedFile = await normalizeImageFile(originalFile);
+      // 压缩
+      const { original, thumbnail } = await compressImage(normalizedFile);
+      // 双图上传
+      const { imageStorageId, thumbnailStorageId } = await uploadImagePair(
+        () => generateUploadUrl({}),
+        original,
+        thumbnail,
+      );
+      // 写入 gallery
+      await addGalleryImage({
+        plantId: plantId as Id<"plants">,
+        imageStorageId: imageStorageId as Id<"_storage">,
+        thumbnailStorageId: thumbnailStorageId as Id<"_storage">,
+      });
+      showToast("照片已添加 · 可在大图中写备注");
+      // UX-003：上传成功后自动打开全屏到最新图片，引导用户添加备注
+      setFullscreenInitialIndex(0);
+      setIsFullscreenOpen(true);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "图片上传失败");
+    } finally {
+      setIsGalleryUploading(false);
+    }
+  }
+
+  async function handleGalleryDelete(imageStorageId: string) {
+    if (!plantId) return;
+    try {
+      await removeGalleryImage({
+        plantId: plantId as Id<"plants">,
+        imageStorageId: imageStorageId as Id<"_storage">,
+      });
+      showToast("照片已删除");
+    } catch {
+      showToast("删除失败");
+    }
+  }
+
+  async function handleGallerySetCover(imageStorageId: string) {
+    if (!plantId) return;
+    try {
+      await setCoverFromGallery({
+        plantId: plantId as Id<"plants">,
+        imageStorageId: imageStorageId as Id<"_storage">,
+      });
+      // toast 由 GalleryFullscreenViewer 内部触发
+    } catch {
+      showToast("设置封面失败");
+    }
+  }
+
+  async function handleGalleryCaptionUpdate(imageStorageId: string, caption: string | undefined) {
+    if (!plantId) return;
+    try {
+      await updateGalleryCaption({
+        plantId: plantId as Id<"plants">,
+        imageStorageId: imageStorageId as Id<"_storage">,
+        caption,
+      });
+    } catch {
+      showToast("备注保存失败");
+    }
+  }
+
+  function handleThumbnailPress(index: number) {
+    setFullscreenInitialIndex(index);
+    setIsFullscreenOpen(true);
   }
 
   function formatNextDue(nextDueAt: number): { text: string; color: string } {
@@ -311,6 +468,27 @@ export function PlantDetailPage({ plantId }: PlantDetailPageProps) {
       </div>
       </div>
 
+      {/* 图集 Gallery Strip - GAL-015 */}
+      <div style={{ ...sectionSpacingStyle, ...sectionAnimStyle(0) }}>
+        <PlantGalleryStrip
+          gallery={gallery}
+          isArchived={plant.isArchived}
+          isFull={galleryIsFull}
+          isUploading={isGalleryUploading}
+          onAdd={handleGalleryAddClick}
+          onThumbnailPress={handleThumbnailPress}
+        />
+      </div>
+
+      {/* Hidden file input for gallery */}
+      <input
+        ref={galleryFileInputRef}
+        type="file"
+        accept="image/*"
+        style={{ display: "none" }}
+        onChange={handleGalleryFileChange}
+      />
+
       {/* 需要处理 section */}
       {!plant.isArchived && actionableTasks.length > 0 && (
         <div style={{ ...sectionSpacingStyle, ...sectionAnimStyle(0) }}>
@@ -392,7 +570,13 @@ export function PlantDetailPage({ plantId }: PlantDetailPageProps) {
             <>
               {visiblePlanTasks.map((task, index) => {
                 const label = formatTaskTypeLabel(task.taskType, task.customLabel);
-                const interval = `每${task.intervalDays}天`;
+                // FLEX-013: 使用排期描述替代简单间隔文案
+                const interval = formatScheduleDescription({
+                  scheduleMode: task.scheduleMode ?? "interval",
+                  intervalDays: task.intervalDays,
+                  weeklyDays: task.weeklyDays,
+                  seasonalIntervals: task.seasonalIntervals,
+                });
                 const { text: dueText } = formatNextDue(task.nextDueAt);
                 const isDisabled = !task.enabled;
 
@@ -511,12 +695,34 @@ export function PlantDetailPage({ plantId }: PlantDetailPageProps) {
         />
       )}
 
+      {/* 任务完成拍照隐藏 input */}
+      <input
+        ref={taskPhotoFileInputRef}
+        type="file"
+        accept="image/*"
+        style={{ display: "none" }}
+        onChange={handleTaskPhotoFileChange}
+      />
+
       {/* 全屏图片预览 */}
       {showImagePreview && plant.imageUrl && (
         <ImagePreviewOverlay
           imageUrl={plant.imageUrl}
           onClose={() => setShowImagePreview(false)}
           plantName={plant.name}
+        />
+      )}
+
+      {/* 图集全屏浏览器 - GAL-015 */}
+      {isFullscreenOpen && gallery.length > 0 && (
+        <GalleryFullscreenViewer
+          gallery={gallery}
+          initialIndex={fullscreenInitialIndex}
+          isArchived={plant.isArchived}
+          onClose={() => setIsFullscreenOpen(false)}
+          onDelete={handleGalleryDelete}
+          onSetCover={handleGallerySetCover}
+          onUpdateCaption={handleGalleryCaptionUpdate}
         />
       )}
     </main>
@@ -785,4 +991,36 @@ const disabledTaskRowStyle: React.CSSProperties = {
 const bottomSafeAreaStyle: React.CSSProperties = {
   height: "calc(env(safe-area-inset-bottom, 0px) + 40px)",
   flexShrink: 0,
+};
+
+// ─── 植物已删除兜底 UI（PUSH-012）─────────────────────────────
+
+const deletedPlantContainerStyle: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "var(--space-sm)",
+  padding: "var(--space-xl) var(--space-md)",
+  minHeight: "240px",
+};
+
+const deletedPlantIconStyle: React.CSSProperties = {
+  marginBottom: "var(--space-sm)",
+};
+
+const deletedPlantTitleStyle: React.CSSProperties = {
+  margin: 0,
+  fontSize: "16px",
+  fontWeight: 600,
+  color: "var(--color-ink)",
+  textAlign: "center",
+};
+
+const deletedPlantSubtitleStyle: React.CSSProperties = {
+  margin: 0,
+  fontSize: "14px",
+  color: "var(--color-muted)",
+  textAlign: "center",
+  marginBottom: "var(--space-md)",
 };

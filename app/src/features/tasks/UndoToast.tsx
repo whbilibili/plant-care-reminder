@@ -68,9 +68,9 @@ const toastStyle: React.CSSProperties = {
   zIndex: 60,
   display: "flex",
   alignItems: "center",
-  gap: "var(--space-md)",
+  gap: "10px",
   width: "min(92vw, 420px)",
-  padding: "12px 16px",
+  padding: "10px 14px",
   borderRadius: "var(--radius-pill)",
   background: "var(--color-leaf)",
   color: "var(--color-paper)",
@@ -80,9 +80,12 @@ const toastStyle: React.CSSProperties = {
 const messageStyle: React.CSSProperties = {
   flex: 1,
   minWidth: 0,
-  fontSize: "0.9rem",
+  fontSize: "0.85rem",
   fontWeight: 500,
   lineHeight: 1.4,
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
 };
 
 const undoButtonStyle: React.CSSProperties = {
@@ -92,7 +95,7 @@ const undoButtonStyle: React.CSSProperties = {
   border: "none",
   padding: "4px 6px",
   color: "var(--color-gold)",
-  fontSize: "0.95rem",
+  fontSize: "0.9rem",
   fontWeight: 700,
   cursor: "pointer",
 };

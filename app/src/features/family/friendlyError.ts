@@ -45,5 +45,11 @@ export function friendlyError(error: unknown, fallback: string): string {
     }
   }
 
+  // 如果提取出的 core 与原始 message 不同，说明成功从 Convex 格式中
+  // 解析出了业务错误消息，直接使用（适用于后端已写好中文提示的场景）
+  if (core !== error.message && core.length > 0 && core.length < 100) {
+    return core;
+  }
+
   return fallback;
 }

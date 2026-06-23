@@ -2,7 +2,6 @@ import { v } from "convex/values";
 
 import { mutation, query } from "./_generated/server";
 import { getCurrentUserContext as loadCurrentUserContext } from "./lib/auth";
-import { notificationPreferencesValidator } from "./lib/validators";
 
 const DISPLAY_NAME_MAX_LENGTH = 40;
 

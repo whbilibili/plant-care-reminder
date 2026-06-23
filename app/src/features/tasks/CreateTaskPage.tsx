@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
-import { ChevronDown, Calendar, Droplet, Leaf, MapPin } from "lucide-react";
+import { ChevronDown, Droplet, Leaf, MapPin } from "lucide-react";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -8,10 +8,17 @@ import { navigate } from "../../app/router";
 import { Button } from "../../components/ui/Button";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { Icon } from "../../components/ui/Icon";
-import { ObjectSummaryBand } from "../../components/ui/ObjectSummaryBand";
+import {
+  FormSummaryCard,
+  formSummaryThumbFallbackStyle,
+  formSummaryThumbImageStyle,
+} from "../../components/ui/FormSummaryCard";
 import { ScreenNav } from "../../components/ui/ScreenNav";
 import { StorageImage } from "../../components/ui/StorageImage";
 import { FormError } from "../../components/ui/FormError";
+import { friendlyError } from "../family/friendlyError";
+import type { ScheduleMode } from "../../types/domain";
+import { ScheduleModeFieldGroup } from "./ScheduleModeFields";
 import {
   careTaskTypeOptions,
   formatTaskTypeLabel,
@@ -20,7 +27,7 @@ import {
   validateCustomTaskName,
   type CareTaskType,
 } from "./taskTypes";
-import { validateIntervalDays } from "./scheduling";
+import { validateIntervalDays, validateWeeklyDays, validateSeasonalIntervals } from "./scheduling";
 import { parseDateInputToTimestamp } from "./TaskForm";
 
 interface CreateTaskPageProps {
@@ -45,7 +52,17 @@ export function CreateTaskPage({ plantId }: CreateTaskPageProps) {
   const [customTaskName, setCustomTaskName] = useState("");
   const [intervalDays, setIntervalDays] = useState("7");
   const [baseCompletedOn, setBaseCompletedOn] = useState("");
-  const [errors, setErrors] = useState<{ customTaskName?: string | null; intervalDays?: string | null }>({});
+  // FLEX-010: 排期模式状态
+  const [scheduleMode, setScheduleMode] = useState<ScheduleMode>("interval");
+  const [weeklyDays, setWeeklyDays] = useState<number[]>([]);
+  const [springSummer, setSpringSummer] = useState("5");
+  const [autumnWinter, setAutumnWinter] = useState("14");
+  const [errors, setErrors] = useState<{
+    customTaskName?: string | null;
+    intervalDays?: string | null;
+    weeklyDays?: string | null;
+    seasonal?: string | null;
+  }>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -53,13 +70,17 @@ export function CreateTaskPage({ plantId }: CreateTaskPageProps) {
     if (!plantId) return;
 
     const interval = Number(intervalDays);
-    const nextErrors = {
+    const nextErrors: typeof errors = {
       customTaskName: validateCustomTaskName(taskType, customTaskName),
-      intervalDays: validateIntervalDays(interval),
+      intervalDays: scheduleMode === "interval" ? validateIntervalDays(interval) : null,
+      weeklyDays: scheduleMode === "weekly" ? validateWeeklyDays(weeklyDays) : null,
+      seasonal: scheduleMode === "seasonal"
+        ? validateSeasonalIntervals({ springSummer: Number(springSummer), autumnWinter: Number(autumnWinter) })
+        : null,
     };
     setErrors(nextErrors);
 
-    if (nextErrors.customTaskName || nextErrors.intervalDays) return;
+    if (nextErrors.customTaskName || nextErrors.intervalDays || nextErrors.weeklyDays || nextErrors.seasonal) return;
 
     setIsSubmitting(true);
     setFormError(null);
@@ -69,16 +90,20 @@ export function CreateTaskPage({ plantId }: CreateTaskPageProps) {
         plantId: plantId as Id<"plants">,
         taskType,
         customTaskName: normalizeCustomTaskName(customTaskName),
-        intervalDays: interval,
+        intervalDays: scheduleMode === "interval" ? interval : 7, // 非 interval 模式传 fallback 值
         baseCompletedAt: baseCompletedOn
           ? parseDateInputToTimestamp(baseCompletedOn)
           : null,
+        // FLEX-010: 排期模式参数
+        scheduleMode,
+        weeklyDays: scheduleMode === "weekly" ? weeklyDays : undefined,
+        seasonalIntervals: scheduleMode === "seasonal"
+          ? { springSummer: Number(springSummer), autumnWinter: Number(autumnWinter) }
+          : undefined,
       });
       navigate(`/plants/${plantId}`, true);
     } catch (error) {
-      setFormError(
-        error instanceof Error ? error.message : "当前无法保存这条养护提醒，请稍后再试。",
-      );
+      setFormError(friendlyError(error, "当前无法保存这条养护提醒，请稍后再试。"));
     } finally {
       setIsSubmitting(false);
     }
@@ -154,34 +179,30 @@ export function CreateTaskPage({ plantId }: CreateTaskPageProps) {
         }
       />
 
-      {/* ObjectSummaryBand — 渐变背景 */}
-      <div style={summaryCardWrapStyle}>
-        <div style={summaryCardInnerStyle}>
-          <ObjectSummaryBand
-            thumbnail={
-              <StorageImage
-                alt={plant.plantName}
-                fallback={
-                  <div style={thumbFallbackStyle}>
-                    <Icon icon={Leaf} size={24} colorVar="--color-leaf" />
-                  </div>
-                }
-                initialUrl={plant.imageUrl}
-                style={thumbImageStyle}
-              />
+      {/* FormSummaryCard — 白色自适应 */}
+      <FormSummaryCard
+        thumbnail={
+          <StorageImage
+            alt={plant.plantName}
+            fallback={
+              <div style={formSummaryThumbFallbackStyle}>
+                <Icon icon={Leaf} size={24} colorVar="--color-leaf" />
+              </div>
             }
-            title={`${plant.plantName} · ${taskLabel}`}
-            subtitle={
-              plant.location ? (
-                <span style={{ display: "inline-flex", alignItems: "center", gap: "3px" }}>
-                  <Icon icon={MapPin} size={13} colorVar="--color-muted" />
-                  {plant.location}
-                </span>
-              ) : undefined
-            }
+            initialUrl={plant.imageUrl}
+            style={formSummaryThumbImageStyle}
           />
-        </div>
-      </div>
+        }
+        title={`${plant.plantName} · ${taskLabel}`}
+        subtitle={
+          plant.location ? (
+            <>
+              <Icon icon={MapPin} size={13} colorVar="--color-muted" />
+              {plant.location}
+            </>
+          ) : undefined
+        }
+      />
 
       {/* Form fields — 分组卡片 */}
       <div style={formAreaStyle}>
@@ -229,48 +250,61 @@ export function CreateTaskPage({ plantId }: CreateTaskPageProps) {
           ) : null}
         </div>
 
-        {/* 第二组：间隔与日期 */}
+        {/* 第二组：排期模式 + 间隔与日期 */}
         <div style={cardGroupStyle} className="form-card-stagger">
-          {/* 提醒间隔天数 */}
-          <div style={fieldGroupStyle}>
-            <label style={fieldLabelWithBarStyle}>提醒间隔天数</label>
-            <div style={inputBoxWrapStyle}>
-              <input
-                type="number"
-                inputMode="numeric"
-                min={1}
-                value={intervalDays}
-                onChange={(e) => setIntervalDays(e.target.value)}
-                className="form-input-enhanced"
-                style={{
-                  ...inboxInputStyle,
-                  ...(errors.intervalDays ? inputErrorBorderStyle : undefined),
-                }}
-              />
-              <span style={inboxSuffixStyle}>天</span>
+          {/* FLEX-010: 排期模式选择器 */}
+          <ScheduleModeFieldGroup
+            mode={scheduleMode}
+            onModeChange={setScheduleMode}
+            weeklyDays={weeklyDays}
+            onWeeklyDaysChange={setWeeklyDays}
+            weeklyError={errors.weeklyDays}
+            springSummer={springSummer}
+            autumnWinter={autumnWinter}
+            onSpringSummerChange={setSpringSummer}
+            onAutumnWinterChange={setAutumnWinter}
+            seasonalError={errors.seasonal}
+          />
+
+          {/* 提醒间隔天数（仅固定间隔模式下显示） */}
+          {scheduleMode === "interval" && (
+            <div style={fieldGroupStyle}>
+              <label style={fieldLabelWithBarStyle}>提醒间隔天数</label>
+              <div style={inputBoxWrapStyle}>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  value={intervalDays}
+                  onChange={(e) => setIntervalDays(e.target.value)}
+                  className="form-input-enhanced"
+                  style={{
+                    ...inboxInputStyle,
+                    ...(errors.intervalDays ? inputErrorBorderStyle : undefined),
+                  }}
+                />
+                <span style={inboxSuffixStyle}>天</span>
+              </div>
+              {errors.intervalDays ? (
+                <span style={errorTextStyle}>{errors.intervalDays}</span>
+              ) : (
+                <span style={helperStyle}>
+                  {`每 ${intervalDays || "?"} 天提醒一次`}
+                </span>
+              )}
             </div>
-            {errors.intervalDays ? (
-              <span style={errorTextStyle}>{errors.intervalDays}</span>
-            ) : (
-              <span style={helperStyle}>每 {intervalDays || "?"} 天提醒一次</span>
-            )}
-          </div>
+          )}
 
           {/* 上次完成日期 */}
           <div style={fieldGroupStyle}>
             <label style={fieldLabelWithBarStyle}>上次完成日期</label>
-            <div style={inputBoxWrapStyle}>
-              <input
-                type="date"
-                value={baseCompletedOn}
-                onChange={(e) => setBaseCompletedOn(e.target.value)}
-                className="form-input-enhanced"
-                style={inboxInputStyle}
-              />
-              <span style={inboxIconStyle}>
-                <Icon icon={Calendar} size={18} colorVar="--color-muted" />
-              </span>
-            </div>
+            <input
+              type="date"
+              value={baseCompletedOn}
+              onChange={(e) => setBaseCompletedOn(e.target.value)}
+              className="form-input-enhanced"
+              style={textInputStyle}
+            />
             <span style={helperStyle}>选填，用于计算下次提醒日期</span>
           </div>
         </div>
@@ -406,37 +440,6 @@ const saveButtonStyle: React.CSSProperties = {
   boxShadow: "0 2px 6px rgba(31,71,61,0.18)",
 };
 
-const summaryCardWrapStyle: React.CSSProperties = {
-  padding: "0 var(--space-md)",
-  marginTop: "var(--space-sm)",
-};
-
-const summaryCardInnerStyle: React.CSSProperties = {
-  background: "linear-gradient(135deg, var(--color-mist) 0%, rgba(237,245,241,0.4) 100%)",
-  borderRadius: "var(--radius-card)",
-  border: "1px solid var(--color-line)",
-  padding: "var(--space-md)",
-  boxShadow: "0 2px 8px rgba(31,71,61,0.06)",
-};
-
-const thumbFallbackStyle: React.CSSProperties = {
-  width: "56px",
-  height: "56px",
-  borderRadius: "var(--radius-button)",
-  background: "var(--color-mist)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-};
-
-const thumbImageStyle: React.CSSProperties = {
-  width: "56px",
-  height: "56px",
-  objectFit: "cover",
-  borderRadius: "var(--radius-button)",
-  border: "2px solid #fff",
-  boxShadow: "0 2px 6px rgba(31,71,61,0.12)",
-};
 
 const formAreaStyle: React.CSSProperties = {
   display: "flex",

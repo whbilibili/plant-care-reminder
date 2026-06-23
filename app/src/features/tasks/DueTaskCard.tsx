@@ -1,7 +1,8 @@
 import { useState } from "react";
 
-import { formatDueDate, formatTaskTypeLabel } from "../../lib/formatters";
+import { formatDueDate, formatScheduleDescription, formatTaskTypeLabel } from "../../lib/formatters";
 import { clampLines, truncateSingleLine } from "../../lib/textTruncate";
+import type { ScheduleMode, SeasonalIntervals } from "../../types/domain";
 import { CompleteTaskButton } from "./CompleteTaskButton";
 import { PostponeButton } from "./PostponeButton";
 import { PostponeHintBanner, shouldShowPostponeHint } from "./PostponeHintBanner";
@@ -21,6 +22,10 @@ export interface DueTaskCardData {
   plantName: string;
   taskId: string;
   taskType: "watering" | "fertilizing" | "misting" | "repotting" | "pruning" | "custom";
+  // FLEX-012: 排期模式字段
+  scheduleMode: ScheduleMode;
+  weeklyDays: number[] | null;
+  seasonalIntervals: SeasonalIntervals | null;
 }
 
 interface DueTaskCardProps {
@@ -35,6 +40,15 @@ export function DueTaskCard({ onCompleted, onOpenPlant, task }: DueTaskCardProps
   const isOverdue = task.nextDueAt < Date.now();
   const showPostponeHint = shouldShowPostponeHint(task.consecutivePostponeCount);
   const [completed, setCompleted] = useState(false);
+  // FLEX-012: 非 interval 模式才显示排期描述
+  const scheduleDesc = task.scheduleMode !== "interval"
+    ? formatScheduleDescription({
+        scheduleMode: task.scheduleMode,
+        intervalDays: task.intervalDays,
+        weeklyDays: task.weeklyDays,
+        seasonalIntervals: task.seasonalIntervals,
+      })
+    : null;
 
   return (
     <article
@@ -68,6 +82,7 @@ export function DueTaskCard({ onCompleted, onOpenPlant, task }: DueTaskCardProps
       <div style={contentStyle}>
         <p style={plantNameStyle}>{task.plantName}</p>
         <p style={taskLabelStyle}>{taskLabel}</p>
+        {scheduleDesc ? <p style={scheduleDescStyle}>{scheduleDesc}</p> : null}
         {isOverdue ? (
           <span style={overduePillStyle}>{dueCopy}</span>
         ) : (
@@ -205,6 +220,14 @@ const dueCopyStyle: React.CSSProperties = {
   color: "var(--color-leaf-light)",
   fontSize: "0.82rem",
   lineHeight: 1.4,
+};
+
+const scheduleDescStyle: React.CSSProperties = {
+  margin: 0,
+  color: "var(--color-leaf-light)",
+  fontSize: "0.78rem",
+  lineHeight: 1.4,
+  fontWeight: 500,
 };
 
 const overduePillStyle: React.CSSProperties = {

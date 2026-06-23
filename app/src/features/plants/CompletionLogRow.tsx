@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { Camera } from "lucide-react";
 
 import { Icon } from "../../components/ui/Icon";
 import { MemberAvatar } from "../family/MemberAvatar";
@@ -18,6 +19,8 @@ interface CompletionLogRowProps {
   completedAt: number;
   /** 可选：植物名维度（家庭动态用）。 */
   plantName?: string;
+  /** GAL-018: 完成时附图的 storageId（存在时展示相机图标标识）。 */
+  imageStorageId?: string | null;
 }
 
 /**
@@ -33,6 +36,7 @@ export function CompletionLogRow({
   completedByImageStorageId,
   completedAt,
   plantName,
+  imageStorageId,
 }: CompletionLogRowProps) {
   const label = formatTaskTypeLabel(taskType, customLabel);
   const relativeTime = formatRelativeTime(completedAt);
@@ -64,6 +68,13 @@ export function CompletionLogRow({
         <span style={taskLabelStyle}>{label}</span>
         <span style={timeStyle}> · {relativeTime}</span>
       </span>
+
+      {/* GAL-018: 附图标识 */}
+      {imageStorageId && (
+        <span style={photoIndicatorStyle} aria-label="有附图">
+          <Icon icon={Camera} size={14} />
+        </span>
+      )}
     </div>
   );
 }
@@ -119,4 +130,12 @@ const taskLabelStyle: CSSProperties = {
 const timeStyle: CSSProperties = {
   color: "var(--color-muted)",
   fontSize: "12px",
+};
+
+const photoIndicatorStyle: CSSProperties = {
+  flexShrink: 0,
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: "var(--color-muted)",
 };

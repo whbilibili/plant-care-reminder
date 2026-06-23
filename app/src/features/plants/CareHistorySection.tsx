@@ -123,6 +123,7 @@ function CareHistoryPanel({ plantId }: CareHistoryPanelProps) {
             completedByName={log.completedByName}
             completedByImageStorageId={log.completedByImageStorageId}
             completedAt={log.completedAt}
+            imageStorageId={(log as Record<string, unknown>).imageStorageId as string | null}
           />
         </div>
       ))}

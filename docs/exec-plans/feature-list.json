@@ -273,6 +273,35 @@
         "care-reminders",
         "settings-page-v2"
       ]
+    },
+    {
+      "module": "multi-image-gallery",
+      "file": "docs/exec-plans/modules/multi-image-gallery.json",
+      "description": "多图上传与养护图集：植物详情页图集横向滚动区（缩略图浏览+全屏模式+删除+设为封面）、任务完成后可选附图（非阻塞后置动作）、前端双图存储（原图+canvas压缩缩略图）。Schema 新增 plants.gallery 内嵌数组 + taskCompletionLogs.imageStorageId；后端新增 4 个 mutation + 改造 3 个已有接口；前端新增 4 个组件 + 2 个工具函数。",
+      "prd": "docs/product-specs/2026-06-22-multi-image-gallery-spec.md",
+      "task_breakdown": "docs/product-specs/2026-06-22-multi-image-gallery-task-breakdown.md",
+      "task_count": 18,
+      "completed": 0,
+      "depends_on": [
+        "plant-registry",
+        "care-reminders",
+        "frontend-refresh"
+      ]
+    },
+    {
+      "module": "care-task-flexibility",
+      "file": "docs/exec-plans/modules/care-task-flexibility.json",
+      "description": "养护任务灵活性：在既有固定间隔排期基础上，新增『每周几』和『按季节』两种排期模式，以及固定任务类型唯一性约束。Schema 新增 scheduleMode/weeklyDays/seasonalIntervals 三个可选字段；后端 create/update/complete 三路 mutation 扩展模式分发；前端新增 ScheduleModeSelector/WeeklyDaysPicker/SeasonalIntervalsInput 三组件集成至创建/编辑页；任务卡片和植物详情展示模式描述文案。",
+      "prd": "docs/product-specs/2026-06-22-care-task-flexibility-spec.md",
+      "task_breakdown": "docs/product-specs/2026-06-22-care-task-flexibility-task-breakdown.md",
+      "task_count": 21,
+      "completed": 0,
+      "depends_on": [
+        "care-reminders",
+        "frontend-refresh",
+        "todo-page-v2",
+        "plant-detail-v2"
+      ]
     }
   ],
   "tasks_summary": [
@@ -1605,6 +1634,279 @@
       "description": "植物详情页增加'植物已删除'兜底 UI（通知深链到已删除植物时）。",
       "status": "pending",
       "priority": "2-Medium"
+    },
+    {
+      "task_id": "GAL-001",
+      "module": "multi-image-gallery",
+      "description": "Schema 扩展：plantFields 新增 gallery 可选数组字段 + taskCompletionLogFields 新增可选 imageStorageId。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "GAL-002",
+      "module": "multi-image-gallery",
+      "description": "实现 addPlantGalleryImage mutation：追加图片到 gallery 数组头部。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "GAL-003",
+      "module": "multi-image-gallery",
+      "description": "实现 removePlantGalleryImage mutation：移除图集照片并清理 storage。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "GAL-004",
+      "module": "multi-image-gallery",
+      "description": "实现 setPlantCoverFromGallery mutation：将图集照片设为植物封面。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "GAL-005",
+      "module": "multi-image-gallery",
+      "description": "改造 getPlantDetail query：返回 gallery 数组含 thumbnailUrl + galleryCount。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "GAL-006",
+      "module": "multi-image-gallery",
+      "description": "改造 deletePlant mutation：级联删除 gallery 中所有图片 storage。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "GAL-007",
+      "module": "multi-image-gallery",
+      "description": "实现 addTaskCompletionImage mutation：任务附图写入 log + gallery。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "GAL-008",
+      "module": "multi-image-gallery",
+      "description": "改造 listPlantCompletionLogs query：返回每条 log 的 imageStorageId。",
+      "status": "pending",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "GAL-009",
+      "module": "multi-image-gallery",
+      "description": "抽取 compressImage 工具函数（canvas 缩略图生成）。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "GAL-010",
+      "module": "multi-image-gallery",
+      "description": "抽取 uploadImagePair 工具函数（双 URL 上传封装）。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "GAL-011",
+      "module": "multi-image-gallery",
+      "description": "前端类型定义补充：domain.ts 新增 GalleryItem 接口。",
+      "status": "pending",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "GAL-012",
+      "module": "multi-image-gallery",
+      "description": "实现 GalleryAddButton 组件（虚线边框+号按钮）。",
+      "status": "pending",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "GAL-013",
+      "module": "multi-image-gallery",
+      "description": "实现 PlantGalleryStrip 组件（横向滚动缩略图区）。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "GAL-014",
+      "module": "multi-image-gallery",
+      "description": "实现 GalleryFullscreenViewer 组件（全屏浏览+删除+设封面）。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "GAL-015",
+      "module": "multi-image-gallery",
+      "description": "PlantDetailPage 集成图集区（strip+fullscreen+上传流程）。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "GAL-016",
+      "module": "multi-image-gallery",
+      "description": "实现 TaskCompletionPhotoPrompt 组件（附图浮层入口）。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "GAL-017",
+      "module": "multi-image-gallery",
+      "description": "任务完成流程集成附图入口 + 上传逻辑。",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "GAL-018",
+      "module": "multi-image-gallery",
+      "description": "CareHistoryTimeline 展示附图缩略图。",
+      "status": "pending",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "FLEX-001",
+      "module": "care-task-flexibility",
+      "description": "Implement computeNextWeeklyDueAt and computeNextSeasonalDueAt scheduling functions with unit tests.",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "FLEX-002",
+      "module": "care-task-flexibility",
+      "description": "Implement computeNextDueAtByMode dispatcher, validateWeeklyDays, validateSeasonalIntervals, getEffectiveIntervalDays with unit tests.",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "FLEX-003",
+      "module": "care-task-flexibility",
+      "description": "Extend plantTaskFields schema with scheduleMode, weeklyDays, and seasonalIntervals fields.",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "FLEX-004",
+      "module": "care-task-flexibility",
+      "description": "Extend createPlantTask mutation with schedule mode parameters and fixed-type uniqueness constraint.",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "FLEX-005",
+      "module": "care-task-flexibility",
+      "description": "Extend updatePlantTask mutation with schedule mode switching, field cleanup, and nextDueAt recalculation.",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "FLEX-006",
+      "module": "care-task-flexibility",
+      "description": "Extend completeTaskCore to branch nextDueAt by scheduleMode; extend getTaskForEdit and listDueTasks to return schedule fields.",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "FLEX-007",
+      "module": "care-task-flexibility",
+      "description": "Extend getTaskCreationPlant query to return existingEnabledTypes for uniqueness annotation.",
+      "status": "pending",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "FLEX-008",
+      "module": "care-task-flexibility",
+      "description": "Add frontend type definitions (ScheduleMode, SeasonalIntervals) and formatWeeklyDays / formatScheduleDescription formatters.",
+      "status": "pending",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "FLEX-009",
+      "module": "care-task-flexibility",
+      "description": "Implement ScheduleModeSelector, WeeklyDaysPicker, and SeasonalIntervalsInput UI components.",
+      "status": "pending",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "FLEX-010",
+      "module": "care-task-flexibility",
+      "description": "Integrate schedule mode components into CreateTaskPage with conditional display and uniqueness UI.",
+      "status": "pending",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "FLEX-011",
+      "module": "care-task-flexibility",
+      "description": "Integrate schedule mode components into EditTaskPage with mode switching, field cleanup, and pre-fill.",
+      "status": "pending",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "FLEX-012",
+      "module": "care-task-flexibility",
+      "description": "Update TaskCard and TaskDetailSheet to display schedule description badge with mode-specific text.",
+      "status": "pending",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "FLEX-013",
+      "module": "care-task-flexibility",
+      "description": "Update PlantDetailPage task list section to display schedule description for each task.",
+      "status": "pending",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "FLEX-014",
+      "module": "care-task-flexibility",
+      "description": "Update cron job (checkDueTasks) to use getEffectiveIntervalDays for overdue calculation of seasonal tasks.",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "FLEX-015",
+      "module": "care-task-flexibility",
+      "description": "Integration tests for create-complete-verify-nextDueAt cycle for all three schedule modes.",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "FLEX-016",
+      "module": "care-task-flexibility",
+      "description": "Integration tests for uniqueness constraint edge cases.",
+      "status": "pending",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "FLEX-017",
+      "module": "care-task-flexibility",
+      "description": "Integration tests for mode-switching edge cases.",
+      "status": "pending",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "FLEX-018",
+      "module": "care-task-flexibility",
+      "description": "Full UI flow test: create task with each mode via UI, verify data persistence and display.",
+      "status": "pending",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "FLEX-019",
+      "module": "care-task-flexibility",
+      "description": "Backward compatibility verification: existing interval-mode tasks work without scheduleMode field.",
+      "status": "pending",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "FLEX-020",
+      "module": "care-task-flexibility",
+      "description": "Update ARCHITECTURE.md with schedule mode data model constraints and AGENTS.md with new module reference.",
+      "status": "pending",
+      "priority": "3-Low"
+    },
+    {
+      "task_id": "FLEX-021",
+      "module": "care-task-flexibility",
+      "description": "Update caveats.md with schedule mode known caveats and tech-debt notes.",
+      "status": "pending",
+      "priority": "3-Low"
     }
   ],
   "cross_module_dependencies": [
@@ -2287,6 +2589,76 @@
       "from": "PUSH-010",
       "to": "SET2-011",
       "reason": "NotificationPromptCard 偏好入口行嵌入 settings-page-v2 SET2-011 建立的通知卡外壳结构中。"
+    },
+    {
+      "from": "GAL-005",
+      "to": "PLANT-004",
+      "reason": "getPlantDetail 改造基于 plant-registry PLANT-004 建立的已有 query 结构。"
+    },
+    {
+      "from": "GAL-006",
+      "to": "PLANT-005",
+      "reason": "deletePlant 级联改造基于 plant-registry PLANT-005 建立的已有删除逻辑。"
+    },
+    {
+      "from": "GAL-007",
+      "to": "CARE-005",
+      "reason": "addTaskCompletionImage 操作 taskCompletionLogs 表,依赖 care-reminders CARE-005 建立的完成日志体系。"
+    },
+    {
+      "from": "GAL-015",
+      "to": "PD2-001",
+      "reason": "PlantDetailPage 集成图集区需在 plant-detail-v2 PD2-001 建立的详情页布局中插入新区域。"
+    },
+    {
+      "from": "GAL-017",
+      "to": "TODO2-003",
+      "reason": "任务完成附图流程嵌入 todo-page-v2 TODO2-003 建立的完成交互中。"
+    },
+    {
+      "from": "GAL-018",
+      "to": "HIST-003",
+      "reason": "CareHistoryTimeline 展示附图基于 care-history-timeline HIST-003 建立的时间线条目结构。"
+    },
+    {
+      "from": "FLEX-001",
+      "to": "CARE-004",
+      "reason": "computeNextWeeklyDueAt/computeNextSeasonalDueAt 与 care-reminders CARE-004 中的 computeNextDueAt 并列，共享同一调度计算层。"
+    },
+    {
+      "from": "FLEX-003",
+      "to": "CARE-001",
+      "reason": "plantTaskFields 扩展三字段依赖 care-reminders CARE-001 建立的 plantTasks schema 基础。"
+    },
+    {
+      "from": "FLEX-004",
+      "to": "CARE-004",
+      "reason": "createPlantTask 扩展依赖 care-reminders CARE-004 建立的创建 mutation 基础。"
+    },
+    {
+      "from": "FLEX-006",
+      "to": "CARE-005",
+      "reason": "completeTaskCore 模式分发依赖 care-reminders CARE-005 建立的完成流程。"
+    },
+    {
+      "from": "FLEX-010",
+      "to": "TODO2-001",
+      "reason": "CreateTaskPage 集成排期组件基于 todo-page-v2 TODO2-001 建立的创建页布局。"
+    },
+    {
+      "from": "FLEX-012",
+      "to": "TODO2-003",
+      "reason": "TaskCard 排期描述替换基于 todo-page-v2 TODO2-003 建立的卡片结构。"
+    },
+    {
+      "from": "FLEX-013",
+      "to": "PD2-001",
+      "reason": "PlantDetailPage 任务列表排期展示基于 plant-detail-v2 PD2-001 建立的详情页布局。"
+    },
+    {
+      "from": "FLEX-014",
+      "to": "CARE-007",
+      "reason": "checkDueTasks cron 季节模式处理依赖 care-reminders CARE-007 建立的定时任务扫描。"
     }
   ]
 }

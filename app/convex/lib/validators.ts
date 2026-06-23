@@ -81,6 +81,18 @@ export const plantFields = {
   notes: optionalTrimmedTextValidator,
   location: optionalTrimmedTextValidator,
   imageStorageId: v.optional(v.id("_storage")),
+  // 多图图集（GAL-001）：内嵌数组，最多 20 项，每项含原图/缩略图 storageId + 上传者 + 时间 + 可选备注。
+  gallery: v.optional(
+    v.array(
+      v.object({
+        imageStorageId: v.id("_storage"),
+        thumbnailStorageId: v.id("_storage"),
+        uploadedBy: v.id("users"),
+        uploadedAt: v.number(),
+        caption: v.optional(v.string()),
+      }),
+    ),
+  ),
   createdBy: v.id("users"),
   createdAt: utcTimestampValidator,
   updatedAt: utcTimestampValidator,
@@ -100,6 +112,18 @@ export const plantTaskFields = {
   nextDueAt: utcTimestampValidator,
   // 连续推迟次数：完成时清零；老数据无此字段时按 0 处理（PRD §8.4）。
   consecutivePostponeCount: v.optional(v.number()),
+  // ─── 灵活排期字段（FLEX-003）──────────────────────────────
+  // scheduleMode: 'interval'（固定间隔）| 'weekly'（每周几）| 'seasonal'（按季节）。
+  // optional 保证向后兼容：旧数据无此字段时按 'interval' 处理。
+  scheduleMode: v.optional(
+    v.union(v.literal("interval"), v.literal("weekly"), v.literal("seasonal")),
+  ),
+  // weeklyDays: 每周几触发，元素 0~6（0=周日），仅 weekly 模式使用。
+  weeklyDays: v.optional(v.array(v.number())),
+  // seasonalIntervals: 春夏/秋冬各自的间隔天数，仅 seasonal 模式使用。
+  seasonalIntervals: v.optional(
+    v.object({ springSummer: v.number(), autumnWinter: v.number() }),
+  ),
   createdBy: v.id("users"),
   createdAt: utcTimestampValidator,
   updatedAt: utcTimestampValidator,
@@ -113,6 +137,8 @@ export const taskCompletionLogFields = {
   completedAt: utcTimestampValidator,
   taskType: plantTaskTypeValidator,
   intervalDays: v.number(),
+  // 任务完成附图（GAL-001）：可选，完成任务后追加的照片 storageId。
+  imageStorageId: v.optional(v.id("_storage")),
 };
 
 export const pushSubscriptionFields = {

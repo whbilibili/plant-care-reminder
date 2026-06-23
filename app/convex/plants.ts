@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 
 import { mutation, query } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
 import { getCurrentUserContext as loadCurrentUserContext } from "./lib/auth";
 import {
   assertMaxLength,
@@ -141,11 +142,18 @@ export const getPlantForEdit = query({
 
 export const getPlantDetail = query({
   args: {
-    plantId: v.id("plants"),
+    plantId: v.string(),
   },
   handler: async (ctx, args) => {
     const currentUserContext = await requireCurrentFamilyMember(ctx);
-    const plant = await ctx.db.get(args.plantId);
+
+    // 安全获取：无效 ID 格式不会抛错，直接返回 null
+    let plant;
+    try {
+      plant = await ctx.db.get(args.plantId as Id<"plants">);
+    } catch {
+      return null;
+    }
 
     if (!plant || plant.familyId !== currentUserContext.familyId) {
       return null;
@@ -159,6 +167,22 @@ export const getPlantDetail = query({
         .collect(),
     ]);
 
+    // GAL-005: 遍历 gallery 获取缩略图 URL
+    const rawGallery = plant.gallery ?? [];
+    const gallery = await Promise.all(
+      rawGallery.map(async (item) => {
+        const thumbnailUrl = await ctx.storage.getUrl(item.thumbnailStorageId);
+        return {
+          imageStorageId: item.imageStorageId,
+          thumbnailStorageId: item.thumbnailStorageId,
+          thumbnailUrl: thumbnailUrl ?? null,
+          uploadedBy: item.uploadedBy,
+          uploadedAt: item.uploadedAt,
+          caption: item.caption,
+        };
+      }),
+    );
+
     const allTasks = tasks
       .sort((left, right) => left.nextDueAt - right.nextDueAt)
       .map((task) => ({
@@ -169,6 +193,10 @@ export const getPlantDetail = query({
         nextDueAt: task.nextDueAt,
         lastCompletedAt: task.lastCompletedAt ?? null,
         enabled: task.enabled ?? true,
+        // FLEX-013: 排期模式字段
+        scheduleMode: task.scheduleMode,
+        weeklyDays: task.weeklyDays ?? null,
+        seasonalIntervals: task.seasonalIntervals ?? null,
       }));
 
     return {
@@ -187,6 +215,8 @@ export const getPlantDetail = query({
         archivedAt: plant.archivedAt ?? null,
       },
       tasks: allTasks,
+      gallery,
+      galleryCount: rawGallery.length,
     };
   },
 });
@@ -351,9 +381,16 @@ export const deletePlant = mutation({
       await ctx.db.delete(task._id);
     }
 
-    // 删除植物图片（如果有）
+    // 删除植物封面图片（如果有）
     if (plant.imageStorageId) {
       await ctx.storage.delete(plant.imageStorageId);
+    }
+
+    // GAL-006: 级联删除 gallery 中所有图片的 storage 文件（原图+缩略图）
+    const gallery = plant.gallery ?? [];
+    for (const item of gallery) {
+      await ctx.storage.delete(item.imageStorageId);
+      await ctx.storage.delete(item.thumbnailStorageId);
     }
 
     // 删除植物
@@ -378,6 +415,161 @@ export const getPlantImageUrl = query({
     return {
       imageUrl,
     };
+  },
+});
+
+// ─── 图集 Gallery mutations（GAL-002 ~ GAL-004）────────────────────
+
+const GALLERY_MAX_LENGTH = 20;
+
+export const addPlantGalleryImage = mutation({
+  args: {
+    plantId: v.id("plants"),
+    imageStorageId: v.id("_storage"),
+    thumbnailStorageId: v.id("_storage"),
+  },
+  handler: async (ctx, args) => {
+    const currentUserContext = await requireCurrentFamilyMember(ctx);
+    const plant = await ctx.db.get(args.plantId);
+
+    if (!plant || plant.familyId !== currentUserContext.familyId) {
+      throw new Error("This plant does not belong to your current household.");
+    }
+
+    if (plant.isArchived) {
+      throw new Error("归档植物无法添加图片。");
+    }
+
+    const gallery = plant.gallery ?? [];
+    if (gallery.length >= GALLERY_MAX_LENGTH) {
+      throw new Error(`图集最多保存 ${GALLERY_MAX_LENGTH} 张照片。`);
+    }
+
+    const newItem = {
+      imageStorageId: args.imageStorageId,
+      thumbnailStorageId: args.thumbnailStorageId,
+      uploadedBy: currentUserContext.userId,
+      uploadedAt: Date.now(),
+    };
+
+    await ctx.db.patch(args.plantId, {
+      gallery: [newItem, ...gallery],
+      updatedAt: Date.now(),
+    });
+
+    return { ok: true as const };
+  },
+});
+
+export const removePlantGalleryImage = mutation({
+  args: {
+    plantId: v.id("plants"),
+    imageStorageId: v.id("_storage"),
+  },
+  handler: async (ctx, args) => {
+    const currentUserContext = await requireCurrentFamilyMember(ctx);
+    const plant = await ctx.db.get(args.plantId);
+
+    if (!plant || plant.familyId !== currentUserContext.familyId) {
+      throw new Error("This plant does not belong to your current household.");
+    }
+
+    if (plant.isArchived) {
+      throw new Error("归档植物无法删除图片。");
+    }
+
+    const gallery = plant.gallery ?? [];
+    const target = gallery.find((item) => item.imageStorageId === args.imageStorageId);
+
+    if (!target) {
+      throw new Error("该照片不存在于图集中。");
+    }
+
+    // 级联删除 storage 文件（原图 + 缩略图）
+    await ctx.storage.delete(target.imageStorageId);
+    await ctx.storage.delete(target.thumbnailStorageId);
+
+    const updatedGallery = gallery.filter(
+      (item) => item.imageStorageId !== args.imageStorageId,
+    );
+
+    await ctx.db.patch(args.plantId, {
+      gallery: updatedGallery,
+      updatedAt: Date.now(),
+    });
+
+    return { ok: true as const };
+  },
+});
+
+export const setPlantCoverFromGallery = mutation({
+  args: {
+    plantId: v.id("plants"),
+    imageStorageId: v.id("_storage"),
+  },
+  handler: async (ctx, args) => {
+    const currentUserContext = await requireCurrentFamilyMember(ctx);
+    const plant = await ctx.db.get(args.plantId);
+
+    if (!plant || plant.familyId !== currentUserContext.familyId) {
+      throw new Error("This plant does not belong to your current household.");
+    }
+
+    const gallery = plant.gallery ?? [];
+    const exists = gallery.some((item) => item.imageStorageId === args.imageStorageId);
+
+    if (!exists) {
+      throw new Error("该照片不存在于图集中，无法设为封面。");
+    }
+
+    await ctx.db.patch(args.plantId, {
+      imageStorageId: args.imageStorageId,
+      updatedAt: Date.now(),
+    });
+
+    return { ok: true as const };
+  },
+});
+
+// UX-002: 更新/删除图集照片备注
+export const updateGalleryCaption = mutation({
+  args: {
+    plantId: v.id("plants"),
+    imageStorageId: v.id("_storage"),
+    caption: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const currentUserContext = await requireCurrentFamilyMember(ctx);
+    const plant = await ctx.db.get(args.plantId);
+
+    if (!plant || plant.familyId !== currentUserContext.familyId) {
+      throw new Error("This plant does not belong to your current household.");
+    }
+
+    const gallery = plant.gallery ?? [];
+    const idx = gallery.findIndex((item) => item.imageStorageId === args.imageStorageId);
+
+    if (idx === -1) {
+      throw new Error("该照片不存在于图集中。");
+    }
+
+    const updatedGallery = [...gallery];
+    // 清空或设置备注
+    const trimmed = args.caption?.trim();
+    if (trimmed) {
+      updatedGallery[idx] = { ...updatedGallery[idx], caption: trimmed };
+    } else {
+      // 删除备注：移除 caption 字段
+      const { caption: _, ...rest } = updatedGallery[idx];
+      updatedGallery[idx] = rest;
+    }
+
+    await ctx.db.patch(args.plantId, {
+      gallery: updatedGallery,
+      updatedAt: Date.now(),
+    });
+
+    return { ok: true as const };
   },
 });
 

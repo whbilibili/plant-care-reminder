@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from "convex/react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Check,
+  Camera,
   ChevronDown,
   ChevronRight,
   Droplet,
@@ -11,16 +11,21 @@ import {
 } from "lucide-react";
 
 import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
 import { navigate } from "../../app/router";
 import { GroupedSurface, GroupedSurfaceDivider } from "../../components/ui/GroupedSurface";
 import { Icon } from "../../components/ui/Icon";
 import { Button } from "../../components/ui/Button";
 import { EmptyState } from "../../components/ui/EmptyState";
+import { showToast } from "../../components/ui/GlobalToast";
 import { CompleteTaskButton } from "./CompleteTaskButton";
 import { FamilyRecentActivity } from "./FamilyRecentActivity";
 import { RoomFilterChips } from "./RoomFilterChips";
 import { UndoToast } from "./UndoToast";
 import { formatTaskTypeLabel } from "./taskTypes";
+import { compressImage } from "../../lib/imageCompression";
+import { uploadImagePair } from "../../lib/imageUpload";
+import { normalizeImageFile } from "../plants/normalizeImageFile";
 import type { DueTaskCardData } from "./DueTaskCard";
 import type { BatchCompletionUndoPayload, CompletionUndoPayload } from "./undoComplete";
 import type { CareTaskType } from "./taskTypes";
@@ -106,11 +111,23 @@ function formatShortDue(dueAt: number): { label: string; date: string; isOverdue
 
 export function TodoPage() {
   const result = useQuery(api.tasks.listDueTasks, {}) as TodoQueryResult | undefined;
-  const plants = useQuery(api.plants.listPlantsWithNextDue, {}) as unknown[] | undefined;
+  const plants = useQuery(api.plants.listPlantsWithNextDue, {}) as unknown as { plants: unknown[] } | undefined;
   const undoComplete = useMutation(api.tasks.undoCompletePlantTask);
+  const addTaskCompletionImage = useMutation(api.tasks.addTaskCompletionImage);
+  const generateUploadUrl = useMutation(api.plants.generatePlantImageUploadUrl);
   const [undoPayload, setUndoPayload] = useState<ActiveUndo | null>(null);
   const [showAllUpcoming, setShowAllUpcoming] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
+
+  // GAL-017: 任务完成后拍照提示
+  const [lastCompletedLogId, setLastCompletedLogId] = useState<string | null>(null);
+  const [lastCompletedPlantId, setLastCompletedPlantId] = useState<string | null>(null);
+  const photoFileInputRef = useRef<HTMLInputElement>(null);
+
+  // 方案 C：缓存刚完成的任务快照，防止 Convex realtime 更新后行被卸载
+  const [recentlyCompleted, setRecentlyCompleted] = useState<
+    Array<{ task: DueTaskCardData; completedAt: number; variant: "overdue" | "today" | "upcoming" }>
+  >([]);
 
   /** 从所有任务中提取去重位置列表（按出现频率降序）。 */
   const roomLocations = useMemo(() => {
@@ -143,6 +160,15 @@ export function TodoPage() {
 
   async function handleUndo(payload: ActiveUndo) {
     setUndoPayload(null);
+
+    // 撤销时立即移除对应的 CompletedTaskRow（触发滑出动画）
+    if ("kind" in payload) {
+      const ids = new Set(payload.items.map((i) => i.taskId));
+      setRecentlyCompleted((prev) => prev.filter((r) => !ids.has(r.task.taskId)));
+    } else {
+      setRecentlyCompleted((prev) => prev.filter((r) => r.task.taskId !== payload.taskId));
+    }
+
     try {
       if ("kind" in payload) {
         await Promise.all(payload.items.map(undoOne));
@@ -151,6 +177,71 @@ export function TodoPage() {
       }
     } catch {
       // 撤销失败时静默
+    }
+  }
+
+  // GAL-017: 任务完成后触发拍照提示 + 方案 C 快照
+  function handleTaskCompleted(undo: CompletionUndoPayload, plantId: string) {
+    setUndoPayload(undo);
+    setLastCompletedLogId(undo.logId);
+    setLastCompletedPlantId(plantId);
+
+    // 方案 C：在 Convex 实时更新删除行之前，保存 task 快照（含原始分组）
+    if (result) {
+      let taskSnapshot: DueTaskCardData | undefined;
+      let variant: "overdue" | "today" | "upcoming" = "today";
+      taskSnapshot = result.overdue.find((t) => t.taskId === undo.taskId);
+      if (taskSnapshot) { variant = "overdue"; }
+      if (!taskSnapshot) {
+        taskSnapshot = result.today.find((t) => t.taskId === undo.taskId);
+        if (taskSnapshot) { variant = "today"; }
+      }
+      if (!taskSnapshot) {
+        taskSnapshot = result.upcoming.find((t) => t.taskId === undo.taskId);
+        if (taskSnapshot) { variant = "upcoming"; }
+      }
+      if (taskSnapshot) {
+        setRecentlyCompleted((prev) => [
+          ...prev.filter((r) => r.task.taskId !== undo.taskId),
+          { task: taskSnapshot!, completedAt: Date.now(), variant },
+        ]);
+      }
+    }
+  }
+
+  /** 方案 C：从 TaskRow 变形态触发拍照 */
+  function handlePhotoCaptureForPlant(plantId: string) {
+    setLastCompletedPlantId(plantId);
+    photoFileInputRef.current?.click();
+  }
+
+  async function handlePhotoFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const originalFile = event.target.files?.[0];
+    event.target.value = "";
+    if (!originalFile || !lastCompletedLogId || !lastCompletedPlantId) return;
+
+    if (originalFile.size > 10 * 1024 * 1024) {
+      showToast("图片过大，请选择 10MB 以内的照片");
+      return;
+    }
+
+    try {
+      const normalizedFile = await normalizeImageFile(originalFile);
+      const { original, thumbnail } = await compressImage(normalizedFile);
+      const { imageStorageId, thumbnailStorageId } = await uploadImagePair(
+        () => generateUploadUrl({}),
+        original,
+        thumbnail,
+      );
+      await addTaskCompletionImage({
+        logId: lastCompletedLogId as Id<"taskCompletionLogs">,
+        plantId: lastCompletedPlantId as Id<"plants">,
+        imageStorageId: imageStorageId as Id<"_storage">,
+        thumbnailStorageId: thumbnailStorageId as Id<"_storage">,
+      });
+      showToast("照片已保存");
+    } catch {
+      showToast("照片保存失败");
     }
   }
 
@@ -175,7 +266,7 @@ export function TodoPage() {
   const pendingTaskCount = result.overdue.filter((t) => !t.completedToday).length
     + result.today.filter((t) => !t.completedToday).length;
   const totalTaskCount = result.overdue.length + result.today.length + result.upcoming.length;
-  const hasNoPlants = Array.isArray(plants) && plants.length === 0;
+  const hasNoPlants = plants != null && plants.plants.length === 0;
 
   return (
     <section style={pageStyle}>
@@ -248,7 +339,7 @@ export function TodoPage() {
       ) : (
         <div style={groupsContainerStyle}>
           {/* Overdue Group */}
-          {filterByRoom(result.overdue).length > 0 && (
+          {(filterByRoom(result.overdue).length > 0 || recentlyCompleted.some((r) => r.variant === "overdue")) && (
             <div style={groupBlockStyle}>
               <h2 style={groupTitleOverdueStyle}><span style={groupTitleBarOverdueStyle} />逾期（{filterByRoom(result.overdue).length}）<span style={groupTitleLineStyle} /></h2>
               <GroupedSurface style={overdueGroupStyle}>
@@ -257,18 +348,35 @@ export function TodoPage() {
                     {index > 0 && <GroupedSurfaceDivider />}
                     <TaskRow
                       task={task}
-                      onCompleted={setUndoPayload}
+                      onCompleted={handleTaskCompleted}
                       onOpenPlant={(plantId) => navigate(`/plants/${plantId}`)}
                       variant="overdue"
                     />
                   </div>
                 ))}
+                {recentlyCompleted
+                  .filter((r) => r.variant === "overdue")
+                  .map((entry) => (
+                    <div key={`completed-${entry.task.taskId}`}>
+                      <GroupedSurfaceDivider />
+                      <CompletedTaskRow
+                        task={entry.task}
+                        onCapture={handlePhotoCaptureForPlant}
+                        onOpenPlant={(plantId) => navigate(`/plants/${plantId}`)}
+                        onDismiss={() =>
+                          setRecentlyCompleted((prev) =>
+                            prev.filter((r) => r.task.taskId !== entry.task.taskId),
+                          )
+                        }
+                      />
+                    </div>
+                  ))}
               </GroupedSurface>
             </div>
           )}
 
           {/* Today Group */}
-          {filterByRoom(result.today).length > 0 && (
+          {(filterByRoom(result.today).length > 0 || recentlyCompleted.some((r) => r.variant === "today")) && (
             <div style={groupBlockStyle}>
               <h2 style={groupTitleDefaultStyle}><span style={groupTitleBarDefaultStyle} />今天（{filterByRoom(result.today).length}）<span style={groupTitleLineStyle} /></h2>
               <GroupedSurface style={todayGroupStyle}>
@@ -277,12 +385,29 @@ export function TodoPage() {
                     {index > 0 && <GroupedSurfaceDivider />}
                     <TaskRow
                       task={task}
-                      onCompleted={setUndoPayload}
+                      onCompleted={handleTaskCompleted}
                       onOpenPlant={(plantId) => navigate(`/plants/${plantId}`)}
                       variant="today"
                     />
                   </div>
                 ))}
+                {recentlyCompleted
+                  .filter((r) => r.variant === "today")
+                  .map((entry) => (
+                    <div key={`completed-${entry.task.taskId}`}>
+                      <GroupedSurfaceDivider />
+                      <CompletedTaskRow
+                        task={entry.task}
+                        onCapture={handlePhotoCaptureForPlant}
+                        onOpenPlant={(plantId) => navigate(`/plants/${plantId}`)}
+                        onDismiss={() =>
+                          setRecentlyCompleted((prev) =>
+                            prev.filter((r) => r.task.taskId !== entry.task.taskId),
+                          )
+                        }
+                      />
+                    </div>
+                  ))}
               </GroupedSurface>
             </div>
           )}
@@ -298,7 +423,7 @@ export function TodoPage() {
                     {index > 0 && <GroupedSurfaceDivider />}
                     <TaskRow
                       task={task}
-                      onCompleted={setUndoPayload}
+                      onCompleted={handleTaskCompleted}
                       onOpenPlant={(plantId) => navigate(`/plants/${plantId}`)}
                       variant="upcoming"
                     />
@@ -347,7 +472,99 @@ export function TodoPage() {
           payload={undoPayload}
         />
       ) : null}
+      <input
+        ref={photoFileInputRef}
+        type="file"
+        accept="image/*"
+        style={{ display: "none" }}
+        onChange={handlePhotoFileChange}
+      />
     </section>
+  );
+}
+
+/* ─── CompletedTaskRow（方案 C 变形态） ─── */
+
+/** 变形态停留后自动消失时长（ms） */
+const CONFIRMED_LINGER_MS = 5000;
+
+interface CompletedTaskRowProps {
+  task: DueTaskCardData;
+  onCapture: (plantId: string) => void;
+  onOpenPlant: (plantId: string) => void;
+  onDismiss: () => void;
+}
+
+function CompletedTaskRow({ task, onCapture, onOpenPlant, onDismiss }: CompletedTaskRowProps) {
+  const taskLabel = formatTaskTypeLabel(task.taskType, task.customLabel);
+
+  // 三阶段动画：entering → visible → exiting
+  const [phase, setPhase] = useState<"entering" | "visible" | "exiting">("entering");
+
+  // 入场：下一帧展开
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setPhase("visible"));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  // 自动消失倒计时
+  useEffect(() => {
+    if (phase !== "visible") return;
+    const timer = setTimeout(() => setPhase("exiting"), CONFIRMED_LINGER_MS);
+    return () => clearTimeout(timer);
+  }, [phase]);
+
+  // 退场动画结束后从列表移除
+  useEffect(() => {
+    if (phase !== "exiting") return;
+    const timer = setTimeout(onDismiss, 350);
+    return () => clearTimeout(timer);
+  }, [phase, onDismiss]);
+
+  const wrapperStyle: React.CSSProperties = {
+    overflow: "hidden",
+    maxHeight: phase === "entering" ? "0px" : phase === "visible" ? "80px" : "0px",
+    opacity: phase === "entering" ? 0 : phase === "visible" ? 1 : 0,
+    transition: "max-height 350ms ease, opacity 300ms ease",
+  };
+
+  return (
+    <div style={wrapperStyle} onTransitionEnd={() => { if (phase === "exiting") onDismiss(); }}>
+      <div
+        style={{
+          ...taskRowStyle,
+          ...confirmedRowStyle,
+        }}
+      >
+        <button
+          aria-label={`查看 ${task.plantName}`}
+          onClick={() => onOpenPlant(task.plantId)}
+          style={plantThumbButtonStyle}
+          type="button"
+        >
+          {task.plantImageUrl ? (
+            <img alt={task.plantName} src={task.plantImageUrl} style={plantThumbImageStyle} />
+          ) : (
+            <span style={plantThumbFallbackStyle}>🌿</span>
+          )}
+        </button>
+
+        <div style={taskContentStyle}>
+          <span style={confirmedNameStyle}>{task.plantName}</span>
+          <span style={confirmedMetaStyle}>✓ {taskLabel}已完成</span>
+        </div>
+
+        <button
+          onClick={() => onCapture(task.plantId)}
+          style={captureInlineButtonStyle}
+          type="button"
+          aria-label="拍照记录"
+        >
+          <Icon icon={Camera} size={15} colorVar="--color-leaf" />
+          <span style={captureInlineTextStyle}>记录</span>
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -355,7 +572,7 @@ export function TodoPage() {
 
 interface TaskRowProps {
   task: DueTaskCardData;
-  onCompleted?: (undo: CompletionUndoPayload) => void;
+  onCompleted?: (undo: CompletionUndoPayload, plantId: string) => void;
   onOpenPlant: (plantId: string) => void;
   variant: "overdue" | "today" | "upcoming";
 }
@@ -365,7 +582,6 @@ function TaskRow({ task, onCompleted, onOpenPlant, variant }: TaskRowProps) {
   const TaskIcon = getTaskIcon(task.taskType);
   const iconColor = getTaskIconColor(task.taskType);
   const dueInfo = formatShortDue(task.nextDueAt);
-
   const isUpcoming = variant === "upcoming";
 
   return (
@@ -429,7 +645,7 @@ function TaskRow({ task, onCompleted, onOpenPlant, variant }: TaskRowProps) {
             appearance="circle"
             celebrateEmoji={task.taskType === "watering" ? "💧" : "🍃"}
             onCompleted={(result) => {
-              onCompleted?.(result.undo);
+              onCompleted?.(result.undo, task.plantId);
             }}
             taskId={task.taskId}
           />
@@ -763,4 +979,50 @@ const footerTextStyle: React.CSSProperties = {
   color: "var(--color-muted)",
   fontStyle: "italic",
   opacity: 0.7,
+};
+
+/* ─── Confirmed Row (方案 C) ─── */
+
+const confirmedRowStyle: React.CSSProperties = {
+  background: "rgba(45, 140, 100, 0.06)",
+  borderRadius: "12px",
+  transition: "opacity 400ms ease, transform 400ms ease",
+};
+
+const confirmedNameStyle: React.CSSProperties = {
+  fontSize: "14px",
+  fontWeight: 600,
+  color: "var(--color-ink)",
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+};
+
+const confirmedMetaStyle: React.CSSProperties = {
+  fontSize: "13px",
+  fontWeight: 500,
+  color: "var(--color-leaf)",
+};
+
+const captureInlineButtonStyle: React.CSSProperties = {
+  appearance: "none",
+  flexShrink: 0,
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "4px",
+  height: "32px",
+  padding: "0 12px",
+  borderRadius: "16px",
+  border: "1.5px solid rgba(45, 140, 100, 0.25)",
+  background: "var(--color-surface)",
+  cursor: "pointer",
+  whiteSpace: "nowrap",
+  transition: "background 150ms ease",
+};
+
+const captureInlineTextStyle: React.CSSProperties = {
+  fontSize: "13px",
+  fontWeight: 500,
+  color: "var(--color-leaf)",
+  lineHeight: 1,
 };

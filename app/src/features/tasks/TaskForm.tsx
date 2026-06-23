@@ -4,6 +4,8 @@ import { InputField } from "../../components/ui/InputField";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { CUSTOM_TASK_NAME_MAX_LENGTH } from "../../lib/constants";
 import { formatDueDate } from "../../lib/formatters";
+import type { ScheduleMode } from "../../types/domain";
+import { ScheduleModeFieldGroup } from "./ScheduleModeFields";
 import {
   careTaskTypeOptions,
   formatTaskTypeLabel,
@@ -16,11 +18,19 @@ export interface TaskFormValues {
   customTaskName: string;
   intervalDays: string;
   taskType: CareTaskType;
+  // FLEX-010: 排期模式字段
+  scheduleMode: ScheduleMode;
+  weeklyDays: number[];
+  springSummer: string;
+  autumnWinter: string;
 }
 
 export interface TaskFormErrors {
   customTaskName?: string | null;
   intervalDays?: string | null;
+  // FLEX-010: 排期模式校验
+  weeklyDays?: string | null;
+  seasonal?: string | null;
 }
 
 interface TaskFormProps {
@@ -92,17 +102,33 @@ export function TaskForm({
             value={values.customTaskName}
           />
         ) : null}
-        <InputField
-          errorMessage={errors.intervalDays}
-          hint="必填。表示两次提醒之间相隔的完整天数。"
-          inputMode="numeric"
-          label="提醒间隔天数"
-          min={1}
-          onChange={(event) => onValueChange("intervalDays", event.target.value)}
-          placeholder="7"
-          type="number"
-          value={values.intervalDays}
+        {/* FLEX-010: 排期模式选择器（位于任务类型之后） */}
+        <ScheduleModeFieldGroup
+          mode={values.scheduleMode}
+          onModeChange={(mode) => onValueChange("scheduleMode", mode)}
+          weeklyDays={values.weeklyDays}
+          onWeeklyDaysChange={(days) => onValueChange("weeklyDays", days)}
+          weeklyError={errors.weeklyDays}
+          springSummer={values.springSummer}
+          autumnWinter={values.autumnWinter}
+          onSpringSummerChange={(v) => onValueChange("springSummer", v)}
+          onAutumnWinterChange={(v) => onValueChange("autumnWinter", v)}
+          seasonalError={errors.seasonal}
         />
+        {/* 仅固定间隔模式下显示间隔天数输入框 */}
+        {values.scheduleMode === "interval" && (
+          <InputField
+            errorMessage={errors.intervalDays}
+            hint="必填。表示两次提醒之间相隔的完整天数。"
+            inputMode="numeric"
+            label="提醒间隔天数"
+            min={1}
+            onChange={(event) => onValueChange("intervalDays", event.target.value)}
+            placeholder="7"
+            type="number"
+            value={values.intervalDays}
+          />
+        )}
         <InputField
           hint="选填。填写后会基于这次完成日期计算下一次提醒时间。"
           label="上次完成日期"
@@ -135,11 +161,6 @@ export function parseDateInputToTimestamp(value: string) {
 }
 
 function getDuePreview(values: TaskFormValues) {
-  const interval = Number(values.intervalDays);
-  if (!Number.isInteger(interval) || interval < 1) {
-    return "请输入有效的整数天数，才能预览下一次提醒时间。";
-  }
-
   const baseTimestamp = values.baseCompletedOn
     ? parseDateInputToTimestamp(values.baseCompletedOn)
     : Date.now();
@@ -148,6 +169,49 @@ function getDuePreview(values: TaskFormValues) {
     return "请输入有效的完成日期，才能预览下一次提醒时间。";
   }
 
+  const { scheduleMode, weeklyDays } = values;
+
+  if (scheduleMode === "weekly") {
+    if (!weeklyDays || weeklyDays.length === 0) {
+      return "请选择至少一个星期几，才能预览下一次提醒时间。";
+    }
+    // 计算下一个匹配日
+    const MS_PER_DAY = 24 * 60 * 60 * 1000;
+    for (let offset = 1; offset <= 7; offset++) {
+      const candidateMs = baseTimestamp + offset * MS_PER_DAY;
+      const candidateDate = new Date(candidateMs);
+      if (weeklyDays.includes(candidateDate.getUTCDay())) {
+        return formatDueDate(Date.UTC(
+          candidateDate.getUTCFullYear(),
+          candidateDate.getUTCMonth(),
+          candidateDate.getUTCDate(),
+        ));
+      }
+    }
+    return formatDueDate(baseTimestamp + 24 * 60 * 60 * 1000);
+  }
+
+  if (scheduleMode === "seasonal") {
+    const springSummer = Number(values.springSummer);
+    const autumnWinter = Number(values.autumnWinter);
+    if ((!Number.isInteger(springSummer) || springSummer < 1) &&
+        (!Number.isInteger(autumnWinter) || autumnWinter < 1)) {
+      return "请输入有效的季节间隔天数，才能预览下一次提醒时间。";
+    }
+    // 根据当前月份选择对应间隔
+    const month = new Date(baseTimestamp).getUTCMonth();
+    const effectiveInterval = (month >= 2 && month <= 7) ? springSummer : autumnWinter;
+    if (!Number.isInteger(effectiveInterval) || effectiveInterval < 1) {
+      return "请输入有效的季节间隔天数，才能预览下一次提醒时间。";
+    }
+    return formatDueDate(baseTimestamp + effectiveInterval * 24 * 60 * 60 * 1000);
+  }
+
+  // interval mode
+  const interval = Number(values.intervalDays);
+  if (!Number.isInteger(interval) || interval < 1) {
+    return "请输入有效的整数天数，才能预览下一次提醒时间。";
+  }
   return formatDueDate(baseTimestamp + interval * 24 * 60 * 60 * 1000);
 }
 

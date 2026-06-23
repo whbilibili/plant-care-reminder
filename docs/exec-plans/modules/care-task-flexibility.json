@@ -1,0 +1,947 @@
+{
+  "project": "plant-care-reminder",
+  "prd": "docs/product-specs/2026-06-22-care-task-flexibility-spec.md",
+  "task_breakdown": "docs/product-specs/2026-06-22-care-task-flexibility-task-breakdown.md",
+  "created_at": "2026-06-22",
+  "tasks": [
+    {
+      "task_id": "FLEX-001",
+      "description": "Implement computeNextWeeklyDueAt and computeNextSeasonalDueAt scheduling functions with unit tests.",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "Pure computation functions, no data layer dependency.",
+            "notes": "computeNextWeeklyDueAt finds the next matching weekday from completedAt (always starting from tomorrow). computeNextSeasonalDueAt selects interval based on month: 3~8 → springSummer, 9~2 → autumnWinter."
+          },
+          "queries": { "read": "N/A", "write": "N/A" },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": { "type": "shared-contract", "endpoints": [] },
+        "component_tree": { "entry_component": "N/A", "children": ["computeNextWeeklyDueAt", "computeNextSeasonalDueAt"] },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "shared helper", "guard": "N/A", "middleware": "N/A" },
+        "auth": { "provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A" }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test -- --testPathPattern=scheduling",
+        "data": "N/A",
+        "visual": "N/A",
+        "manual": "computeNextWeeklyDueAt correctly finds next matching weekday; computeNextSeasonalDueAt correctly selects interval by season."
+      },
+      "metadata": {
+        "files_affected": ["app/src/features/tasks/scheduling.ts", "app/tests/unit/tasks/scheduling.test.ts"],
+        "modules": ["care-task-flexibility"],
+        "layer": "shared",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "computeNextWeeklyDueAt returns the next matching weekday timestamp from completedAt (never today if today is a match).",
+        "computeNextWeeklyDueAt handles single-day, multi-day, cross-week, and overdue-then-complete scenarios.",
+        "computeNextSeasonalDueAt uses springSummer interval for months 3~8 and autumnWinter for months 9~2.",
+        "computeNextSeasonalDueAt does not switch interval mid-calculation when crossing season boundary.",
+        "All edge cases have unit test coverage."
+      ]
+    },
+    {
+      "task_id": "FLEX-002",
+      "description": "Implement computeNextDueAtByMode unified dispatcher, validateWeeklyDays, validateSeasonalIntervals, and getEffectiveIntervalDays with unit tests.",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "Dispatches to computeNextDueAt (existing), computeNextWeeklyDueAt, or computeNextSeasonalDueAt based on scheduleMode.",
+            "notes": "scheduleMode undefined falls back to 'interval' for backward compatibility."
+          },
+          "queries": { "read": "N/A", "write": "N/A" },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": { "type": "shared-contract", "endpoints": [] },
+        "component_tree": { "entry_component": "N/A", "children": ["computeNextDueAtByMode", "validateWeeklyDays", "validateSeasonalIntervals", "getEffectiveIntervalDays"] },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "shared helper", "guard": "N/A", "middleware": "N/A" },
+        "auth": { "provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A" }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test -- --testPathPattern=scheduling",
+        "data": "N/A",
+        "visual": "N/A",
+        "manual": "computeNextDueAtByMode dispatches correctly for all three modes; validators reject invalid inputs."
+      },
+      "metadata": {
+        "files_affected": ["app/src/features/tasks/scheduling.ts", "app/tests/unit/tasks/scheduling.test.ts"],
+        "modules": ["care-task-flexibility"],
+        "layer": "shared",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "computeNextDueAtByMode correctly dispatches to interval/weekly/seasonal calculation.",
+        "computeNextDueAtByMode treats undefined scheduleMode as 'interval' (backward compatible).",
+        "validateWeeklyDays rejects empty array, out-of-range values (< 0 or > 6), and duplicates.",
+        "validateSeasonalIntervals rejects values <= 0 or > 365.",
+        "getEffectiveIntervalDays returns correct interval based on current season for seasonal mode.",
+        "All functions have unit test coverage."
+      ]
+    },
+    {
+      "task_id": "FLEX-003",
+      "description": "Extend plantTaskFields schema with scheduleMode, weeklyDays, and seasonalIntervals fields.",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": ["plantTasks"],
+            "key_fields": { "plantTasks": ["scheduleMode", "weeklyDays", "seasonalIntervals"] },
+            "indexes": [],
+            "relations": "scheduleMode optional for backward compatibility — old data without field treated as interval.",
+            "notes": "weeklyDays: v.optional(v.array(v.number())), elements 0~6. seasonalIntervals: v.optional(v.object({ springSummer: v.number(), autumnWinter: v.number() })). No new indexes needed."
+          },
+          "queries": { "read": "N/A", "write": "N/A" },
+          "migration_strategy": "All new fields v.optional — no data migration needed."
+        },
+        "api_layer": { "type": "shared-contract", "endpoints": [] },
+        "component_tree": { "entry_component": "N/A", "children": [] },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "N/A", "guard": "N/A", "middleware": "N/A" },
+        "auth": { "provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A" }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "cd app && npx convex dev --once --typecheck enable",
+        "visual": "N/A",
+        "manual": "Convex schema push succeeds; existing data remains accessible."
+      },
+      "metadata": {
+        "files_affected": ["app/convex/lib/validators.ts", "app/convex/schema.ts"],
+        "modules": ["care-task-flexibility"],
+        "layer": "data",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "plantTaskFields includes scheduleMode as v.optional(v.union(v.literal('interval'), v.literal('weekly'), v.literal('seasonal'))).",
+        "plantTaskFields includes weeklyDays as v.optional(v.array(v.number())).",
+        "plantTaskFields includes seasonalIntervals as v.optional(v.object({ springSummer: v.number(), autumnWinter: v.number() })).",
+        "Convex schema type-check passes.",
+        "No data migration required — all new fields optional."
+      ]
+    },
+    {
+      "task_id": "FLEX-004",
+      "description": "Extend createPlantTask mutation with schedule mode parameters and fixed-type uniqueness constraint.",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": ["plantTasks"],
+            "key_fields": { "plantTasks": ["plantId", "taskType", "enabled", "scheduleMode", "weeklyDays", "seasonalIntervals"] },
+            "indexes": ["plantTasks.by_plantId"],
+            "relations": "Uniqueness check: for non-custom taskType, query by_plantId filter enabled !== false and same taskType.",
+            "notes": "Weekly mode weeklyDays deduplicated and sorted before storage. scheduleMode defaults to interval when not provided."
+          },
+          "queries": {
+            "read": "Query by_plantId to check uniqueness.",
+            "write": "Insert new plantTask document with schedule mode fields."
+          },
+          "migration_strategy": "Uses FLEX-003 schema extension."
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [{
+            "method": "mutation",
+            "path": "convex/createPlantTask",
+            "request": { "plantId": "Id<plants>", "taskType": "string", "customTaskName": "string|null", "intervalDays": "number", "baseCompletedAt": "number|null", "scheduleMode": "optional 'interval'|'weekly'|'seasonal'", "weeklyDays": "optional number[]", "seasonalIntervals": "optional { springSummer: number, autumnWinter: number }" },
+            "response": { "taskId": "Id<plantTasks>" },
+            "auth_required": true
+          }]
+        },
+        "component_tree": { "entry_component": "N/A", "children": [] },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "N/A", "guard": "authenticated family members", "middleware": "N/A" },
+        "auth": { "provider": "Convex Auth", "strategy": "session", "rls_or_rbac": "Creation scoped to current family." }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "cd app && npx convex dev --once --typecheck enable",
+        "visual": "N/A",
+        "manual": "createPlantTask accepts new schedule mode params; rejects duplicate fixed-type tasks; correctly computes nextDueAt for all three modes."
+      },
+      "metadata": {
+        "files_affected": ["app/convex/tasks.ts"],
+        "modules": ["care-task-flexibility"],
+        "layer": "api",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "createPlantTask accepts scheduleMode, weeklyDays, and seasonalIntervals parameters.",
+        "Non-custom task type with enabled=true duplicate for same plantId rejected with friendly Chinese error.",
+        "Weekly mode: weeklyDays validated (1~7 elements, values 0~6, no duplicates), sorted before storage.",
+        "Seasonal mode: seasonalIntervals validated (both values 1~365 integers).",
+        "nextDueAt computed via computeNextDueAtByMode for all three modes.",
+        "Omitting scheduleMode behaves identically to existing interval mode."
+      ]
+    },
+    {
+      "task_id": "FLEX-005",
+      "description": "Extend updatePlantTask mutation with schedule mode switching, field cleanup, and nextDueAt recalculation.",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": ["plantTasks"],
+            "key_fields": { "plantTasks": ["scheduleMode", "weeklyDays", "seasonalIntervals", "nextDueAt"] },
+            "indexes": [],
+            "relations": "Mode switch clears irrelevant fields (e.g. weekly→interval clears weeklyDays).",
+            "notes": "nextDueAt immediately recalculated when schedule mode changes, using lastCompletedAt as baseline."
+          },
+          "queries": {
+            "read": "Load task by id, verify family ownership.",
+            "write": "Patch task with new schedule mode, clear irrelevant fields, recalculate nextDueAt."
+          },
+          "migration_strategy": "Uses FLEX-003 schema extension."
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [{
+            "method": "mutation",
+            "path": "convex/updatePlantTask",
+            "request": { "taskId": "Id<plantTasks>", "taskType": "string", "customTaskName": "string|null", "intervalDays": "number", "enabled": "boolean", "scheduleMode": "optional", "weeklyDays": "optional", "seasonalIntervals": "optional" },
+            "response": { "ok": true },
+            "auth_required": true
+          }]
+        },
+        "component_tree": { "entry_component": "N/A", "children": [] },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "N/A", "guard": "authenticated family members", "middleware": "N/A" },
+        "auth": { "provider": "Convex Auth", "strategy": "session", "rls_or_rbac": "Scoped to current family." }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "cd app && npx convex dev --once --typecheck enable",
+        "visual": "N/A",
+        "manual": "Mode switching recalculates nextDueAt; irrelevant fields cleared correctly; no uniqueness check on edit."
+      },
+      "metadata": {
+        "files_affected": ["app/convex/tasks.ts"],
+        "modules": ["care-task-flexibility"],
+        "layer": "api",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "updatePlantTask accepts new schedule mode parameters.",
+        "Switching from weekly to interval clears weeklyDays field.",
+        "Switching from seasonal to interval clears seasonalIntervals field.",
+        "nextDueAt immediately recalculated using new mode when schedule mode changes.",
+        "Editing task does not trigger uniqueness check.",
+        "Parameter validation consistent with createPlantTask."
+      ]
+    },
+    {
+      "task_id": "FLEX-006",
+      "description": "Extend completeTaskCore to branch nextDueAt by scheduleMode; extend getTaskForEdit and listDueTasks to return schedule fields.",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": ["plantTasks", "taskCompletionLogs"],
+            "key_fields": { "plantTasks": ["scheduleMode", "weeklyDays", "seasonalIntervals", "nextDueAt", "lastCompletedAt"] },
+            "indexes": [],
+            "relations": "completeTaskCore reads task.scheduleMode to dispatch calculation; queries return schedule fields to frontend.",
+            "notes": "task.scheduleMode ?? 'interval' for backward compatibility. Batch complete reuses completeTaskCore."
+          },
+          "queries": {
+            "read": "getTaskForEdit and listDueTasks return scheduleMode/weeklyDays/seasonalIntervals.",
+            "write": "completeTaskCore writes completion log and patches task with mode-aware nextDueAt."
+          },
+          "migration_strategy": "No schema change (uses FLEX-003)."
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [
+            { "method": "mutation", "path": "convex/completePlantTask", "request": { "taskId": "Id<plantTasks>" }, "response": { "taskId": "string", "lastCompletedAt": "number", "nextDueAt": "number" }, "auth_required": true },
+            { "method": "query", "path": "convex/getTaskForEdit", "request": { "taskId": "Id<plantTasks>" }, "response": { "task": "existing + scheduleMode/weeklyDays/seasonalIntervals" }, "auth_required": true },
+            { "method": "query", "path": "convex/listDueTasks", "request": {}, "response": { "tasks": "Array with schedule fields" }, "auth_required": true }
+          ]
+        },
+        "component_tree": { "entry_component": "N/A", "children": [] },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "N/A", "guard": "authenticated family members", "middleware": "N/A" },
+        "auth": { "provider": "Convex Auth", "strategy": "session", "rls_or_rbac": "Scoped to current family." }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "cd app && npx convex dev --once --typecheck enable",
+        "visual": "N/A",
+        "manual": "Completing weekly/seasonal task yields correct nextDueAt; queries include schedule fields."
+      },
+      "metadata": {
+        "files_affected": ["app/convex/tasks.ts"],
+        "modules": ["care-task-flexibility"],
+        "layer": "api",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "completeTaskCore dispatches to correct calculation based on task.scheduleMode.",
+        "Old tasks without scheduleMode complete using interval logic.",
+        "Batch complete inherits mode-aware calculation via completeTaskCore.",
+        "Undo restores previous snapshot without mode-aware recalculation.",
+        "getTaskForEdit returns scheduleMode (default 'interval'), weeklyDays, seasonalIntervals.",
+        "listDueTasks returns same three fields for each due task."
+      ]
+    },
+    {
+      "task_id": "FLEX-007",
+      "description": "Extend getTaskCreationPlant query to return existingEnabledTypes for uniqueness annotation.",
+      "priority": "2-Medium",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": ["plantTasks"],
+            "key_fields": { "plantTasks": ["plantId", "taskType", "enabled"] },
+            "indexes": ["plantTasks.by_plantId"],
+            "relations": "Query existing tasks for plant, filter enabled + non-custom, return type list.",
+            "notes": "Used by CreateTaskPage to show 'already exists' labels on fixed task types."
+          },
+          "queries": {
+            "read": "Query by_plantId → filter enabled non-custom → map to taskType strings.",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [{
+            "method": "query",
+            "path": "convex/getTaskCreationPlant",
+            "request": { "plantId": "Id<plants>" },
+            "response": { "plant": "existing", "existingEnabledTypes": "string[]" },
+            "auth_required": true
+          }]
+        },
+        "component_tree": { "entry_component": "N/A", "children": [] },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "N/A", "guard": "authenticated family members", "middleware": "N/A" },
+        "auth": { "provider": "Convex Auth", "strategy": "session", "rls_or_rbac": "Scoped to current family." }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "cd app && npx convex dev --once --typecheck enable",
+        "visual": "N/A",
+        "manual": "getTaskCreationPlant returns correct existingEnabledTypes for plant with mixed task states."
+      },
+      "metadata": {
+        "files_affected": ["app/convex/tasks.ts"],
+        "modules": ["care-task-flexibility"],
+        "layer": "api",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Response includes existingEnabledTypes string array.",
+        "Only enabled non-custom task types included.",
+        "Disabled tasks not listed (allowing re-creation).",
+        "Custom type tasks never included."
+      ]
+    },
+    {
+      "task_id": "FLEX-008",
+      "description": "Add frontend type definitions (ScheduleMode, SeasonalIntervals) and implement formatWeeklyDays / formatScheduleDescription formatters.",
+      "priority": "2-Medium",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": { "tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "N/A", "notes": "Pure frontend types and formatters." },
+          "queries": { "read": "N/A", "write": "N/A" },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": { "type": "shared-contract", "endpoints": [] },
+        "component_tree": { "entry_component": "N/A", "children": ["ScheduleMode type", "SeasonalIntervals type", "formatWeeklyDays", "formatScheduleDescription"] },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "N/A", "guard": "N/A", "middleware": "N/A" },
+        "auth": { "provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A" }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "N/A",
+        "visual": "N/A",
+        "manual": "formatWeeklyDays([1,3,5]) returns '每周一三五'; formatScheduleDescription formats all three modes correctly."
+      },
+      "metadata": {
+        "files_affected": ["app/src/types/domain.ts", "app/src/lib/formatters.ts"],
+        "modules": ["care-task-flexibility"],
+        "layer": "ui",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "ScheduleMode type exported as 'interval' | 'weekly' | 'seasonal'.",
+        "SeasonalIntervals interface exported with springSummer and autumnWinter number fields.",
+        "formatWeeklyDays converts [1,3,5] to '每周一三五' (Chinese short names, sorted Mon→Sun).",
+        "formatScheduleDescription returns '每 N 天' for interval, weekly format for weekly, '春夏每 N 天 / 秋冬每 M 天' for seasonal."
+      ]
+    },
+    {
+      "task_id": "FLEX-009",
+      "description": "Implement ScheduleModeSelector, WeeklyDaysPicker, and SeasonalIntervalsInput UI components.",
+      "priority": "2-Medium",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": { "tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "N/A", "notes": "Pure UI components." },
+          "queries": { "read": "N/A", "write": "N/A" },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": { "type": "shared-contract", "endpoints": [] },
+        "component_tree": {
+          "entry_component": "N/A",
+          "children": ["ScheduleModeSelector", "WeeklyDaysPicker", "SeasonalIntervalsInput"],
+          "notes": "ScheduleModeSelector: SegmentedControl with 3 options (固定间隔/每周几/按季节), --color-leaf selected bg, --color-mist container bg, 150ms slide. WeeklyDaysPicker: 7 circular 36x36 buttons (一二三四五六日), unselected --color-bark/10 border, selected --color-leaf bg, at least 1 required. SeasonalIntervalsInput: two InputField groups with labels '春夏 (3~8月)' and '秋冬 (9~2月)', each with number input 1~365, suffix '天', --color-spring and --color-autumn tint."
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "Each component is controlled (value/onChange props)."
+        },
+        "routing": { "path": "N/A", "guard": "N/A", "middleware": "N/A" },
+        "auth": { "provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A" }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "N/A",
+        "visual": "iPhone 375px width: ScheduleModeSelector shows 3 segments with smooth slide; WeeklyDaysPicker shows 7 buttons in a row; SeasonalIntervalsInput shows two labeled input groups.",
+        "manual": "Switching mode triggers onChange; WeeklyDaysPicker enforces at least 1 selected; SeasonalIntervalsInput validates range."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/tasks/components/ScheduleModeSelector.tsx",
+          "app/src/features/tasks/components/WeeklyDaysPicker.tsx",
+          "app/src/features/tasks/components/SeasonalIntervalsInput.tsx"
+        ],
+        "modules": ["care-task-flexibility"],
+        "layer": "ui",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "ScheduleModeSelector renders 3-segment control with smooth 150ms sliding indicator.",
+        "ScheduleModeSelector uses --color-leaf for selected bg and --color-mist for container.",
+        "WeeklyDaysPicker renders 7 circular 36x36 buttons labeled 一~日.",
+        "WeeklyDaysPicker enforces at least 1 day selected (cannot deselect last).",
+        "SeasonalIntervalsInput renders two labeled groups with season labels and number inputs.",
+        "All components follow design tokens from tokens.css.",
+        "All components are 375px-responsive."
+      ]
+    },
+    {
+      "task_id": "FLEX-010",
+      "description": "Integrate schedule mode components into CreateTaskPage with conditional display and uniqueness UI.",
+      "priority": "2-Medium",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": { "tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "N/A", "notes": "Consumes getTaskCreationPlant response (FLEX-007)." },
+          "queries": { "read": "N/A", "write": "N/A" },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": { "type": "shared-contract", "endpoints": [] },
+        "component_tree": {
+          "entry_component": "CreateTaskPage",
+          "children": ["ScheduleModeSelector", "IntervalDaysInput (existing)", "WeeklyDaysPicker", "SeasonalIntervalsInput", "TaskTypeSelector (enhanced)"],
+          "notes": "ScheduleModeSelector inserted between task type selection and interval input. Interval input shown only in interval mode. WeeklyDaysPicker shown only in weekly mode. SeasonalIntervalsInput shown only in seasonal mode. Mode switch with height animation. TaskTypeSelector shows '已存在' label + disabled state for types in existingEnabledTypes."
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "Convex query: getTaskCreationPlant (includes existingEnabledTypes).",
+          "local_state": "scheduleMode (default 'interval'), weeklyDays (default [1]), seasonalIntervals (default {springSummer:7, autumnWinter:14})."
+        },
+        "routing": { "path": "/plants/:plantId/tasks/new", "guard": "authenticated", "middleware": "N/A" },
+        "auth": { "provider": "Convex Auth", "strategy": "session", "rls_or_rbac": "N/A" }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "N/A",
+        "visual": "iPhone 375px: Mode selector visible; switching modes shows/hides correct input; already-created task types show grey label and are not selectable.",
+        "manual": "Create task with each mode; verify data saved correctly; verify duplicate type prevention."
+      },
+      "metadata": {
+        "files_affected": ["app/src/features/tasks/CreateTaskPage.tsx"],
+        "modules": ["care-task-flexibility"],
+        "layer": "ui",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "ScheduleModeSelector appears between task type and interval input.",
+        "Only the relevant input component is shown based on selected mode.",
+        "Mode switching animates with height transition.",
+        "createPlantTask mutation call includes scheduleMode and mode-specific params.",
+        "Fixed task types already in existingEnabledTypes are shown with '已存在' label and disabled.",
+        "Custom type is always selectable regardless of existing tasks.",
+        "Form defaults: scheduleMode='interval', weeklyDays=[1], seasonalIntervals={springSummer:7, autumnWinter:14}."
+      ]
+    },
+    {
+      "task_id": "FLEX-011",
+      "description": "Integrate schedule mode components into EditTaskPage with mode switching, field cleanup, and pre-fill from existing data.",
+      "priority": "2-Medium",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": { "tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "N/A", "notes": "Consumes getTaskForEdit response (FLEX-006)." },
+          "queries": { "read": "N/A", "write": "N/A" },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": { "type": "shared-contract", "endpoints": [] },
+        "component_tree": {
+          "entry_component": "EditTaskPage",
+          "children": ["ScheduleModeSelector", "IntervalDaysInput (existing)", "WeeklyDaysPicker", "SeasonalIntervalsInput"],
+          "notes": "Pre-fill all schedule fields from getTaskForEdit response. Mode switch triggers immediate visual change. No uniqueness check needed for editing own task."
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "Convex query: getTaskForEdit (includes schedule fields).",
+          "local_state": "scheduleMode, weeklyDays, seasonalIntervals — initialized from server data."
+        },
+        "routing": { "path": "/plants/:plantId/tasks/:taskId/edit", "guard": "authenticated", "middleware": "N/A" },
+        "auth": { "provider": "Convex Auth", "strategy": "session", "rls_or_rbac": "N/A" }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "N/A",
+        "visual": "iPhone 375px: Edit page shows pre-filled schedule mode and corresponding input; mode switch works smoothly.",
+        "manual": "Edit a weekly task, switch to seasonal, save — verify fields updated and old fields cleared."
+      },
+      "metadata": {
+        "files_affected": ["app/src/features/tasks/EditTaskPage.tsx"],
+        "modules": ["care-task-flexibility"],
+        "layer": "ui",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Edit page pre-fills schedule mode and mode-specific fields from server data.",
+        "Old interval-mode tasks load with scheduleMode='interval' (from default).",
+        "Mode switch shows correct input component with animation.",
+        "updatePlantTask call includes scheduleMode and mode-specific params.",
+        "Switching mode does not trigger uniqueness validation.",
+        "Save button disabled during mutation."
+      ]
+    },
+    {
+      "task_id": "FLEX-012",
+      "description": "Update TaskCard and TaskDetailSheet to display schedule description badge with mode-specific text.",
+      "priority": "2-Medium",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": { "tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "N/A", "notes": "Consumes schedule fields from listDueTasks and task detail queries." },
+          "queries": { "read": "N/A", "write": "N/A" },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": { "type": "shared-contract", "endpoints": [] },
+        "component_tree": {
+          "entry_component": "TaskCard",
+          "children": ["ScheduleBadge (new sub-component or inline)", "TaskDetailSheet"],
+          "notes": "TaskCard: existing '每 N 天' text replaced with formatScheduleDescription output. TaskDetailSheet: schedule description shown in detail section. Badge uses 12px --font-caption, --color-bark/60 color."
+        },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "N/A", "guard": "N/A", "middleware": "N/A" },
+        "auth": { "provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A" }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "N/A",
+        "visual": "iPhone 375px: TaskCard shows '每周一三五' for weekly task, '春夏7天/秋冬14天' for seasonal task, '每 3 天' for interval task.",
+        "manual": "Verify all three mode descriptions render correctly on TaskCard and in TaskDetailSheet."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/tasks/components/TaskCard.tsx",
+          "app/src/features/tasks/components/TaskDetailSheet.tsx"
+        ],
+        "modules": ["care-task-flexibility"],
+        "layer": "ui",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "TaskCard displays formatScheduleDescription output instead of hardcoded '每 N 天'.",
+        "TaskDetailSheet displays full schedule description.",
+        "Old tasks without scheduleMode display as '每 N 天' (backward compatible).",
+        "Badge uses design tokens: 12px caption font, --color-bark/60.",
+        "Text truncation handled for long descriptions on narrow screens."
+      ]
+    },
+    {
+      "task_id": "FLEX-013",
+      "description": "Update PlantDetailPage task list section to display schedule description for each task.",
+      "priority": "2-Medium",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": { "tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "N/A", "notes": "Consumes schedule fields from plant task list query." },
+          "queries": { "read": "N/A", "write": "N/A" },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": { "type": "shared-contract", "endpoints": [] },
+        "component_tree": {
+          "entry_component": "PlantDetailPage",
+          "children": ["TaskListItem (within plant detail)"],
+          "notes": "Each task row in plant detail shows schedule description alongside interval info."
+        },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "/plants/:plantId", "guard": "authenticated", "middleware": "N/A" },
+        "auth": { "provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A" }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "N/A",
+        "visual": "iPhone 375px: Plant detail task list shows correct schedule description for each task type.",
+        "manual": "Verify all three modes display correctly in plant detail view."
+      },
+      "metadata": {
+        "files_affected": ["app/src/features/plants/PlantDetailPage.tsx"],
+        "modules": ["care-task-flexibility"],
+        "layer": "ui",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Plant detail task list shows formatScheduleDescription for each task.",
+        "Backward compatible: old tasks show '每 N 天'.",
+        "Layout remains clean at 375px width."
+      ]
+    },
+    {
+      "task_id": "FLEX-014",
+      "description": "Update cron job (checkDueTasks) to use getEffectiveIntervalDays for overdue calculation of seasonal tasks.",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": { "tables_or_collections": ["plantTasks"], "key_fields": { "plantTasks": ["scheduleMode", "seasonalIntervals", "nextDueAt"] }, "indexes": [], "relations": "Cron scans all due tasks and must handle seasonal overdue thresholds differently.", "notes": "For seasonal tasks, overdue badge threshold uses getEffectiveIntervalDays instead of fixed intervalDays." },
+          "queries": { "read": "Scan due tasks by nextDueAt < now.", "write": "N/A" },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "convex-function",
+          "endpoints": [{
+            "method": "cron",
+            "path": "convex/cron/checkDueTasks",
+            "request": {},
+            "response": { "notificationsSent": "number" },
+            "auth_required": false
+          }]
+        },
+        "component_tree": { "entry_component": "N/A", "children": [] },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "N/A", "guard": "N/A (system cron)", "middleware": "N/A" },
+        "auth": { "provider": "N/A (system)", "strategy": "N/A", "rls_or_rbac": "N/A" }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "cd app && npx convex dev --once --typecheck enable",
+        "visual": "N/A",
+        "manual": "Cron correctly sends push notifications for weekly and seasonal overdue tasks."
+      },
+      "metadata": {
+        "files_affected": ["app/convex/cron.ts"],
+        "modules": ["care-task-flexibility"],
+        "layer": "api",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Cron handles all three schedule modes when scanning due tasks.",
+        "Seasonal task overdue threshold uses getEffectiveIntervalDays.",
+        "Weekly tasks use fixed 7-day overdue threshold.",
+        "Existing interval tasks unaffected.",
+        "Push notification content includes correct schedule description."
+      ]
+    },
+    {
+      "task_id": "FLEX-015",
+      "description": "Add integration tests for create → complete → verify-nextDueAt cycle for all three schedule modes.",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": { "tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "N/A", "notes": "Integration test layer." },
+          "queries": { "read": "N/A", "write": "N/A" },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": { "type": "shared-contract", "endpoints": [] },
+        "component_tree": { "entry_component": "N/A", "children": [] },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "N/A", "guard": "N/A", "middleware": "N/A" },
+        "auth": { "provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A" }
+      },
+      "verification": {
+        "auto": "cd app && npm run test -- --testPathPattern=scheduling",
+        "data": "N/A",
+        "visual": "N/A",
+        "manual": "All integration tests pass for create → complete → verify cycle."
+      },
+      "metadata": {
+        "files_affected": ["app/tests/integration/tasks/scheduling-modes.test.ts"],
+        "modules": ["care-task-flexibility"],
+        "layer": "test",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Integration test covers interval mode create → complete → verify nextDueAt.",
+        "Integration test covers weekly mode create → complete → verify nextDueAt.",
+        "Integration test covers seasonal mode create → complete → verify nextDueAt (spring and autumn).",
+        "Integration test covers mode switching edit → verify nextDueAt recalculation.",
+        "Integration test covers uniqueness constraint rejection for duplicate fixed types.",
+        "Integration test covers backward compatibility (no scheduleMode field)."
+      ]
+    },
+    {
+      "task_id": "FLEX-016",
+      "description": "Add integration tests for uniqueness constraint edge cases: duplicate rejection, disabled task re-creation, and custom type bypass.",
+      "priority": "2-Medium",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": { "tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "N/A", "notes": "Integration test layer." },
+          "queries": { "read": "N/A", "write": "N/A" },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": { "type": "shared-contract", "endpoints": [] },
+        "component_tree": { "entry_component": "N/A", "children": [] },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "N/A", "guard": "N/A", "middleware": "N/A" },
+        "auth": { "provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A" }
+      },
+      "verification": {
+        "auto": "cd app && npm run test -- --testPathPattern=uniqueness",
+        "data": "N/A",
+        "visual": "N/A",
+        "manual": "All uniqueness constraint tests pass."
+      },
+      "metadata": {
+        "files_affected": ["app/tests/integration/tasks/uniqueness-constraint.test.ts"],
+        "modules": ["care-task-flexibility"],
+        "layer": "test",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Test: creating duplicate enabled 'watering' task for same plant is rejected.",
+        "Test: creating 'watering' when disabled 'watering' exists succeeds.",
+        "Test: creating multiple custom tasks for same plant succeeds.",
+        "Test: creating same type for different plants succeeds.",
+        "Test: error message is user-friendly Chinese text."
+      ]
+    },
+    {
+      "task_id": "FLEX-017",
+      "description": "Add integration tests for mode-switching edge cases: field cleanup after switch, nextDueAt recalculation, and undo after complete.",
+      "priority": "2-Medium",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": { "tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "N/A", "notes": "Integration test layer." },
+          "queries": { "read": "N/A", "write": "N/A" },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": { "type": "shared-contract", "endpoints": [] },
+        "component_tree": { "entry_component": "N/A", "children": [] },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "N/A", "guard": "N/A", "middleware": "N/A" },
+        "auth": { "provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A" }
+      },
+      "verification": {
+        "auto": "cd app && npm run test -- --testPathPattern=mode-switch",
+        "data": "N/A",
+        "visual": "N/A",
+        "manual": "All mode-switching edge case tests pass."
+      },
+      "metadata": {
+        "files_affected": ["app/tests/integration/tasks/mode-switch-edge-cases.test.ts"],
+        "modules": ["care-task-flexibility"],
+        "layer": "test",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Test: switch weekly → interval clears weeklyDays from document.",
+        "Test: switch seasonal → weekly clears seasonalIntervals, adds weeklyDays.",
+        "Test: switch interval → seasonal adds seasonalIntervals, keeps intervalDays for fallback.",
+        "Test: nextDueAt recalculated immediately on mode switch.",
+        "Test: undo after completing mode-switched task restores correct previous state."
+      ]
+    },
+    {
+      "task_id": "FLEX-018",
+      "description": "Full UI flow test: create task with each mode via UI, verify data persistence and display.",
+      "priority": "2-Medium",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": { "tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "N/A", "notes": "UI integration test layer." },
+          "queries": { "read": "N/A", "write": "N/A" },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": { "type": "shared-contract", "endpoints": [] },
+        "component_tree": { "entry_component": "N/A", "children": [] },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "N/A", "guard": "N/A", "middleware": "N/A" },
+        "auth": { "provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A" }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "N/A",
+        "visual": "iPhone 375px: Complete flow — mode selector, conditional inputs, task card display, edit pre-fill.",
+        "manual": "Manual walkthrough of create → view → edit → complete flow for each mode."
+      },
+      "metadata": {
+        "files_affected": [],
+        "modules": ["care-task-flexibility"],
+        "layer": "test",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Create task in interval mode → task card shows '每 N 天'.",
+        "Create task in weekly mode → task card shows '每周一三五' (or selected days).",
+        "Create task in seasonal mode → task card shows '春夏N天/秋冬M天'.",
+        "Edit pre-fills correct mode and values.",
+        "Complete updates nextDueAt correctly for each mode.",
+        "Uniqueness prevents duplicate fixed types."
+      ]
+    },
+    {
+      "task_id": "FLEX-019",
+      "description": "Backward compatibility verification: existing interval-mode tasks work without scheduleMode field.",
+      "priority": "1-High",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": { "tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "N/A", "notes": "Verification task — no code changes expected." },
+          "queries": { "read": "N/A", "write": "N/A" },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": { "type": "shared-contract", "endpoints": [] },
+        "component_tree": { "entry_component": "N/A", "children": [] },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "N/A", "guard": "N/A", "middleware": "N/A" },
+        "auth": { "provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A" }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test",
+        "data": "cd app && npx convex dev --once --typecheck enable",
+        "visual": "Existing tasks render correctly without schedule mode badge changes.",
+        "manual": "Complete, undo, edit existing interval task — all paths work as before."
+      },
+      "metadata": {
+        "files_affected": [],
+        "modules": ["care-task-flexibility"],
+        "layer": "test",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Existing tasks without scheduleMode field load and display correctly.",
+        "Complete existing task calculates nextDueAt using interval logic.",
+        "Edit existing task shows scheduleMode='interval' as default.",
+        "No data migration required for existing data.",
+        "All existing tests pass without modification."
+      ]
+    },
+    {
+      "task_id": "FLEX-020",
+      "description": "Update ARCHITECTURE.md with schedule mode data model constraints and AGENTS.md with new module reference.",
+      "priority": "3-Low",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": { "tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "N/A", "notes": "Documentation-only task." },
+          "queries": { "read": "N/A", "write": "N/A" },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": { "type": "shared-contract", "endpoints": [] },
+        "component_tree": { "entry_component": "N/A", "children": [] },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "N/A", "guard": "N/A", "middleware": "N/A" },
+        "auth": { "provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A" }
+      },
+      "verification": {
+        "auto": "N/A",
+        "data": "N/A",
+        "visual": "N/A",
+        "manual": "ARCHITECTURE.md includes schedule mode constraints; AGENTS.md links to new module."
+      },
+      "metadata": {
+        "files_affected": ["ARCHITECTURE.md", "AGENTS.md"],
+        "modules": ["care-task-flexibility"],
+        "layer": "docs",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "ARCHITECTURE.md documents scheduleMode/weeklyDays/seasonalIntervals field constraints.",
+        "ARCHITECTURE.md documents uniqueness constraint rule for fixed task types.",
+        "ARCHITECTURE.md documents backward compatibility strategy (undefined = interval).",
+        "AGENTS.md updated with care-task-flexibility module reference."
+      ]
+    },
+    {
+      "task_id": "FLEX-021",
+      "description": "Update caveats.md with schedule mode known caveats and tech-debt notes.",
+      "priority": "3-Low",
+      "status": "pending",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": { "tables_or_collections": [], "key_fields": {}, "indexes": [], "relations": "N/A", "notes": "Documentation-only task." },
+          "queries": { "read": "N/A", "write": "N/A" },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": { "type": "shared-contract", "endpoints": [] },
+        "component_tree": { "entry_component": "N/A", "children": [] },
+        "state_management": { "global_store": "N/A", "server_state": "N/A", "local_state": "N/A" },
+        "routing": { "path": "N/A", "guard": "N/A", "middleware": "N/A" },
+        "auth": { "provider": "N/A", "strategy": "N/A", "rls_or_rbac": "N/A" }
+      },
+      "verification": {
+        "auto": "N/A",
+        "data": "N/A",
+        "visual": "N/A",
+        "manual": "caveats.md includes schedule mode caveats; tech-debt-tracker updated if needed."
+      },
+      "metadata": {
+        "files_affected": ["docs/caveats.md", "docs/exec-plans/tech-debt-tracker.md"],
+        "modules": ["care-task-flexibility"],
+        "layer": "docs",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "caveats.md documents: seasonal mode uses fixed month ranges (no equinox calculation).",
+        "caveats.md documents: uniqueness is application-layer only (no DB unique index).",
+        "caveats.md documents: weeklyDays uses JS getDay() convention (0=Sun, 6=Sat).",
+        "Tech debt noted if any temporary workarounds were used."
+      ]
+    }
+  ]
+}

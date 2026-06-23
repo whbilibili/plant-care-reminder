@@ -1,5 +1,13 @@
 ### [Current Focus]
-`care-history-timeline-v0.9` 模块全部完成（2026-06-18），CARE-HIST-001~006 共 6/6 已完成。模块结项。
+`care-task-flexibility` 模块任务拆解完成（2026-06-22），FLEX-001~021 共 21 个 Task 已生成，全部 pending。
+  - 模块文件：docs/exec-plans/modules/care-task-flexibility.json
+  - PRD：docs/product-specs/2026-06-22-care-task-flexibility-spec.md
+  - 任务拆解规格：docs/product-specs/2026-06-22-care-task-flexibility-task-breakdown.md
+  - feature-list.json 已更新：module_index + tasks_summary + cross_module_dependencies
+  - 5 阶段落地：P0 纯函数计算层(FLEX-001~002) → P1 数据层+后端(FLEX-003~007) → P2 前端组件+集成(FLEX-008~013) → P3 Cron+集成测试(FLEX-014~019) → P4 文档(FLEX-020~021)
+  - 下一步：开始 FLEX-001（computeNextWeeklyDueAt / computeNextSeasonalDueAt 纯函数 + 单元测试）
+
+[2026-06-18] `care-history-timeline-v0.9` 模块全部完成，CARE-HIST-001~006 共 6/6 已完成。模块结项。
 
 [2026-06-18] CARE-HIST-006 DONE — 回归验证 + 端到端验收（care-history-timeline-v0.9 回归验收，High）
   - 三件套验证全通过：npm run typecheck（tsc -b）仅预存错误（7 个，git stash 核实全部预存）；npm run test 14 failures 全部为预存（2 files: EmailLoginForm.test.tsx + AppRouter.smoke.test.tsx，git stash 核实 stash 前后同源）；npx convex dev --once --typecheck enable 零错误。

@@ -15,14 +15,14 @@ import { OwnerLeaveGuideSheet } from "./OwnerLeaveGuideSheet";
 import { RoleBadge } from "./RoleBadge";
 import { navigate } from "../../app/router";
 import { normalizeSubscription } from "../notifications/normalizeSubscription";
+import { NotificationPreferencesSheet } from "../notifications/NotificationPreferencesSheet";
 
 /* ── Web Push 辅助函数（与 NotificationPromptCard 共用逻辑） ── */
 
 function toApplicationServerKey(value: string) {
-  const padded = value
-    .padEnd(Math.ceil(value.length / 4) * 4, "=")
-    .replace(/-/g, "+")
-    .replace(/_/g, "/");
+  // base64url → base64: 先替换字符，再补 padding
+  const base64 = value.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
   const decoded = window.atob(padded);
   return Uint8Array.from(decoded, (c) => c.charCodeAt(0));
 }
@@ -94,6 +94,7 @@ export function FamilySettingsPage() {
   const savePushSubscription = useMutation(api.notifications.savePushSubscription);
   const removeMySubscriptions = useMutation(api.notifications.removeMySubscriptions);
   const [isTogglingNotif, setIsTogglingNotif] = useState(false);
+  const [notifError, setNotifError] = useState<string | null>(null);
 
   // 真实的通知开关状态：基于后端是否有有效订阅
   const notificationsEnabled = hasSubscription === true;
@@ -201,6 +202,8 @@ export function FamilySettingsPage() {
   async function handleToggleNotifications() {
     if (isTogglingNotif) return;
     setIsTogglingNotif(true);
+    setNotifError(null);
+    console.log("[NotifToggle] start, enabled:", notificationsEnabled);
     try {
       if (notificationsEnabled) {
         // 关闭：移除当前用户的所有订阅
@@ -212,18 +215,36 @@ export function FamilySettingsPage() {
           !("Notification" in window) ||
           !("PushManager" in window)
         ) {
-          return; // 不支持 Web Push，静默退出
+          console.log("[NotifToggle] browser not supported", {
+            sw: "serviceWorker" in navigator,
+            notif: "Notification" in window,
+            push: "PushManager" in window,
+          });
+          setNotifError("当前浏览器不支持推送通知，请使用 Safari 或 Chrome 打开。");
+          return;
         }
 
+        console.log("[NotifToggle] requesting permission, current:", Notification.permission);
         const permission =
           Notification.permission === "granted"
             ? "granted"
             : await Notification.requestPermission();
         if (permission !== "granted") {
-          return; // 用户拒绝或忽略，不做任何操作
+          console.log("[NotifToggle] permission denied:", permission);
+          setNotifError("通知权限被拒绝，请在系统设置中允许本应用发送通知。");
+          return;
         }
 
-        const registration = await navigator.serviceWorker.ready;
+        console.log("[NotifToggle] waiting for SW ready...");
+        // 等待 SW ready，加超时保护（5s）
+        const registration = await Promise.race([
+          navigator.serviceWorker.ready,
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("timeout")), 5000),
+          ),
+        ]);
+        console.log("[NotifToggle] SW ready, subscribing...");
+
         const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as
           | string
           | undefined;
@@ -251,6 +272,9 @@ export function FamilySettingsPage() {
           deviceLabel: deriveDeviceLabel(),
         });
       }
+    } catch (err) {
+      console.error("[Notification Toggle]", err);
+      setNotifError("开启通知失败，请确认已添加到主屏幕后重试。");
     } finally {
       setIsTogglingNotif(false);
     }
@@ -370,6 +394,12 @@ export function FamilySettingsPage() {
             <span style={toggleThumbStyle(notificationsEnabled)} />
           </button>
         </div>
+        {notifError && (
+          <div style={notifErrorRowStyle}>
+            <span style={notifErrorTextStyle}>{notifError}</span>
+          </div>
+        )}
+        {notificationsEnabled && <NotificationPreferenceEntry />}
       </GroupedSurface>
 
       {/* Members section */}
@@ -861,4 +891,81 @@ const dangerDescStyle: CSSProperties = {
   fontSize: "12px",
   color: "var(--color-muted)",
   lineHeight: 1.4,
+};
+
+// ─── 通知偏好设置入口行（PUSH-011）─────────────────────────────
+
+function NotificationPreferenceEntry() {
+  const preferences = useQuery(api.users.getNotificationPreferences, {});
+  const updatePreferences = useMutation(api.users.updateNotificationPreferences);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+
+  // 加载中或未登录时不展示
+  if (preferences === undefined) return null;
+
+  const displayText =
+    preferences && preferences.preferredHour !== undefined
+      ? `每天 ${preferences.preferredHour}:00`
+      : "立即";
+
+  async function handleSave(hour: number | null) {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    await updatePreferences({ preferredHour: hour, timezone });
+  }
+
+  return (
+    <>
+      <GroupedSurfaceDivider />
+      <button
+        onClick={() => setIsSheetOpen(true)}
+        style={prefEntryRowStyle}
+        type="button"
+      >
+        <span style={prefEntryLabelStyle}>提醒时间</span>
+        <span style={prefEntryValueStyle}>{displayText}</span>
+        <Icon icon={ChevronRight} size={14} colorVar="--color-muted" />
+      </button>
+      <NotificationPreferencesSheet
+        open={isSheetOpen}
+        onClose={() => setIsSheetOpen(false)}
+        currentHour={preferences?.preferredHour ?? null}
+        onSave={handleSave}
+      />
+    </>
+  );
+}
+
+const prefEntryRowStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  width: "100%",
+  padding: "var(--space-sm) var(--space-md)",
+  background: "none",
+  border: "none",
+  cursor: "pointer",
+  gap: "var(--space-xs)",
+};
+
+const prefEntryLabelStyle: CSSProperties = {
+  flex: 1,
+  fontSize: "14px",
+  color: "var(--color-ink)",
+  textAlign: "left",
+};
+
+const prefEntryValueStyle: CSSProperties = {
+  fontSize: "14px",
+  color: "var(--color-muted)",
+};
+
+const notifErrorRowStyle: CSSProperties = {
+  padding: "var(--space-xs) var(--space-md) var(--space-sm)",
+  marginTop: "-4px",
+};
+
+const notifErrorTextStyle: CSSProperties = {
+  fontSize: "12px",
+  color: "var(--color-error, #d32f2f)",
+  lineHeight: 1.4,
+  marginLeft: "48px",
 };
