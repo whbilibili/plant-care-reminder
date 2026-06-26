@@ -222,6 +222,98 @@
   }
 }
 
+/* 物种标签入场（KNOW-008）。 */
+@keyframes speciesTagEnter {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 物种推荐卡片入场（KNOW-005）。 */
+@keyframes speciesCardEnter {
+  0% {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-8px);
+  }
+  100% {
+    opacity: 1;
+    max-height: 500px;
+    transform: translateY(0);
+  }
+}
+
+/* 物种推荐卡片退出——应用（KNOW-005）。 */
+@keyframes speciesCardExitApply {
+  0% {
+    opacity: 1;
+    max-height: 500px;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    max-height: 0;
+    transform: scale(0.98);
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* 物种推荐卡片退出——忽略（KNOW-005）。 */
+@keyframes speciesCardExitDismiss {
+  0% {
+    opacity: 1;
+    max-height: 500px;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    max-height: 0;
+    transform: scale(0.98);
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* 物种建议面板入场（KNOW-004）。 */
+@keyframes speciesPanelIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 确认态左侧 🌿 图标入场（KNOW-007）。 */
+@keyframes confirmedIconEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(-50%) scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+}
+
+/* 确认态右侧 × 清除按钮入场（KNOW-007）。 */
+@keyframes confirmedClearEnter {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
 /* 尊重用户减少动画偏好 */
 @media (prefers-reduced-motion: reduce) {
   *,

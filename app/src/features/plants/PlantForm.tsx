@@ -1,13 +1,20 @@
+import { useCallback, useEffect, useState } from "react";
 import { FormError } from "../../components/ui/FormError";
 import {
   PLANT_DESCRIPTION_MAX_LENGTH,
   PLANT_LOCATION_MAX_LENGTH,
-  PLANT_NAME_MAX_LENGTH,
   PLANT_NOTE_MAX_LENGTH,
 } from "../../lib/constants";
 import { LocationAutocomplete } from "./LocationAutocomplete";
 import { PlantImageField } from "./PlantImageField";
+import { ConfirmedNameInput } from "./ConfirmedNameInput";
+import { SpeciesSuggestions } from "./SpeciesSuggestions";
+import { SpeciesRecommendCard } from "./SpeciesRecommendCard";
+import type { RecommendApplyPayload } from "./SpeciesRecommendCard";
+import type { PlantSpecies } from "../../data/plant-species.types";
+import { plantSpeciesList } from "../../data";
 import type { PlantFormController } from "./usePlantForm";
+import { showToast } from "../../components/ui/GlobalToast";
 
 interface PlantFormProps {
   form: PlantFormController;
@@ -15,6 +22,16 @@ interface PlantFormProps {
   submitLabel: string;
   /** 家庭内已有的位置建议列表（去重、按频率降序）。 */
   locationSuggestions?: string[];
+  /** KNOW-007: 物种选择回调（通知父组件 speciesId 变化） */
+  onSpeciesChange?: (speciesId: string | null) => void;
+  /** KNOW-007: 推荐参数应用回调（通知父组件填充表单） */
+  onRecommendApply?: (payload: RecommendApplyPayload) => void;
+  /** 当前模式，edit 页不展示推荐卡 */
+  mode?: "create" | "edit";
+  /** KNOW-007: 初始确认态物种 ID（编辑页加载时使用） */
+  initialSpeciesId?: string | null;
+  /** 外部清除物种关联信号（变为 true 时清除内部确认态） */
+  speciesCleared?: boolean;
 }
 
 /**
@@ -22,31 +39,132 @@ interface PlantFormProps {
  *
  * 字段分组卡片化 + 左侧绿色竖线 label + focus 态增强 + 入场动画。
  */
-export function PlantForm({ form, submitLabel, locationSuggestions }: PlantFormProps) {
+export function PlantForm({
+  form,
+  submitLabel,
+  locationSuggestions,
+  onSpeciesChange,
+  onRecommendApply,
+  mode = "create",
+  initialSpeciesId,
+  speciesCleared,
+}: PlantFormProps) {
+  const [selectedSpecies, setSelectedSpecies] = useState<PlantSpecies | null>(() => {
+    // KNOW-007: 编辑页加载时，如果有 initialSpeciesId，查找对应物种进入确认态
+    if (initialSpeciesId) {
+      const found = plantSpeciesList.find((s) => s.id === initialSpeciesId);
+      return found ?? null;
+    }
+    return null;
+  });
+  const [showRecommendCard, setShowRecommendCard] = useState(false);
+  // Bug 3: 输入框焦点状态，仅聚焦时才展示物种建议面板
+  const [isNameFocused, setIsNameFocused] = useState(false);
+
+  // 外部清除信号：编辑页 footer 的 ✕ 触发后联动清除确认态
+  useEffect(() => {
+    if (speciesCleared) {
+      setSelectedSpecies(null);
+      setShowRecommendCard(false);
+    }
+  }, [speciesCleared]);
+
+  const handleSpeciesSelect = useCallback(
+    (species: PlantSpecies) => {
+      setSelectedSpecies(species);
+      setShowRecommendCard(mode === "create");
+      onSpeciesChange?.(species.id);
+      // KNOW-007: 自动补全名称为物种标准名 names[0]
+      form.setFieldValue("name", species.names[0]);
+    },
+    [onSpeciesChange, mode, form],
+  );
+
+  // KNOW-007: 清除品种关联（× 按钮点击）
+  const handleSpeciesClear = useCallback(() => {
+    setSelectedSpecies(null);
+    setShowRecommendCard(false);
+    onSpeciesChange?.(null);
+  }, [onSpeciesChange]);
+
+  const handleRecommendApply = useCallback(
+    (payload: RecommendApplyPayload) => {
+      setShowRecommendCard(false);
+      // KNOW-005: 仅当字段为空时自动填充推荐文案
+      if (!form.values.description.trim() && payload.description) {
+        form.setFieldValue("description", payload.description);
+      }
+      if (!form.values.note.trim() && payload.note) {
+        form.setFieldValue("note", payload.note);
+      }
+      onRecommendApply?.(payload);
+      showToast(`已应用 ${selectedSpecies?.names[0] ?? ""} 的推荐养护参数 🌿`);
+    },
+    [onRecommendApply, selectedSpecies, form],
+  );
+
+  const handleRecommendDismiss = useCallback(() => {
+    setShowRecommendCard(false);
+  }, []);
+
+  // 名称变化时重新触发匹配（清除已选物种以重新显示建议面板）
+  const handleNameChange = useCallback(
+    (value: string) => {
+      form.setFieldValue("name", value);
+      // 如果用户修改了名称，取消当前选中以重新匹配
+      if (selectedSpecies) {
+        setSelectedSpecies(null);
+        setShowRecommendCard(false);
+        onSpeciesChange?.(null);
+      }
+    },
+    [form, selectedSpecies, onSpeciesChange],
+  );
+
   return (
     <form noValidate style={formStyle} onSubmit={form.handleSubmit}>
       {/* 第一组：基本信息 */}
       <div style={cardGroupStyle} className="plant-form-card-stagger">
         <div style={fieldWrapStyle}>
-          <span style={fieldLabelWithBarStyle}>植物名称</span>
-          <input
-            autoComplete="off"
-            maxLength={PLANT_NAME_MAX_LENGTH}
-            onChange={(event) => form.setFieldValue("name", event.target.value)}
-            placeholder="给它起个名字"
-            required
-            value={form.values.name}
-            className="form-input-enhanced"
-            style={{
-              ...textInputStyle,
-              ...(form.errors.name ? textInputErrorStyle : null),
-            }}
-          />
+          <label htmlFor="plant-name" style={fieldLabelWithBarStyle}>植物名称</label>
+          {/* 输入框 + 下拉面板容器：position relative 让面板紧贴输入框底部 */}
+          <div style={{ position: "relative" }}>
+            {/* KNOW-007: 确认态名称输入框 */}
+            <ConfirmedNameInput
+              id="plant-name"
+              value={form.values.name}
+              onChange={handleNameChange}
+              isConfirmed={!!selectedSpecies}
+              confirmedName={selectedSpecies?.names[0]}
+              onClear={handleSpeciesClear}
+              error={form.errors.name}
+              ariaExpanded={!selectedSpecies && form.values.name.length >= 2}
+              ariaControls="species-suggestions-panel"
+              onFocus={() => setIsNameFocused(true)}
+              onBlur={() => setIsNameFocused(false)}
+            />
+            {/* KNOW-004: 物种建议面板 */}
+            <SpeciesSuggestions
+              query={form.values.name}
+              onSelect={handleSpeciesSelect}
+              hasSelection={!!selectedSpecies}
+              isFocused={isNameFocused}
+            />
+          </div>
           <span style={hintRowStyle}>
             <span style={hintStyle}>必填。建议使用家里平时对这盆植物的叫法。</span>
           </span>
           <FormError message={form.errors.name} />
         </div>
+
+        {/* KNOW-005: 推荐养护卡片（仅 create 模式） */}
+        {showRecommendCard && selectedSpecies && mode === "create" && (
+          <SpeciesRecommendCard
+            species={selectedSpecies}
+            onApply={handleRecommendApply}
+            onDismiss={handleRecommendDismiss}
+          />
+        )}
 
         <TextAreaField
           errorMessage={form.errors.description}
@@ -85,8 +203,9 @@ export function PlantForm({ form, submitLabel, locationSuggestions }: PlantFormP
           />
         ) : (
           <div style={fieldWrapStyle}>
-            <span style={fieldLabelWithBarStyle}>摆放位置</span>
+            <label htmlFor="plant-location" style={fieldLabelWithBarStyle}>摆放位置</label>
             <input
+              id="plant-location"
               autoComplete="off"
               maxLength={PLANT_LOCATION_MAX_LENGTH}
               onChange={(event) => form.setFieldValue("location", event.target.value)}

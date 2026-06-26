@@ -52,6 +52,8 @@
   - 迭代需求储备大纲：P1（多图上传/任务灵活性/数据导出）和 P2（植物知识卡片/季节性建议/协作增强）六个方向的初步方案记录
 - [2026-06-23-plant-knowledge-card-spec.md](./2026-06-23-plant-knowledge-card-spec.md)
   - P2 PRD：植物知识卡片——预置 80 种常见绿植品种知识库、创建植物时品种匹配与养护参数推荐、详情页可折叠知识卡片（浇水/光照/施肥/当季要点）、前端静态 JSON 方案（D1~D6 已拍板决策）
+- [2026-06-24-plant-knowledge-card-ui-spec.md](./2026-06-24-plant-knowledge-card-ui-spec.md)
+  - P2 UI 设计规格：植物知识卡片——创建页品种匹配下拉（复用 Autocomplete 范式）、推荐卡片三宫格布局与应用反馈、详情页可折叠知识区块（5 区块结构）、编辑页品种标签管理、色彩/动效/无障碍全规格（UD1~UD10 设计决策）
 - [2026-06-23-seasonal-care-advice-spec.md](./2026-06-23-seasonal-care-advice-spec.md)
   - P2 PRD：季节性养护建议——待办页季节横幅（换季提醒+常规提示）、换季调整建议面板、详情页当季要点联动品种库、纯前端实现无后端变更（D1~D6 已拍板决策）
 - [2026-06-23-family-collaboration-enhancement-spec.md](./2026-06-23-family-collaboration-enhancement-spec.md)

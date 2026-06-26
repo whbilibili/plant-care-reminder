@@ -94,10 +94,18 @@ app/
 │   │   ├── ui/               # 原子组件（Button/Icon/Input/Sheet 等）
 │   │   └── navigation/       # 导航组件（BottomNav）
 │   │
+│   ├── data/                 # 静态数据层
+│   │   ├── plant-species.json # 植物品种知识库
+│   │   ├── plant-species.types.ts # 品种类型定义
+│   │   └── index.ts           # 导出入口
+│   │
 │   ├── lib/                  # 前端工具库
 │   │   ├── constants.ts      # 全局常量
 │   │   ├── formatters.ts     # 日期/文本格式化
+│   │   ├── imageCompression.ts # 图片压缩
+│   │   ├── imageUpload.ts    # 图片上传
 │   │   ├── motion.ts         # 动画配置
+│   │   ├── speciesMatch.ts   # 物种模糊匹配
 │   │   └── textTruncate.ts   # 文本截断工具
 │   │
 │   ├── pwa/                  # PWA 相关
@@ -134,8 +142,12 @@ Convex 后端采用 **按领域拆分 Function 文件** 的组织方式，每个
 | `tasks.ts` | 养护任务 | 任务创建/编辑/完成/延后、排期计算、完成日志 |
 | `notifications.ts` | 通知 | Push 订阅注册/注销、推送发送 |
 | `cron.ts` | 定时调度 | 到期任务扫描、Push 通知触发 |
+| `ResendOTPPasswordReset.ts` | 认证 | OTP 邮件发送 Provider（基于 Resend） |
+| `notificationsNode.ts` | 通知 | Node action：web-push 发送（服务端密钥隔离） |
+| `migrations.ts` | 数据迁移 | @convex-dev/migrations 注册入口 |
+| `seedTestData.ts` | 测试 | 开发环境种子数据生成 |
 
-共享逻辑放在 `convex/lib/` 下：`auth.ts` 提供统一的用户身份获取与家庭归属校验，`validators.ts` 提供可复用的参数校验器。
+共享逻辑放在 `convex/lib/` 下：`auth.ts` 提供统一的用户身份获取与家庭归属校验，`validators.ts` 提供可复用的参数校验器，`roleHelpers.ts` 提供三级角色（owner/admin/member）权限判定。
 
 ### 前端架构（src/）
 
@@ -204,6 +216,9 @@ Page/Route -> Feature Component -> Hook -> Convex Client API -> Convex Function 
 - Provider：Convex Auth 或兼容邮件登录方案
 - Strategy：邮箱验证码 / magic link 优先
 - 授权模型：同一家庭空间内默认协作，写操作必须校验当前用户属于该家庭
+- 三级角色体系：owner（创建者，不可转让）> admin（可管理成员/植物）> member（只可完成任务）
+- 角色判定统一走 `convex/lib/roleHelpers.ts` 的 `isAtLeastAdmin()` / `isOwner()`，禁止各 function 自行硬编码角色字符串
+- owner 专属操作：解散家庭、移除 admin
 - 红线：任何任务完成、植物修改、推送订阅写入都必须带登录态
 
 ## 全局状态边界
@@ -211,6 +226,25 @@ Page/Route -> Feature Component -> Hook -> Convex Client API -> Convex Function 
 - 全局 Store：仅放导航、对话框开关、一次性引导状态
 - 服务端状态：植物列表、植物详情、待办列表、家庭成员、推送订阅状态
 - 局部状态：表单草稿、图片上传中状态、筛选 UI 状态
+
+## 图标系统约束
+
+- 统一使用 `lucide-react` 图标库，禁止引入其他图标库（如 react-icons、heroicons）
+- 任务类型仍采用 emoji + 色彩双编码策略（与图标库无关）
+- 新增页面如需图标，优先从 lucide 已有集合中选取，保持视觉一致性
+
+## 文本长度约束
+
+- 植物名称：最大 50 字符，超出截断加省略号
+- 植物备注：最大 200 字符
+- 家庭名称：最大 30 字符
+- 前端展示长文本时统一使用 `src/lib/textTruncate.ts` 工具
+
+## 物种知识库约束
+
+- 物种数据存放于 `src/data/plant-species.json`（通过 `src/data/index.ts` 导出），作为前端静态数据源
+- 物种匹配使用 `src/lib/speciesMatch.ts`，支持模糊搜索
+- 物种数据仅用于创建植物时的智能推荐，不影响后端 schema
 
 ## 设计系统约束
 
@@ -246,6 +280,8 @@ Page/Route -> Feature Component -> Hook -> Convex Client API -> Convex Function 
 | 方案 | 为什么不可行 | 被废弃时间 |
 |------|------------|-----------|
 | 纯本地静态网页 + 定时提醒 | iPhone 后台定时和共享同步都不可靠 | 2026-06-05 |
+| 跳过 Design Token 直接用 #hex | 色板不一致、维护成本高 | 2026-06-10 |
+| 用 ☆ 表示收藏/重要 | 语义模糊（像评分），改用心形或书签图标 | 2026-06-18 |
 
 ## 规范引用
 

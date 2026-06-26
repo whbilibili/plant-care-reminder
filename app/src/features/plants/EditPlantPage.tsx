@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "convex/react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Leaf, MapPin } from "lucide-react";
 
 import { api } from "../../../convex/_generated/api";
@@ -15,6 +15,7 @@ import { ScreenNav } from "../../components/ui/ScreenNav";
 import { StorageImage } from "../../components/ui/StorageImage";
 import { navigate } from "../../app/router";
 import { PlantForm } from "./PlantForm";
+import { SpeciesTag } from "./SpeciesTag";
 import { usePlantForm } from "./usePlantForm";
 
 interface EditPlantPageProps {
@@ -33,6 +34,8 @@ export function EditPlantPage({ plantId }: EditPlantPageProps) {
   );
   const plantsData = useQuery(api.plants.listPlantsWithNextDue, {});
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  // KNOW-008: 物种关联状态管理（useState 以便移除时触发重渲染）
+  const [speciesIdOverride, setSpeciesIdOverride] = useState<string | null | undefined>(undefined); // undefined = 未修改
 
   /** 从已有植物中提取去重位置建议（按频率降序）。 */
   const locationSuggestions = useMemo(() => {
@@ -47,6 +50,14 @@ export function EditPlantPage({ plantId }: EditPlantPageProps) {
       .sort((a, b) => b[1] - a[1])
       .map(([loc]) => loc);
   }, [plantsData]);
+  const handleSpeciesChange = useCallback((id: string | null) => {
+    setSpeciesIdOverride(id);
+  }, []);
+
+  const handleSpeciesRemove = useCallback(() => {
+    setSpeciesIdOverride(null);
+  }, []);
+
   const form = usePlantForm({
     initialValue: plant ?? null,
     onSubmit: async (payload) => {
@@ -62,6 +73,10 @@ export function EditPlantPage({ plantId }: EditPlantPageProps) {
           plantId: plantId as Id<"plants">,
           ...payload,
           imageStorageId: payload.imageStorageId as Id<"_storage"> | null,
+          // KNOW-008: 只有用户修改过物种关联时才传透
+          ...(speciesIdOverride !== undefined
+            ? { speciesId: speciesIdOverride }
+            : {}),
         });
         navigate("/plants", true);
       } catch (error) {
@@ -131,10 +146,26 @@ export function EditPlantPage({ plantId }: EditPlantPageProps) {
           ) : undefined
         }
         description={form.values.description ? form.values.description.slice(0, 40) + (form.values.description.length > 40 ? "…" : "") : undefined}
+        footer={
+          plant.speciesId && speciesIdOverride !== null ? (
+            <SpeciesTag
+              speciesId={speciesIdOverride === undefined ? plant.speciesId : (speciesIdOverride ?? plant.speciesId)}
+              onRemove={handleSpeciesRemove}
+            />
+          ) : undefined
+        }
       />
 
       {/* 精致表单 — 字段分组卡片化 */}
-      <PlantForm form={form} submitLabel="更新植物" locationSuggestions={locationSuggestions} />
+      <PlantForm
+        form={form}
+        submitLabel="更新植物"
+        locationSuggestions={locationSuggestions}
+        onSpeciesChange={handleSpeciesChange}
+        mode="edit"
+        initialSpeciesId={plant.speciesId ?? null}
+        speciesCleared={speciesIdOverride === null}
+      />
 
       <div style={bottomErrorStyle}>
         <FormError message={errorMessage} />

@@ -1,0 +1,4832 @@
+[
+  {
+    "id": "bindweed-bindweed",
+    "names": [
+      "绿萝",
+      "黄金葛",
+      "魔鬼藤"
+    ],
+    "category": "观叶植物",
+    "difficulty": "easy",
+    "briefDescription": "生命力极强的攀援藤本，叶片油绿心形，净化空气能力出众",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          3,
+          5
+        ],
+        "tip": "保持土壤微湿，避免积水；冬季可适当延长间隔"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "喜散射光，避免强光直射，耐半阴"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每 2~4 周施一次薄液肥",
+        "seasonalNote": "冬季停止施肥"
+      }
+    },
+    "commonIssues": [
+      "叶片发黄可能是浇水过多或光照不足",
+      "叶尖干枯多因空气过于干燥",
+      "茎节变软通常是温度过低"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏生长旺盛，保持充足散射光和适当湿度，可适量修剪促进分枝",
+      "autumnWinter": "秋冬减少浇水频率，避免冷风直吹，室温保持 10°C 以上"
+    }
+  },
+  {
+    "id": "monstera-deliciosa",
+    "names": [
+      "龟背竹",
+      "蓬莱蕉",
+      "电线兰"
+    ],
+    "category": "观叶植物",
+    "difficulty": "easy",
+    "briefDescription": "热带大型观叶植物，成熟叶片有独特的天然裂孔和切割纹",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          5,
+          7
+        ],
+        "tip": "表土干透后浇透水，冬季保持偏干"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "喜明亮散射光，忌强光直射，会灼伤叶片"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "春夏每 2~4 周施一次通用液肥",
+        "seasonalNote": "秋冬停止施肥"
+      }
+    },
+    "commonIssues": [
+      "新叶无开裂可能是光照不足",
+      "叶缘发黄多因浇水不均匀",
+      "气根可引导入土或修剪"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏为生长旺季，提供充足散射光和较高湿度，可喷雾增湿",
+      "autumnWinter": "减少浇水，保持室温 15°C 以上，避免冷风"
+    }
+  },
+  {
+    "id": "ficus-lyrata",
+    "names": [
+      "琴叶榕",
+      "琴叶橡皮树"
+    ],
+    "category": "观叶植物",
+    "difficulty": "medium",
+    "briefDescription": "叶片形似提琴的大型观叶树，株型优雅适合空间装饰",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          5,
+          8
+        ],
+        "tip": "表土 2~3cm 干透再浇，忌积水烂根"
+      },
+      "light": {
+        "level": "bright",
+        "tip": "喜明亮光照，可接受少量直射光，光照不足易落叶"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每 2~4 周施一次液肥",
+        "seasonalNote": "冬季停止施肥"
+      }
+    },
+    "commonIssues": [
+      "下部叶片脱落多因光照不足或环境骤变",
+      "叶片出现褐斑可能是浇水过多",
+      "新叶发黑多因温度过低"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏放置在明亮通风处，保持规律浇水，避免频繁移动位置",
+      "autumnWinter": "冬季保持 15°C 以上，减少浇水，远离暖气片"
+    }
+  },
+  {
+    "id": "spathiphyllum",
+    "names": [
+      "白掌",
+      "白鹤芋",
+      "一帆风顺"
+    ],
+    "category": "观叶植物",
+    "difficulty": "easy",
+    "briefDescription": "少数能在低光照下开出白色花苞的室内植物",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          3,
+          5
+        ],
+        "tip": "喜湿润，土壤保持微湿但不积水"
+      },
+      "light": {
+        "level": "low",
+        "tip": "极耐阴，散射光即可开花，避免直射"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "春夏每 2~4 周施一次开花型液肥"
+      }
+    },
+    "commonIssues": [
+      "叶尖发黑多因空气干燥或浇水含氟",
+      "不开花通常是光照不足",
+      "整株萎蔫多是缺水，浇透后可恢复"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏可适当增加光照促进开花，保持较高空气湿度",
+      "autumnWinter": "冬季减少浇水，保持 15°C 以上，远离冷风"
+    }
+  },
+  {
+    "id": "chlorophytum-comosum",
+    "names": [
+      "吊兰",
+      "挂兰",
+      "折鹤兰"
+    ],
+    "category": "观叶植物",
+    "difficulty": "easy",
+    "briefDescription": "叶片飘逸如兰，能长出优美的走茎和小植株",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          3,
+          5
+        ],
+        "tip": "保持土壤微湿，肉质根耐旱但不耐涝"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "喜散射光，耐半阴，夏季避免暴晒"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每 2~4 周施一次通用液肥"
+      }
+    },
+    "commonIssues": [
+      "叶尖干枯是最常见问题，多因空气干燥或水质含氟",
+      "叶片失去斑纹色彩多因光照过暗",
+      "根系膨大挤满盆时需及时换盆"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏生长旺盛，可修剪匍匐茎繁殖，保持通风",
+      "autumnWinter": "冬季减少浇水，保持 5°C 以上即可安全越冬"
+    }
+  },
+  {
+    "id": "dracaena-fragrans",
+    "names": [
+      "巴西木",
+      "香龙血树",
+      "巴西铁树"
+    ],
+    "category": "观叶植物",
+    "difficulty": "easy",
+    "briefDescription": "直立型室内树，叶色丰富，对甲醛等有害气体有良好吸附",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          5,
+          8
+        ],
+        "tip": "表土干透再浇水，耐旱忌积水"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "喜散射光，耐半阴，避免强光直射"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          21,
+          30
+        ],
+        "tip": "生长期每 3~4 周施一次通用液肥"
+      }
+    },
+    "commonIssues": [
+      "叶尖干枯多因空气干燥",
+      "下部叶片自然脱落属正常老化",
+      "茎段过长可截顶促萌新芽"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏保持充足散射光和通风，可适当喷雾增湿",
+      "autumnWinter": "冬季控水，保持 10°C 以上"
+    }
+  },
+  {
+    "id": "ficus-elastica",
+    "names": [
+      "橡皮树",
+      "印度榕",
+      "印度橡胶树"
+    ],
+    "category": "观叶植物",
+    "difficulty": "easy",
+    "briefDescription": "厚革质大叶的室内乔木，有红叶和绿叶等多个品种",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          5,
+          8
+        ],
+        "tip": "表土干透再浇透水，冬季保持偏干"
+      },
+      "light": {
+        "level": "bright",
+        "tip": "喜充足光照，可接受直射光，光照不足叶片会变小"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "春夏每 2~4 周施一次通用液肥"
+      }
+    },
+    "commonIssues": [
+      "叶片发黄脱落多因浇水过多",
+      "叶片灰暗无光泽需定期擦拭",
+      "切口流出白色乳汁属正常现象"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏放在明亮处生长旺盛，可修剪整形",
+      "autumnWinter": "冬季控水，保持 10°C 以上"
+    }
+  },
+  {
+    "id": "schefflera",
+    "names": [
+      "鹅掌柴",
+      "鸭脚木",
+      "八叶木"
+    ],
+    "category": "观叶植物",
+    "difficulty": "easy",
+    "briefDescription": "掌状复叶形似鹅掌，适应力强可长成室内小树",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          4,
+          7
+        ],
+        "tip": "表土干透再浇水，夏季可多浇，冬季控水"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "喜散射光，耐半阴，避免夏季强光直射"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每 2~4 周施一次通用液肥"
+      }
+    },
+    "commonIssues": [
+      "掉叶多因浇水不当或光照骤变",
+      "叶片发黑多因温度过低",
+      "长势过旺可修剪控制形态"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏生长旺盛，保持通风，可适当修剪",
+      "autumnWinter": "冬季保持 5°C 以上，控水防冻"
+    }
+  },
+  {
+    "id": "sansevieria",
+    "names": [
+      "虎皮兰",
+      "虎尾兰",
+      "千岁兰"
+    ],
+    "category": "观叶植物",
+    "difficulty": "easy",
+    "briefDescription": "极耐旱耐阴的直立型多浆植物，夜间释放氧气",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          7,
+          14
+        ],
+        "tip": "极耐旱，表土完全干透再浇水，冬季可 2~3 周一次"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "耐阴性强，散射光到明亮光均可，避免夏季暴晒"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          60
+        ],
+        "tip": "生长期每 1~2 月施一次薄肥即可",
+        "seasonalNote": "冬季停止施肥"
+      }
+    },
+    "commonIssues": [
+      "叶基部腐烂必定是浇水过多",
+      "叶片变软发皱是缺水信号",
+      "金边品种光照不足会退绿"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏可适当增加浇水频率，放在明亮通风处",
+      "autumnWinter": "冬季严格控水，保持 10°C 以上，避免冻伤"
+    }
+  },
+  {
+    "id": "zamioculcas",
+    "names": [
+      "金钱树",
+      "雪铁芋",
+      "美铁芋"
+    ],
+    "category": "观叶植物",
+    "difficulty": "easy",
+    "briefDescription": "地下有球茎储水的常绿植物，叶片厚实有光泽",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          7,
+          14
+        ],
+        "tip": "极耐旱，等盆土完全干透再浇透水"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "耐阴，散射光最佳，避免强光直射"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          60
+        ],
+        "tip": "生长期每 1~2 月施一次缓释肥"
+      }
+    },
+    "commonIssues": [
+      "茎基部变黑腐烂是浇水过频的信号",
+      "新叶发黄多因强光灼伤",
+      "地下球茎膨大是正常储水组织"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏为生长期，可适当增加浇水，保持通风",
+      "autumnWinter": "冬季严格控水，保持 10°C 以上"
+    }
+  },
+  {
+    "id": "dieffenbachia",
+    "names": [
+      "花叶万年青",
+      "黛粉叶",
+      "大王万年青"
+    ],
+    "category": "观叶植物",
+    "difficulty": "easy",
+    "briefDescription": "叶面有美丽的白绿斑纹，汁液有毒需注意安全",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          4,
+          7
+        ],
+        "tip": "保持土壤微湿，表土稍干即可浇水"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "喜明亮散射光，避免直射光灼伤斑叶"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每 2~4 周施一次通用液肥"
+      }
+    },
+    "commonIssues": [
+      "汁液有毒，修剪后需洗手",
+      "下部叶片脱落属正常老化",
+      "叶片变黄多因浇水过多或温度过低"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏保持温暖湿润环境，可喷雾增湿",
+      "autumnWinter": "冬季保持 15°C 以上，减少浇水"
+    }
+  },
+  {
+    "id": "aglaonema",
+    "names": [
+      "粗肋草",
+      "广东万年青",
+      "银皇后"
+    ],
+    "category": "观叶植物",
+    "difficulty": "easy",
+    "briefDescription": "叶色丰富的耐阴植物，品种多样适合各种室内环境",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          4,
+          7
+        ],
+        "tip": "保持土壤微湿，不耐旱也不耐涝"
+      },
+      "light": {
+        "level": "low",
+        "tip": "非常耐阴，室内弱光环境即可生长"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每 2~4 周施一次稀薄液肥"
+      }
+    },
+    "commonIssues": [
+      "叶片卷曲多因温度过低",
+      "茎基部腐烂是浇水过多信号",
+      "红色品种需要更多光照维持色彩"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏保持温暖湿润，适当增加光照",
+      "autumnWinter": "冬季保持 15°C 以上，减少浇水频率"
+    }
+  },
+  {
+    "id": "philodendron-birkin",
+    "names": [
+      "白锦龟背",
+      "魔纹蔓绿绒",
+      "白画笔蔓绿绒"
+    ],
+    "category": "观叶植物",
+    "difficulty": "medium",
+    "briefDescription": "叶面有细密白色条纹的紧凑型观叶植物",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          5,
+          7
+        ],
+        "tip": "表土干 2cm 后浇透，忌积水"
+      },
+      "light": {
+        "level": "bright",
+        "tip": "明亮散射光最佳，光照不足白纹会减少"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每 2~4 周施一次通用液肥"
+      }
+    },
+    "commonIssues": [
+      "新叶无白纹通常是光照不足",
+      "叶片发黄可能是浇水过多",
+      "植株徒长需增强光照"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏生长旺盛，保持明亮光照和适当湿度",
+      "autumnWinter": "冬季保持 15°C 以上，减少浇水"
+    }
+  },
+  {
+    "id": "calathea-orbifolia",
+    "names": [
+      "青苹果竹芋",
+      "圆叶竹芋"
+    ],
+    "category": "观叶植物",
+    "difficulty": "hard",
+    "briefDescription": "叶面有精致的银绿条纹，叶背紫红色昼开夜合",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          3,
+          5
+        ],
+        "tip": "保持土壤持续微湿，用纯净水或放置过夜的自来水"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "喜散射光，忌直射，叶片会灼伤卷曲"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每 2~4 周施一次稀薄液肥"
+      }
+    },
+    "commonIssues": [
+      "叶缘干枯是空气湿度过低的典型表现",
+      "叶片卷曲多因缺水或光照过强",
+      "叶背出现红蜘蛛需及时处理"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏保持 60%+ 空气湿度，远离空调出风口",
+      "autumnWinter": "冬季保持 15°C 以上，维持高湿度环境"
+    }
+  },
+  {
+    "id": "alocasia-amazonica",
+    "names": [
+      "黑叶观音莲",
+      "亚马逊海芋",
+      "仙羽芋"
+    ],
+    "category": "观叶植物",
+    "difficulty": "hard",
+    "briefDescription": "箭形叶片上有醒目的银白色叶脉，极具异域风情",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          4,
+          6
+        ],
+        "tip": "保持土壤微湿但不积水，对水分很敏感"
+      },
+      "light": {
+        "level": "bright",
+        "tip": "喜明亮散射光，避免直射光灼伤叶片"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "生长期每 2~3 周施一次稀薄液肥"
+      }
+    },
+    "commonIssues": [
+      "休眠期叶片全部脱落是正常现象",
+      "叶缘发黄多因空气干燥",
+      "块茎腐烂是浇水过多的信号"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏为活跃生长期，保持温暖高湿环境",
+      "autumnWinter": "冬季可能进入休眠，减少浇水，保持 15°C 以上"
+    }
+  },
+  {
+    "id": "tradescantia-zebrina",
+    "names": [
+      "紫鸭跖草",
+      "吊竹梅",
+      "斑叶鸭跖草"
+    ],
+    "category": "观叶植物",
+    "difficulty": "easy",
+    "briefDescription": "叶面有银紫色条纹光泽，匍匐生长的垂吊植物",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          3,
+          5
+        ],
+        "tip": "保持土壤微湿，不耐完全干旱"
+      },
+      "light": {
+        "level": "bright",
+        "tip": "充足光照色彩更鲜艳，耐半阴但会褪色"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每 2~4 周施一次薄液肥"
+      }
+    },
+    "commonIssues": [
+      "茎节变长空秃是光照不足信号",
+      "叶色变绿需增加光照",
+      "老株下部空秃可重新扦插更新"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏生长极快，可频繁修剪保持丰满",
+      "autumnWinter": "冬季保持 10°C 以上，稍控水"
+    }
+  },
+  {
+    "id": "pilea-peperomioides",
+    "names": [
+      "镜面草",
+      "翠屏草",
+      "铜钱草（镜面草）"
+    ],
+    "category": "观叶植物",
+    "difficulty": "easy",
+    "briefDescription": "圆形叶片如铜钱，株型可爱是热门的网红植物",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          5,
+          7
+        ],
+        "tip": "表土干透再浇水，忌积水"
+      },
+      "light": {
+        "level": "bright",
+        "tip": "喜明亮散射光，定期转盆防止偏向生长"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每 2~4 周施一次通用液肥"
+      }
+    },
+    "commonIssues": [
+      "叶片下垂是缺水信号",
+      "茎干弯曲是趋光性，需定期转盆",
+      "根部小苗可分离繁殖"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏生长旺盛，会萌生大量侧芽",
+      "autumnWinter": "冬季减少浇水，保持 10°C 以上"
+    }
+  },
+  {
+    "id": "epipremnum-neon",
+    "names": [
+      "黄金葛·霓虹",
+      "霓虹绿萝",
+      "金光绿萝"
+    ],
+    "category": "观叶植物",
+    "difficulty": "easy",
+    "briefDescription": "叶片呈亮丽的荧光黄绿色，是绿萝的彩叶变种",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          4,
+          6
+        ],
+        "tip": "表土干透再浇水，耐旱忌涝"
+      },
+      "light": {
+        "level": "bright",
+        "tip": "明亮散射光保持亮黄色泽，光照不足会转绿"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每 2~4 周施一次通用液肥"
+      }
+    },
+    "commonIssues": [
+      "叶色变暗绿是光照不足",
+      "叶片发黄脱落可能是浇水过多",
+      "藤蔓过长可修剪促进分枝"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏保持明亮环境，生长快速",
+      "autumnWinter": "冬季保持 10°C 以上，减少浇水"
+    }
+  },
+  {
+    "id": "peperomia-watermelon",
+    "names": [
+      "西瓜皮椒草",
+      "西瓜椒草"
+    ],
+    "category": "观叶植物",
+    "difficulty": "medium",
+    "briefDescription": "叶面纹路酷似西瓜外皮的紧凑型观叶植物",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          5,
+          7
+        ],
+        "tip": "表土干透再浇水，叶片肥厚有一定储水能力"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "散射光最佳，避免直射光灼伤叶面"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          21,
+          30
+        ],
+        "tip": "生长期每 3~4 周施一次稀薄液肥"
+      }
+    },
+    "commonIssues": [
+      "叶片卷曲多因光照过强",
+      "茎基腐烂是浇水过频信号",
+      "花穗无观赏价值可摘除保存养分"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏保持温暖散射光环境",
+      "autumnWinter": "冬季保持 15°C 以上，控水"
+    }
+  },
+  {
+    "id": "maranta-leuconeura",
+    "names": [
+      "豹纹竹芋",
+      "孔雀竹芋",
+      "祈祷草"
+    ],
+    "category": "观叶植物",
+    "difficulty": "medium",
+    "briefDescription": "叶面有独特的羽状斑纹，夜间叶片上举如祈祷",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          3,
+          5
+        ],
+        "tip": "保持土壤微湿，用温水或放置过夜的水"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "散射光为主，光照过强叶色会褪"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每 2~4 周施一次稀薄液肥"
+      }
+    },
+    "commonIssues": [
+      "叶缘干枯多因空气湿度低",
+      "叶片不再展合是环境过暗",
+      "容易受红蜘蛛侵害需注意通风"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏保持高湿度环境，远离空调",
+      "autumnWinter": "冬季保持 15°C 以上，减少浇水但维持湿度"
+    }
+  },
+  {
+    "id": "croton",
+    "names": [
+      "变叶木",
+      "洒金榕"
+    ],
+    "category": "观叶植物",
+    "difficulty": "medium",
+    "briefDescription": "叶色斑斓的热带灌木，色彩随光照强度变化万千",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          3,
+          5
+        ],
+        "tip": "保持土壤微湿，不耐旱"
+      },
+      "light": {
+        "level": "direct",
+        "tip": "需要充足直射光才能维持鲜艳色彩"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "生长期每 2~3 周施一次通用液肥"
+      }
+    },
+    "commonIssues": [
+      "叶色变暗是光照不足的典型表现",
+      "落叶多因环境骤变或冷风",
+      "叶片灰尘多需定期擦拭"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏放在阳光充足处，保持高湿度",
+      "autumnWinter": "冬季保持 15°C 以上，避免冷风"
+    }
+  },
+  {
+    "id": "strelitzia-nicolai",
+    "names": [
+      "天堂鸟",
+      "鹤望兰",
+      "极乐鸟蕉"
+    ],
+    "category": "观叶植物",
+    "difficulty": "medium",
+    "briefDescription": "大型热带植物，叶片如芭蕉般宽大挺拔",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          5,
+          8
+        ],
+        "tip": "表土干透再浇透水，忌积水"
+      },
+      "light": {
+        "level": "bright",
+        "tip": "喜充足明亮光照，可接受少量直射光"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每 2~4 周施一次通用液肥"
+      }
+    },
+    "commonIssues": [
+      "叶片边缘撕裂是自然现象不影响健康",
+      "新叶不展开可能是湿度不足",
+      "根系强大需定期换盆"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏为活跃生长期，保持充足光照和水肥",
+      "autumnWinter": "冬季保持 10°C 以上，减少浇水"
+    }
+  },
+  {
+    "id": "pachira-aquatica",
+    "names": [
+      "发财树",
+      "马拉巴栗",
+      "瓜栗"
+    ],
+    "category": "观叶植物",
+    "difficulty": "easy",
+    "briefDescription": "茎干可编织造型的室内树，寓意招财进宝",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          7,
+          14
+        ],
+        "tip": "极耐旱，表土完全干透再浇水，过多浇水是致死主因"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "耐阴，散射光即可，避免夏季强光"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          60
+        ],
+        "tip": "每 1~2 月施一次稀薄液肥即可",
+        "seasonalNote": "冬季停肥"
+      }
+    },
+    "commonIssues": [
+      "树干变软发黑是浇水过多导致根腐",
+      "叶片脱落多因积水或环境骤变",
+      "编织造型的主干开裂是正常生长"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏正常养护，避免暴晒",
+      "autumnWinter": "冬季严格控水，保持 10°C 以上"
+    }
+  },
+  {
+    "id": "fittonia",
+    "names": [
+      "网纹草",
+      "费通草"
+    ],
+    "category": "观叶植物",
+    "difficulty": "medium",
+    "briefDescription": "叶面布满精致的白色或粉色网状叶脉",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          2,
+          4
+        ],
+        "tip": "喜湿润，不耐旱，缺水会迅速萎蔫但浇水后可恢复"
+      },
+      "light": {
+        "level": "low",
+        "tip": "耐阴，散射光即可，直射光会灼伤叶片"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每 2~4 周施一次稀薄液肥"
+      }
+    },
+    "commonIssues": [
+      "整株萎蔫是缺水信号，浇水后可快速恢复",
+      "茎节变长是光照不足",
+      "高温高湿环境下容易白粉病"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏保持土壤湿润和较高空气湿度",
+      "autumnWinter": "冬季保持 15°C 以上，注意保湿"
+    }
+  },
+  {
+    "id": "hoya-carnosa",
+    "names": [
+      "球兰",
+      "蜡兰",
+      "樱花葛"
+    ],
+    "category": "观叶植物",
+    "difficulty": "medium",
+    "briefDescription": "花朵如蜡制星星的攀援藤本，芳香宜人",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          7,
+          10
+        ],
+        "tip": "叶片肥厚储水，表土干透再浇，宁干勿湿"
+      },
+      "light": {
+        "level": "bright",
+        "tip": "明亮散射光最佳，充足光照促进开花"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "春夏每 2~4 周施磷钾肥促花"
+      }
+    },
+    "commonIssues": [
+      "花梗摘除后该处不再开花",
+      "叶片发黄变软是浇水过多",
+      "攀爬型品种需设支架引导"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏保持明亮光照和适当肥水，促进开花",
+      "autumnWinter": "冬季保持 10°C 以上，减少浇水"
+    }
+  },
+  {
+    "id": "codiaeum-petra",
+    "names": [
+      "彩叶变叶木",
+      "佩特拉变叶木"
+    ],
+    "category": "观叶植物",
+    "difficulty": "medium",
+    "briefDescription": "叶片色彩浓烈的变叶木品种，需充足光照出色",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          3,
+          5
+        ],
+        "tip": "保持土壤微湿，不耐干旱"
+      },
+      "light": {
+        "level": "direct",
+        "tip": "需要充足阳光维持叶色，光照越强色彩越艳"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "生长期每 2~3 周施一次液肥"
+      }
+    },
+    "commonIssues": [
+      "落叶多因温度骤降或冷风",
+      "叶色暗淡是光照不足",
+      "汁液有毒，修剪需戴手套"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏放在阳光充足通风处",
+      "autumnWinter": "冬季保持 15°C 以上，避免冷风"
+    }
+  },
+  {
+    "id": "philodendron-brasil",
+    "names": [
+      "巴西蔓绿绒",
+      "心叶蔓绿绒·巴西"
+    ],
+    "category": "观叶植物",
+    "difficulty": "easy",
+    "briefDescription": "叶面有黄绿色中央斑纹的蔓性心叶蔓绿绒",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          4,
+          7
+        ],
+        "tip": "表土干透再浇水，耐旱性较好"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "散射光保持斑叶色彩，耐半阴但会失去黄色条纹"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每 2~4 周施一次液肥"
+      }
+    },
+    "commonIssues": [
+      "黄色条纹消失是光照不足",
+      "叶片变小是需要施肥的信号",
+      "藤蔓过长可修剪扦插繁殖"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏生长迅速，保持明亮环境",
+      "autumnWinter": "冬季保持 10°C 以上，减少浇水"
+    }
+  },
+  {
+    "id": "syngonium-podophyllum",
+    "names": [
+      "合果芋",
+      "箭叶芋",
+      "白蝴蝶"
+    ],
+    "category": "观叶植物",
+    "difficulty": "easy",
+    "briefDescription": "箭形叶随生长变为掌状裂叶的攀援植物",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          4,
+          6
+        ],
+        "tip": "保持土壤微湿，不耐完全干旱"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "散射光最佳，白色品种需更多光照维持色彩"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每 2~4 周施一次液肥"
+      }
+    },
+    "commonIssues": [
+      "叶形随成熟度变化（从箭形到掌状）是正常的",
+      "白色品种变绿是光照不足",
+      "生长点修剪可促进丛生"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏生长快速，可引导攀爬",
+      "autumnWinter": "冬季保持 15°C 以上，控水"
+    }
+  },
+  {
+    "id": "aspidistra-elatior",
+    "names": [
+      "一叶兰",
+      "蜘蛛抱蛋",
+      "大叶万年青"
+    ],
+    "category": "观叶植物",
+    "difficulty": "easy",
+    "briefDescription": "极耐阴耐寒的老牌室内植物，叶片挺拔深绿",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          5,
+          10
+        ],
+        "tip": "耐旱，表土干透再浇水，宁干勿湿"
+      },
+      "light": {
+        "level": "low",
+        "tip": "极耐阴，几乎可在无自然光环境下生存"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          60
+        ],
+        "tip": "每 1~2 月施一次薄肥即可"
+      }
+    },
+    "commonIssues": [
+      "生长缓慢是正常特性",
+      "叶片出现褐斑可能是强光灼伤",
+      "新叶从根部长出，老叶自然发黄可剪除"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏正常养护，保持通风",
+      "autumnWinter": "极耐寒，0°C 以上即可存活"
+    }
+  },
+  {
+    "id": "echeveria",
+    "names": [
+      "拟石莲花",
+      "石莲花",
+      "宝石花"
+    ],
+    "category": "多肉植物",
+    "difficulty": "easy",
+    "briefDescription": "莲座状排列的肥厚叶片，形态优美如玉雕花朵",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          7,
+          14
+        ],
+        "tip": "等盆土完全干透再浇透水，忌叶心积水"
+      },
+      "light": {
+        "level": "direct",
+        "tip": "需要充足直射光，光照不足会徒长变形"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          60
+        ],
+        "tip": "生长期每 1~2 月施一次多肉专用稀薄液肥",
+        "seasonalNote": "夏季休眠期和冬季停肥"
+      }
+    },
+    "commonIssues": [
+      "株型松散徒长是光照不足",
+      "底部叶片消耗是正常代谢",
+      "叶片化水是浇水过多或通风不良"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春季为主要生长期，夏季高温需遮阴通风控水",
+      "autumnWinter": "秋季恢复生长可正常浇水，冬季保持 5°C 以上控水"
+    }
+  },
+  {
+    "id": "sedum-morganianum",
+    "names": [
+      "翡翠景天",
+      "玉珠帘",
+      "驴尾巴"
+    ],
+    "category": "多肉植物",
+    "difficulty": "easy",
+    "briefDescription": "肥厚圆珠状叶片串成的垂吊型多肉",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          7,
+          14
+        ],
+        "tip": "盆土干透浇透，叶片轻微发皱是浇水信号"
+      },
+      "light": {
+        "level": "bright",
+        "tip": "喜充足光照，强光下叶色更青翠"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          60
+        ],
+        "tip": "生长期每 1~2 月施一次稀薄液肥"
+      }
+    },
+    "commonIssues": [
+      "叶片容易脱落，搬动时需小心",
+      "徒长变稀疏是光照不足",
+      "脱落的叶片可放在土面上叶插繁殖"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春季正常生长，夏季高温适当遮阴",
+      "autumnWinter": "冬季保持 5°C 以上，严格控水"
+    }
+  },
+  {
+    "id": "haworthia-fasciata",
+    "names": [
+      "条纹十二卷",
+      "十二卷",
+      "瀑布"
+    ],
+    "category": "多肉植物",
+    "difficulty": "easy",
+    "briefDescription": "小巧玲珑的多肉植物，叶背有白色横条纹",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          7,
+          14
+        ],
+        "tip": "盆土干透浇透，冬夏休眠期严控水分"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "散射光或半阴环境，忌夏季强光直射"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          60
+        ],
+        "tip": "春秋生长期每月施一次稀薄液肥"
+      }
+    },
+    "commonIssues": [
+      "叶尖干枯多因空气干燥或强光",
+      "叶色变红褐是光照充足的正常表现",
+      "根部容易长侧芽可分株繁殖"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春季正常生长，夏季需遮阴降温",
+      "autumnWinter": "秋季恢复生长，冬季保持 5°C 以上控水"
+    }
+  },
+  {
+    "id": "crassula-ovata",
+    "names": [
+      "玉树",
+      "景天树",
+      "燕子掌"
+    ],
+    "category": "多肉植物",
+    "difficulty": "easy",
+    "briefDescription": "叶片圆润如玉的灌木型多肉，寓意招财",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          7,
+          14
+        ],
+        "tip": "盆土干透浇透，耐旱忌涝"
+      },
+      "light": {
+        "level": "bright",
+        "tip": "喜充足光照，夏季避免暴晒"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          60
+        ],
+        "tip": "生长期每 1~2 月施一次通用液肥"
+      }
+    },
+    "commonIssues": [
+      "叶片发软是缺水信号",
+      "茎干变软腐烂是浇水过多",
+      "汁液有微毒，修剪后洗手"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏正常养护，夏季高温适当遮阴",
+      "autumnWinter": "冬季保持 5°C 以上，严格控水"
+    }
+  },
+  {
+    "id": "aloe-vera",
+    "names": [
+      "芦荟",
+      "库拉索芦荟",
+      "翠叶芦荟"
+    ],
+    "category": "多肉植物",
+    "difficulty": "easy",
+    "briefDescription": "含有天然凝胶的药用多肉，可用于舒缓皮肤",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          7,
+          14
+        ],
+        "tip": "盆土完全干透再浇水，宁干勿湿"
+      },
+      "light": {
+        "level": "bright",
+        "tip": "喜充足光照，可接受直射光"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          60
+        ],
+        "tip": "生长期每 1~2 月施一次稀薄液肥"
+      }
+    },
+    "commonIssues": [
+      "叶片变褐扁平可能是强光灼伤",
+      "叶基腐烂是浇水过多",
+      "底部叶片变薄是自然消耗"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏正常养护，注意夏季通风",
+      "autumnWinter": "冬季保持 5°C 以上，大幅减少浇水"
+    }
+  },
+  {
+    "id": "lithops",
+    "names": [
+      "生石花",
+      "石头花",
+      "屁股花"
+    ],
+    "category": "多肉植物",
+    "difficulty": "hard",
+    "briefDescription": "外形酷似小石头的拟态多肉，花开石缝间",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "极耐旱，蜕皮期和夏季休眠期完全断水"
+      },
+      "light": {
+        "level": "direct",
+        "tip": "需要充足直射光，光照不足会徒长变高"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          60,
+          90
+        ],
+        "tip": "每年施 1~2 次极稀薄液肥即可"
+      }
+    },
+    "commonIssues": [
+      "徒长（变高变窄）是光照严重不足",
+      "化水（变透明状）是浇水过多或不通风",
+      "蜕皮期严禁浇水，让老皮自然干枯"
+    ],
+    "seasonalNotes": {
+      "springSummer": "蜕皮期断水等待新叶长出；夏季半休眠，严格控水",
+      "autumnWinter": "秋季为主要生长期可适量浇水；冬季保持 5°C 以上控水"
+    }
+  },
+  {
+    "id": "sempervivum",
+    "names": [
+      "长生草",
+      "观音莲（多肉）",
+      "佛座莲"
+    ],
+    "category": "多肉植物",
+    "difficulty": "easy",
+    "briefDescription": "极耐寒的莲座型多肉，子株环绕母株如花环",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          7,
+          14
+        ],
+        "tip": "盆土干透浇透，避免叶心积水"
+      },
+      "light": {
+        "level": "direct",
+        "tip": "喜强光直射，光照越充足株型越紧凑"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          60
+        ],
+        "tip": "生长期每月施一次稀薄液肥"
+      }
+    },
+    "commonIssues": [
+      "徒长松散是光照不足",
+      "夏季高温可能进入半休眠",
+      "群生后需分株保持通风"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春季为主要生长期，夏季高温需遮阴通风",
+      "autumnWinter": "耐寒性强，-10°C 以上可露养越冬"
+    }
+  },
+  {
+    "id": "kalanchoe-blossfeldiana",
+    "names": [
+      "长寿花",
+      "圣诞伽蓝菜",
+      "矮生伽蓝菜"
+    ],
+    "category": "多肉植物",
+    "difficulty": "easy",
+    "briefDescription": "花期长达数月的多肉植物，花色丰富多彩",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          5,
+          10
+        ],
+        "tip": "表土干透浇透，花期保持略湿"
+      },
+      "light": {
+        "level": "bright",
+        "tip": "喜光照充足，短日照处理可促进开花"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "花期每 2 周施一次磷钾肥促花",
+        "seasonalNote": "花后休眠期减少施肥"
+      }
+    },
+    "commonIssues": [
+      "不开花多因日照时间过长",
+      "茎节徒长是光照不足",
+      "花后及时摘除残花促进复花"
+    ],
+    "seasonalNotes": {
+      "springSummer": "花后修剪休养，夏季避免暴晒",
+      "autumnWinter": "秋季短日照处理促花芽分化，冬季保持 10°C 以上"
+    }
+  },
+  {
+    "id": "gasteria",
+    "names": [
+      "卧牛",
+      "鲨鱼掌",
+      "美丽鲨鱼掌"
+    ],
+    "category": "多肉植物",
+    "difficulty": "easy",
+    "briefDescription": "舌形厚叶交互排列的小型耐阴多肉植物",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          7,
+          14
+        ],
+        "tip": "盆土干透浇透，耐旱忌涝"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "耐半阴，散射光即可，避免夏季强光"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          60
+        ],
+        "tip": "生长期每 1~2 月施一次稀薄液肥"
+      }
+    },
+    "commonIssues": [
+      "叶片变红褐是光照偏强的正常反应",
+      "根腐多因浇水过多通风差",
+      "容易群生可分株繁殖"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春季为生长期，夏季高温遮阴控水",
+      "autumnWinter": "秋季恢复生长，冬季保持 5°C 以上"
+    }
+  },
+  {
+    "id": "adenium-obesum",
+    "names": [
+      "沙漠玫瑰",
+      "天宝花",
+      "富贵花"
+    ],
+    "category": "多肉植物",
+    "difficulty": "medium",
+    "briefDescription": "茎干粗壮如瓶的多肉灌木，花朵艳丽似玫瑰",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          7,
+          14
+        ],
+        "tip": "生长期盆土干透浇透，休眠期大幅减少"
+      },
+      "light": {
+        "level": "direct",
+        "tip": "需要充足直射光才能开花，不耐阴"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每 2~4 周施一次磷钾肥促花",
+        "seasonalNote": "冬季休眠期停肥"
+      }
+    },
+    "commonIssues": [
+      "基部变软是浇水过多或低温冻伤",
+      "不开花多因光照不足",
+      "汁液有毒，修剪需注意"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏为花期和生长期，保持充足光照和水肥",
+      "autumnWinter": "冬季落叶休眠，保持 10°C 以上，大幅控水"
+    }
+  },
+  {
+    "id": "senecio-rowleyanus",
+    "names": [
+      "佛珠",
+      "珍珠吊兰",
+      "翡翠珠"
+    ],
+    "category": "多肉植物",
+    "difficulty": "medium",
+    "briefDescription": "叶片如绿色珍珠串成的垂吊多肉植物",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          7,
+          10
+        ],
+        "tip": "珠子轻微发皱再浇水，忌盆土长期湿润"
+      },
+      "light": {
+        "level": "bright",
+        "tip": "明亮散射光最佳，避免夏季强光灼伤"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          60
+        ],
+        "tip": "春秋生长期每月施一次稀薄液肥"
+      }
+    },
+    "commonIssues": [
+      "珠子发扁发皱是缺水",
+      "珠子化水是浇水过多或不通风",
+      "黑腐蔓延需及时剪除健康段扦插"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春季正常生长，夏季高温遮阴控水",
+      "autumnWinter": "秋季为第二生长期，冬季保持 5°C 以上"
+    }
+  },
+  {
+    "id": "pachyphytum-oviferum",
+    "names": [
+      "桃美人",
+      "星美人",
+      "桃蛋"
+    ],
+    "category": "多肉植物",
+    "difficulty": "easy",
+    "briefDescription": "叶片圆润饱满如桃蛋的可爱多肉植物",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          7,
+          14
+        ],
+        "tip": "盆土完全干透再浇水，忌频繁浇水"
+      },
+      "light": {
+        "level": "direct",
+        "tip": "充足直射光叶色粉嫩饱满，光照不足变绿"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          60
+        ],
+        "tip": "生长期每 1~2 月施一次稀薄液肥"
+      }
+    },
+    "commonIssues": [
+      "叶片变绿是光照不足",
+      "掉叶多因浇水过多",
+      "叶片表面白粉勿擦拭"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春季正常出状态，夏季遮阴通风控水",
+      "autumnWinter": "秋季为出色期，冬季保持 5°C 以上"
+    }
+  },
+  {
+    "id": "gymnocalycium",
+    "names": [
+      "裸萼球属",
+      "绯牡丹",
+      "山影"
+    ],
+    "category": "多肉植物",
+    "difficulty": "easy",
+    "briefDescription": "球形仙人掌，棱脊分明花朵精致多彩",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          10,
+          14
+        ],
+        "tip": "盆土完全干透浇透水，冬季基本断水"
+      },
+      "light": {
+        "level": "bright",
+        "tip": "喜光但忌夏季暴晒，散射光到半日照"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          60
+        ],
+        "tip": "生长期每 1~2 月施一次仙人掌专用肥"
+      }
+    },
+    "commonIssues": [
+      "球体变红褐色可能是晒伤",
+      "不开花多因苗龄不够",
+      "根部容易生粉蚧需定期检查"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏为生长期和花期，适当遮阴避免灼伤",
+      "autumnWinter": "冬季保持 5°C 以上，基本断水"
+    }
+  },
+  {
+    "id": "graptoveria",
+    "names": [
+      "银星",
+      "紫珍珠",
+      "黛比"
+    ],
+    "category": "多肉植物",
+    "difficulty": "easy",
+    "briefDescription": "莲座紧凑株型优美的杂交多肉，易出状态",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          7,
+          14
+        ],
+        "tip": "盆土干透浇透，避免叶心积水"
+      },
+      "light": {
+        "level": "direct",
+        "tip": "强光直射出状态，光照不足变绿松散"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          60
+        ],
+        "tip": "生长期每月施一次多肉专用肥"
+      }
+    },
+    "commonIssues": [
+      "叶色变绿是光照不足信号",
+      "底部消叶是正常代谢",
+      "夏季需通风防黑腐"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春季为最佳观赏期，夏季遮阴通风",
+      "autumnWinter": "秋季上色期，冬季保持 5°C 以上"
+    }
+  },
+  {
+    "id": "aeonium-arboreum",
+    "names": [
+      "黑法师",
+      "紫叶莲花掌",
+      "墨法师"
+    ],
+    "category": "多肉植物",
+    "difficulty": "medium",
+    "briefDescription": "叶片聚生枝顶如黑色玫瑰的灌木型多肉",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          7,
+          10
+        ],
+        "tip": "冬型种，夏季休眠严控水，冬季正常浇水"
+      },
+      "light": {
+        "level": "direct",
+        "tip": "充足直射光叶色更黑亮，光照不足变绿"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          60
+        ],
+        "tip": "秋冬生长期每月施一次液肥",
+        "seasonalNote": "夏季休眠期停肥"
+      }
+    },
+    "commonIssues": [
+      "夏季叶片合拢缩头是正常休眠",
+      "掉叶是夏季休眠的正常表现",
+      "茎干木质化是正常老化"
+    ],
+    "seasonalNotes": {
+      "springSummer": "夏季高温进入休眠，遮阴严格控水保通风",
+      "autumnWinter": "秋冬为生长旺季，给予充足光照和水肥"
+    }
+  },
+  {
+    "id": "cotyledon-orbiculata",
+    "names": [
+      "熊童子",
+      "毛茸茸"
+    ],
+    "category": "多肉植物",
+    "difficulty": "medium",
+    "briefDescription": "叶片圆形覆有白粉的灌木型多肉植物",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          7,
+          14
+        ],
+        "tip": "盆土完全干透再浇水，叶片不可沾水"
+      },
+      "light": {
+        "level": "bright",
+        "tip": "喜充足光照，强光下叶缘爪印更红"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          60
+        ],
+        "tip": "春秋生长期每月施一次稀薄液肥"
+      }
+    },
+    "commonIssues": [
+      "掉叶多因浇水过多或温度骤变",
+      "徒长是光照不足",
+      "夏季高温半休眠需控水"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春季正常生长，夏季高温遮阴控水",
+      "autumnWinter": "秋季恢复生长出状态，冬季保持 5°C 以上"
+    }
+  },
+  {
+    "id": "opuntia-microdasys",
+    "names": [
+      "仙人掌（金乌帽子）",
+      "兔耳仙人掌",
+      "乌帽子"
+    ],
+    "category": "多肉植物",
+    "difficulty": "easy",
+    "briefDescription": "扁平茎节如兔耳的仙人掌，有细密刺毛",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          10,
+          21
+        ],
+        "tip": "极耐旱，盆土完全干透才浇水，冬季基本断水"
+      },
+      "light": {
+        "level": "direct",
+        "tip": "需要全日照环境，光照越强越健壮"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          60
+        ],
+        "tip": "生长期每 1~2 月施一次仙人掌专用肥"
+      }
+    },
+    "commonIssues": [
+      "刺座细小毛刺易扎手，操作需戴手套",
+      "变软发黄是浇水过多",
+      "基部木质化是正常老化"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏为生长期，保持充足光照少浇水",
+      "autumnWinter": "冬季保持 5°C 以上，基本断水"
+    }
+  },
+  {
+    "id": "schlumbergera",
+    "names": [
+      "蟹爪兰",
+      "仙人指",
+      "锦上添花"
+    ],
+    "category": "多肉植物",
+    "difficulty": "medium",
+    "briefDescription": "在圣诞节前后盛开的仙人掌科垂吊植物",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          5,
+          7
+        ],
+        "tip": "花期保持微湿，花后控水让其休整"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "散射光为主，短日照处理促花芽分化"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "花前每 2 周施一次磷钾肥",
+        "seasonalNote": "花期停肥，花后恢复"
+      }
+    },
+    "commonIssues": [
+      "落蕾多因环境温度骤变或移动",
+      "不开花需秋季短日照处理",
+      "茎节萎蔫多因根腐"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春季花后修剪休养，夏季遮阴通风",
+      "autumnWinter": "秋季控光促花，冬季为花期保持 10°C 以上"
+    }
+  },
+  {
+    "id": "phalaenopsis",
+    "names": [
+      "蝴蝶兰",
+      "蝶兰"
+    ],
+    "category": "开花植物",
+    "difficulty": "medium",
+    "briefDescription": "蝴蝶形花朵优雅高贵的热门室内兰花",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          5,
+          7
+        ],
+        "tip": "水苔或树皮干透再浇水，忌根部积水"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "散射光为主，忌强光直射"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "生长期每 2~3 周施一次兰花专用肥",
+        "seasonalNote": "花期停肥"
+      }
+    },
+    "commonIssues": [
+      "花谢后花梗可在节点上方剪断促进二次开花",
+      "根部变空心发灰是老化可修剪",
+      "叶片变软皱是缺水或根系问题"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏为生长期，保持温暖湿润环境",
+      "autumnWinter": "秋季日夜温差促花芽，冬季保持 15°C 以上"
+    }
+  },
+  {
+    "id": "anthurium",
+    "names": [
+      "红掌",
+      "安祖花",
+      "火鹤花"
+    ],
+    "category": "开花植物",
+    "difficulty": "medium",
+    "briefDescription": "红色佛焰苞花光亮如蜡的热带观花植物",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          4,
+          6
+        ],
+        "tip": "保持基质微湿，忌积水"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "明亮散射光，忌直射光灼伤叶片"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "生长期每 2~3 周施一次液肥"
+      }
+    },
+    "commonIssues": [
+      "不开花多因光照不足",
+      "花苞变绿是自然老化",
+      "叶尖焦枯多因空气干燥"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏为盛花期，保持高湿度和散射光",
+      "autumnWinter": "冬季保持 15°C 以上，减少浇水"
+    }
+  },
+  {
+    "id": "gardenia-jasminoides",
+    "names": [
+      "栀子花",
+      "黄栀子"
+    ],
+    "category": "开花植物",
+    "difficulty": "hard",
+    "briefDescription": "花朵洁白芳香馥郁的常绿灌木",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          2,
+          4
+        ],
+        "tip": "喜湿润酸性土壤，用雨水或酸化水浇灌"
+      },
+      "light": {
+        "level": "bright",
+        "tip": "喜充足光照，夏季避免暴晒"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "花前施磷钾肥促花，平时用酸性肥",
+        "seasonalNote": "花期停肥，花后追肥"
+      }
+    },
+    "commonIssues": [
+      "叶片发黄多因土壤偏碱或缺铁",
+      "落蕾多因温度骤变或空气干燥",
+      "不开花多因光照不足或修剪时机不对"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春季花芽分化期保证光照和水肥，夏季开花期维持高湿度",
+      "autumnWinter": "秋季勿修剪（翌年花芽已形成），冬季保持 5°C 以上"
+    }
+  },
+  {
+    "id": "hibiscus-rosa-sinensis",
+    "names": [
+      "扶桑花",
+      "朱槿",
+      "大红花"
+    ],
+    "category": "开花植物",
+    "difficulty": "medium",
+    "briefDescription": "花大色艳的热带灌木，花朵朝开暮落",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          2,
+          4
+        ],
+        "tip": "喜湿润，生长期保持土壤微湿"
+      },
+      "light": {
+        "level": "direct",
+        "tip": "喜全日照，光照越充足开花越多"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          7,
+          14
+        ],
+        "tip": "花期每 1~2 周施一次磷钾肥促花"
+      }
+    },
+    "commonIssues": [
+      "落蕾多因光照不足或环境骤变",
+      "叶片脱落可能是温度过低",
+      "白粉虱和蚜虫是常见害虫"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏为盛花期，保持充足光照和水肥",
+      "autumnWinter": "冬季保持 12°C 以上，减少浇水"
+    }
+  },
+  {
+    "id": "cyclamen-persicum",
+    "names": [
+      "仙客来",
+      "兔耳花",
+      "萝卜海棠"
+    ],
+    "category": "开花植物",
+    "difficulty": "medium",
+    "briefDescription": "花瓣反卷如兔耳的秋冬季开花植物",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          3,
+          5
+        ],
+        "tip": "盆土微干即浇水，避免浇到球茎和叶心"
+      },
+      "light": {
+        "level": "bright",
+        "tip": "喜明亮散射光，冬季可接受柔和直射光"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "花期每 2~3 周施一次磷钾肥"
+      }
+    },
+    "commonIssues": [
+      "叶片发黄倒伏是夏季休眠前兆",
+      "花茎歪倒可能是温度过高",
+      "球茎外露是正常生长，勿覆土"
+    ],
+    "seasonalNotes": {
+      "springSummer": "夏季进入休眠，叶片枯萎后停水遮阴；春季花期尾声逐渐减水",
+      "autumnWinter": "秋季恢复浇水发新叶，冬季为盛花期保持 10~18°C"
+    }
+  },
+  {
+    "id": "begonia-rex",
+    "names": [
+      "蟆叶秋海棠",
+      "彩叶秋海棠",
+      "大王秋海棠"
+    ],
+    "category": "开花植物",
+    "difficulty": "medium",
+    "briefDescription": "叶色斑斓胜过花朵的观叶秋海棠",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          3,
+          5
+        ],
+        "tip": "保持土壤微湿，避免叶面积水"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "散射光为主，直射光会灼伤叶片"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每 2~4 周施一次稀薄液肥"
+      }
+    },
+    "commonIssues": [
+      "叶面有白粉是白粉病，需改善通风",
+      "叶缘干枯是空气太干燥",
+      "花序可摘除以保存叶片观赏性"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏保持高湿度和通风，避免闷热",
+      "autumnWinter": "冬季保持 15°C 以上，减少浇水"
+    }
+  },
+  {
+    "id": "saintpaulia",
+    "names": [
+      "非洲紫罗兰",
+      "非洲堇"
+    ],
+    "category": "开花植物",
+    "difficulty": "medium",
+    "briefDescription": "花色丰富可全年开花的小型室内花卉",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          3,
+          5
+        ],
+        "tip": "底部浸盆法浇水最佳，避免水溅叶面"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "散射光或人工光照，12 小时光照可常年开花"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "每 2~3 周施一次非洲紫罗兰专用肥"
+      }
+    },
+    "commonIssues": [
+      "叶面水渍斑是冷水溅到叶面造成",
+      "不开花多因光照不足",
+      "老叶变软下垂是正常老化可摘除"
+    ],
+    "seasonalNotes": {
+      "springSummer": "光照充足时可常年开花，夏季避免高温",
+      "autumnWinter": "冬季保持 15°C 以上，补充人工照明"
+    }
+  },
+  {
+    "id": "pelargonium",
+    "names": [
+      "天竺葵",
+      "洋绣球"
+    ],
+    "category": "开花植物",
+    "difficulty": "medium",
+    "briefDescription": "花色丰富四季可开的阳台盆栽花卉",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          3,
+          5
+        ],
+        "tip": "表土干透浇水，忌盆土长期湿润"
+      },
+      "light": {
+        "level": "direct",
+        "tip": "喜充足阳光，光照不足开花少"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "花期每 2~3 周施一次磷钾肥"
+      }
+    },
+    "commonIssues": [
+      "不开花是光照不足",
+      "茎基部发黑是浇水过多导致黑腐",
+      "夏季高温可能进入半休眠"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春季为盛花期，夏季高温需遮阴通风控水",
+      "autumnWinter": "秋季恢复开花，冬季保持 5°C 以上"
+    }
+  },
+  {
+    "id": "jasmine-sambac",
+    "names": [
+      "茉莉花",
+      "茉莉"
+    ],
+    "category": "开花植物",
+    "difficulty": "medium",
+    "briefDescription": "花朵小巧洁白，香气清幽的常绿灌木",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          2,
+          3
+        ],
+        "tip": "喜湿润，生长期需保持土壤持续微湿"
+      },
+      "light": {
+        "level": "direct",
+        "tip": "需要全日照，光照越充足开花越多越香"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          7,
+          14
+        ],
+        "tip": "花期每 1~2 周施一次磷钾肥促花",
+        "seasonalNote": "冬季停肥"
+      }
+    },
+    "commonIssues": [
+      "不开花是光照不足或缺磷钾肥",
+      "叶片发黄多因土壤偏碱",
+      "冬季落叶是正常休眠"
+    ],
+    "seasonalNotes": {
+      "springSummer": "夏季为盛花期，保证充足阳光和水肥",
+      "autumnWinter": "冬季落叶后大幅修剪，保持 5°C 以上"
+    }
+  },
+  {
+    "id": "azalea",
+    "names": [
+      "杜鹃花",
+      "映山红"
+    ],
+    "category": "开花植物",
+    "difficulty": "hard",
+    "briefDescription": "花团锦簇色彩缤纷的经典盆栽花卉",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          2,
+          4
+        ],
+        "tip": "喜酸性湿润土壤，用雨水或酸化水，忌干透"
+      },
+      "light": {
+        "level": "bright",
+        "tip": "明亮散射光，避免夏季强光直射"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "用杜鹃专用酸性肥，花后施氮肥促新梢",
+        "seasonalNote": "花蕾膨大期停肥"
+      }
+    },
+    "commonIssues": [
+      "叶片发黄多因土壤碱化或缺铁",
+      "落蕾多因温度骤变或空气干燥",
+      "新叶卷曲可能有蚜虫或红蜘蛛"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春季花期保持凉爽高湿，花后及时修剪；夏季遮阴降温",
+      "autumnWinter": "秋季形成花芽勿修剪，冬季保持 5~15°C 促春季开花"
+    }
+  },
+  {
+    "id": "dendrobium",
+    "names": [
+      "石斛兰",
+      "金钗石斛"
+    ],
+    "category": "开花植物",
+    "difficulty": "medium",
+    "briefDescription": "花朵精致优雅的附生兰科植物，品种众多",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          5,
+          7
+        ],
+        "tip": "基质干透再浇水，保持良好通风"
+      },
+      "light": {
+        "level": "bright",
+        "tip": "明亮散射光，适当光照促花"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "生长期每 2~3 周施一次兰花肥",
+        "seasonalNote": "花期和休眠期停肥"
+      }
+    },
+    "commonIssues": [
+      "不开花需秋冬低温催花",
+      "老茎不可随意剪除仍可开花",
+      "根系发白干瘪是缺水信号"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春季花后开始长新芽，夏季保持通风高湿",
+      "autumnWinter": "秋冬降温 10~15°C 促花芽分化"
+    }
+  },
+  {
+    "id": "impatiens-walleriana",
+    "names": [
+      "凤仙花",
+      "指甲花",
+      "急性子"
+    ],
+    "category": "开花植物",
+    "difficulty": "easy",
+    "briefDescription": "花量大色彩丰富的耐阴一年生草花",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          2,
+          3
+        ],
+        "tip": "喜湿润，不耐旱，缺水会迅速萎蔫"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "散射光或半阴，避免强光直射"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "花期每 2~3 周施一次通用液肥"
+      }
+    },
+    "commonIssues": [
+      "整株萎蔫是缺水信号，及时浇水可恢复",
+      "茎节腐烂是浇水过多通风差",
+      "花少是光照不足或肥力不够"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏为盛花期，保持湿润和散射光",
+      "autumnWinter": "多年生品种冬季保持 10°C 以上"
+    }
+  },
+  {
+    "id": "spathiphyllum-sweet-chico",
+    "names": [
+      "迷你白掌",
+      "小型白鹤芋"
+    ],
+    "category": "开花植物",
+    "difficulty": "easy",
+    "briefDescription": "紧凑型白掌品种，花朵小巧适合桌面",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          3,
+          5
+        ],
+        "tip": "喜湿润环境，表土干即浇水"
+      },
+      "light": {
+        "level": "low",
+        "tip": "极耐阴，办公桌光照即可生长开花"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "每 2~4 周施一次通用液肥"
+      }
+    },
+    "commonIssues": [
+      "佛焰苞变绿是自然老化可剪除",
+      "叶尖发黑是水质或空气问题",
+      "萎蔫是严重缺水信号"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏为花期高峰，保持湿润",
+      "autumnWinter": "冬季保持 15°C 以上，减少浇水"
+    }
+  },
+  {
+    "id": "nephrolepis-exaltata",
+    "names": [
+      "波士顿蕨",
+      "肾蕨"
+    ],
+    "category": "草本蕨类",
+    "difficulty": "medium",
+    "briefDescription": "叶片飘逸如绿色喷泉的经典室内蕨类",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          2,
+          4
+        ],
+        "tip": "保持土壤持续湿润，不耐干旱"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "散射光为主，忌直射光"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每 2~4 周施一次稀薄液肥"
+      }
+    },
+    "commonIssues": [
+      "叶片大量脱落多因空气太干燥",
+      "新芽卷曲是正常展叶过程",
+      "褐色鳞片是孢子不是病害"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏保持高湿度环境，经常喷雾",
+      "autumnWinter": "冬季保持 10°C 以上，减少浇水但维持湿度"
+    }
+  },
+  {
+    "id": "adiantum",
+    "names": [
+      "铁线蕨",
+      "黑骨芒萁"
+    ],
+    "category": "草本蕨类",
+    "difficulty": "hard",
+    "briefDescription": "叶片精致如少女秀发的湿润环境蕨类",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          1,
+          3
+        ],
+        "tip": "要求持续高湿度，土壤不可干透，叶面经常喷雾"
+      },
+      "light": {
+        "level": "low",
+        "tip": "耐阴，散射光即可，忌任何直射光"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每 2~4 周施极稀薄液肥（1/4 浓度）"
+      }
+    },
+    "commonIssues": [
+      "叶片干枯脱落是空气湿度过低",
+      "新叶不出可能是温度太低",
+      "一旦干透很难恢复需剃头重生"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏保持 70%+ 空气湿度，经常喷雾",
+      "autumnWinter": "冬季保持 10°C 以上，远离暖气保湿"
+    }
+  },
+  {
+    "id": "asplenium-nidus",
+    "names": [
+      "鸟巢蕨",
+      "山苏花"
+    ],
+    "category": "草本蕨类",
+    "difficulty": "medium",
+    "briefDescription": "叶片宽大光滑呈漏斗状排列的鸟巢蕨",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          3,
+          5
+        ],
+        "tip": "保持土壤微湿，避免水进入叶心"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "散射光，忌直射光灼伤叶片"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每 2~4 周施一次稀薄液肥"
+      }
+    },
+    "commonIssues": [
+      "叶心积水容易导致腐烂",
+      "叶缘焦枯是空气干燥",
+      "叶背褐色线条是孢子非病害"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏保持温暖高湿环境",
+      "autumnWinter": "冬季保持 15°C 以上，维持较高湿度"
+    }
+  },
+  {
+    "id": "selaginella",
+    "names": [
+      "卷柏",
+      "九死还魂草",
+      "万年松"
+    ],
+    "category": "草本蕨类",
+    "difficulty": "medium",
+    "briefDescription": "枝叶细密如苔藓的微型观赏蕨类植物",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          2,
+          3
+        ],
+        "tip": "保持土壤持续湿润，极喜湿环境"
+      },
+      "light": {
+        "level": "low",
+        "tip": "耐阴，散射光即可"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          60
+        ],
+        "tip": "每 1~2 月施一次极稀薄液肥"
+      }
+    },
+    "commonIssues": [
+      "卷缩干枯后浸水可恢复（但反复损害健康）",
+      "变色多因光照过强",
+      "喜欢密闭高湿环境适合玻璃瓶景"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏保持高湿度环境",
+      "autumnWinter": "冬季保持 10°C 以上"
+    }
+  },
+  {
+    "id": "platycerium",
+    "names": [
+      "鹿角蕨",
+      "麋角蕨"
+    ],
+    "category": "草本蕨类",
+    "difficulty": "medium",
+    "briefDescription": "形如鹿角的附生蕨类，可壁挂种植",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          5,
+          7
+        ],
+        "tip": "板植可浸泡法浇水，盆栽表面干透再浇"
+      },
+      "light": {
+        "level": "bright",
+        "tip": "明亮散射光，耐半阴但光照充足生长更好"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每 2~4 周施一次稀薄液肥"
+      }
+    },
+    "commonIssues": [
+      "基部干枯褐色叶片是营养叶不可摘除",
+      "叶面白色绒毛勿擦拭",
+      "悬挂养护需注意固定牢固"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏生长旺盛，保持通风和散射光",
+      "autumnWinter": "冬季保持 10°C 以上，减少浇水"
+    }
+  },
+  {
+    "id": "oxalis-triangularis",
+    "names": [
+      "紫叶酢浆草",
+      "三角酢浆草",
+      "紫蝴蝶"
+    ],
+    "category": "草本蕨类",
+    "difficulty": "easy",
+    "briefDescription": "紫色三角形叶片随光线开合的球根植物",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          3,
+          5
+        ],
+        "tip": "表土干透浇水，不耐涝"
+      },
+      "light": {
+        "level": "bright",
+        "tip": "喜明亮光照，光照不足叶色变浅"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每 2~4 周施一次通用液肥"
+      }
+    },
+    "commonIssues": [
+      "叶片夜间闭合白天展开是正常感光运动",
+      "夏季高温叶片枯萎是正常休眠",
+      "球根过于拥挤需分球"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春季生长旺盛，夏季高温可能休眠",
+      "autumnWinter": "秋季恢复生长，冬季保持 5°C 以上"
+    }
+  },
+  {
+    "id": "peperomia-caperata",
+    "names": [
+      "皱叶椒草",
+      "西瓜皮（皱叶型）"
+    ],
+    "category": "草本蕨类",
+    "difficulty": "easy",
+    "briefDescription": "叶面有深褶皱纹理的紧凑型椒草",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          5,
+          7
+        ],
+        "tip": "表土干透再浇水，叶片肥厚有一定耐旱性"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "散射光为主，避免直射光"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          21,
+          30
+        ],
+        "tip": "生长期每 3~4 周施一次稀薄液肥"
+      }
+    },
+    "commonIssues": [
+      "叶片发软是缺水",
+      "茎基腐烂是浇水过多",
+      "花穗像鼠尾不影响观赏可保留"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏保持温暖散射光环境",
+      "autumnWinter": "冬季保持 15°C 以上，控水"
+    }
+  },
+  {
+    "id": "soleirolia-soleirolii",
+    "names": [
+      "婴儿泪",
+      "玲珑冷水花",
+      "天使的眼泪"
+    ],
+    "category": "草本蕨类",
+    "difficulty": "easy",
+    "briefDescription": "细小圆叶铺满盆面的地被型植物",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          2,
+          4
+        ],
+        "tip": "保持土壤持续湿润，忌干旱"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "散射光到半阴，避免强光"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每 2~4 周施一次极稀薄液肥"
+      }
+    },
+    "commonIssues": [
+      "干枯后难恢复需保持持续湿润",
+      "长势过猛可能侵占其他植物空间",
+      "高温不通风容易烂根"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏生长迅速需保持湿润通风",
+      "autumnWinter": "冬季保持 5°C 以上，维持湿度"
+    }
+  },
+  {
+    "id": "tillandsia",
+    "names": [
+      "空气凤梨",
+      "气生铁兰"
+    ],
+    "category": "草本蕨类",
+    "difficulty": "easy",
+    "briefDescription": "不需要土壤的空气植物，可悬挂或附生展示",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          2,
+          3
+        ],
+        "tip": "每 2~3 天喷雾一次或每周浸泡 15 分钟，沥干水分"
+      },
+      "light": {
+        "level": "bright",
+        "tip": "明亮散射光，部分品种可接受少量直射光"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "每 2~4 周喷施 1/4 浓度液肥"
+      }
+    },
+    "commonIssues": [
+      "叶尖干枯是空气湿度不足",
+      "基部腐烂是浸泡后未沥干积水",
+      "叶片卷曲收紧是缺水信号"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏增加喷雾频率，保持通风",
+      "autumnWinter": "冬季减少浸泡频率，保持 5°C 以上"
+    }
+  },
+  {
+    "id": "pteris-cretica",
+    "names": [
+      "凤尾蕨",
+      "大叶井口边草"
+    ],
+    "category": "草本蕨类",
+    "difficulty": "easy",
+    "briefDescription": "叶形多样的中型蕨类，有银白色条纹品种",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          3,
+          5
+        ],
+        "tip": "保持土壤湿润，不耐完全干透"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "散射光为主，耐半阴"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每 2~4 周施一次稀薄液肥"
+      }
+    },
+    "commonIssues": [
+      "叶尖干枯是空气干燥",
+      "新芽卷曲展开是正常过程",
+      "老叶自然枯黄可剪除"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏保持湿润通风环境",
+      "autumnWinter": "冬季保持 10°C 以上，维持湿度"
+    }
+  },
+  {
+    "id": "lucky-bamboo",
+    "names": [
+      "富贵竹",
+      "转运竹",
+      "万寿竹"
+    ],
+    "category": "水培植物",
+    "difficulty": "easy",
+    "briefDescription": "节节向上的水培观赏竹，寓意富贵吉祥",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          5,
+          7
+        ],
+        "tip": "水培每周换水一次保持水质清洁"
+      },
+      "light": {
+        "level": "low",
+        "tip": "耐阴，散射光即可，忌直射光"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          60
+        ],
+        "tip": "每 1~2 月加几滴水培营养液"
+      }
+    },
+    "commonIssues": [
+      "叶尖发黄多因水质含氯或强光",
+      "茎干发黄变软是根腐需截取健康段重新生根",
+      "水培勿用自来水直接浇需放置 24 小时"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏生长旺盛，保持水质清洁",
+      "autumnWinter": "冬季保持 10°C 以上，换水频率可降低"
+    }
+  },
+  {
+    "id": "pothos-water",
+    "names": [
+      "水培绿萝"
+    ],
+    "category": "水培植物",
+    "difficulty": "easy",
+    "briefDescription": "从土培绿萝转化的水培品种，根系洁白",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          5,
+          7
+        ],
+        "tip": "每周换水一次，保持水位覆盖根系 2/3"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "散射光最佳，避免直射光导致水温升高"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "每 2~4 周加几滴水培营养液"
+      }
+    },
+    "commonIssues": [
+      "根系发黑发臭需修剪并换水",
+      "水中长绿藻需避光或换不透明容器",
+      "叶片变小是营养不足信号"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏生长快速，注意保持水质清洁不变浑",
+      "autumnWinter": "冬季减少换水频率，保持 10°C 以上"
+    }
+  },
+  {
+    "id": "hydrocotyle-vulgaris",
+    "names": [
+      "铜钱草",
+      "香菇草",
+      "金钱莲"
+    ],
+    "category": "水培植物",
+    "difficulty": "easy",
+    "briefDescription": "圆形小叶铺展水面的可爱水生植物",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          1,
+          2
+        ],
+        "tip": "半水半土或全水培，保持水位不断"
+      },
+      "light": {
+        "level": "direct",
+        "tip": "喜充足阳光，光照越足茎秆越粗壮"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "每 2~4 周加一次水培营养液"
+      }
+    },
+    "commonIssues": [
+      "茎细长叶小是光照不足",
+      "叶片发黄可能是水质变差",
+      "生长极快需定期修剪控制"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏爆发式生长，保持充足阳光",
+      "autumnWinter": "冬季光照不足可能休眠，保持 5°C 以上"
+    }
+  },
+  {
+    "id": "cyperus-alternifolius",
+    "names": [
+      "水竹",
+      "旱伞草",
+      "风车草"
+    ],
+    "category": "水培植物",
+    "difficulty": "easy",
+    "briefDescription": "伞形叶冠挺立的水边湿地植物",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          2,
+          3
+        ],
+        "tip": "喜水，盆底可长期有水，或直接水培"
+      },
+      "light": {
+        "level": "bright",
+        "tip": "喜明亮光照，耐半阴"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "每 2~4 周施一次稀薄液肥"
+      }
+    },
+    "commonIssues": [
+      "叶尖干枯是空气太干",
+      "茎干倒伏是光照不足",
+      "生长旺盛时需定期分株"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏生长旺盛，保证水分充足",
+      "autumnWinter": "冬季保持 5°C 以上，减少水位但不可干透"
+    }
+  },
+  {
+    "id": "eichhornia-crassipes",
+    "names": [
+      "水葫芦",
+      "凤眼莲",
+      "凤眼蓝"
+    ],
+    "category": "水培植物",
+    "difficulty": "easy",
+    "briefDescription": "漂浮水面开出紫蓝色花的水生植物",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          1,
+          2
+        ],
+        "tip": "全水生植物，保持水面浮生即可"
+      },
+      "light": {
+        "level": "direct",
+        "tip": "需要全日照才能正常开花"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "水中适量添加水生植物营养液"
+      }
+    },
+    "commonIssues": [
+      "繁殖极快需定期疏除",
+      "室内光照不足难以开花",
+      "水质要求不高但需偶尔换水"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏为主要生长期和花期",
+      "autumnWinter": "冬季需入室保温 10°C 以上，光照不足会衰退"
+    }
+  },
+  {
+    "id": "caladium-bicolor",
+    "names": [
+      "花叶芋",
+      "彩叶芋",
+      "五彩芋"
+    ],
+    "category": "观叶植物",
+    "difficulty": "medium",
+    "briefDescription": "叶片色彩绚丽如画的热带球根观叶植物",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          3,
+          5
+        ],
+        "tip": "生长期保持土壤微湿，休眠期干燥存放"
+      },
+      "light": {
+        "level": "bright",
+        "tip": "明亮散射光，直射光会灼伤薄叶"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "生长期每 2~3 周施一次通用液肥",
+        "seasonalNote": "休眠期停肥"
+      }
+    },
+    "commonIssues": [
+      "秋冬叶片枯萎是正常休眠",
+      "叶片出现焦边是光照过强或空气干燥",
+      "球茎储存过冬需保持干燥 15°C 以上"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏为活跃生长期，保持高湿度和明亮散射光",
+      "autumnWinter": "秋冬进入休眠，叶片枯萎后停水，球茎干存"
+    }
+  },
+  {
+    "id": "mammillaria",
+    "names": [
+      "玉翁",
+      "白雪球",
+      "乳突球属"
+    ],
+    "category": "多肉植物",
+    "difficulty": "easy",
+    "briefDescription": "球形仙人掌表面布满整齐的疣状突起",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          10,
+          14
+        ],
+        "tip": "盆土完全干透再浇水，冬季基本断水"
+      },
+      "light": {
+        "level": "direct",
+        "tip": "需要充足直射光，光照不足不开花"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          60
+        ],
+        "tip": "生长期每 1~2 月施一次仙人掌专用肥"
+      }
+    },
+    "commonIssues": [
+      "球体不圆是光照不均匀",
+      "根部易生粉蚧需定期翻盆检查",
+      "花环状开花是健康生长的标志"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春季为花期，夏季保持通风避免闷热",
+      "autumnWinter": "冬季保持 5°C 以上，干燥越冬"
+    }
+  },
+  {
+    "id": "sedum-adolphii",
+    "names": [
+      "乙女心",
+      "虹之玉锦"
+    ],
+    "category": "多肉植物",
+    "difficulty": "easy",
+    "briefDescription": "叶片金黄色的紧凑型多肉，日照下变橙红",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          7,
+          14
+        ],
+        "tip": "盆土干透浇透，叶片变软是浇水信号"
+      },
+      "light": {
+        "level": "direct",
+        "tip": "充足日照叶尖变红色，光照不足变绿徒长"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          60
+        ],
+        "tip": "生长期每 1~2 月施一次稀薄液肥"
+      }
+    },
+    "commonIssues": [
+      "叶片变绿是光照不足",
+      "掉叶可能是浇水过多",
+      "老株茎干木质化可砍头扦插更新"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春季出状态，夏季高温遮阴控水通风",
+      "autumnWinter": "秋季为最佳观赏期，冬季保持 5°C 以上"
+    }
+  },
+  {
+    "id": "hoya-kerrii",
+    "names": [
+      "心叶球兰",
+      "情人球兰",
+      "爱心叶"
+    ],
+    "category": "开花植物",
+    "difficulty": "easy",
+    "briefDescription": "叶片心形厚实的攀援植物，常作爱情信物",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          7,
+          10
+        ],
+        "tip": "叶片肥厚储水，表土干透再浇"
+      },
+      "light": {
+        "level": "bright",
+        "tip": "明亮散射光促进生长，耐半阴"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          60
+        ],
+        "tip": "生长期每 1~2 月施一次通用液肥"
+      }
+    },
+    "commonIssues": [
+      "单叶插扦不一定能长出新芽需带茎节",
+      "叶片变软发黄是浇水过多",
+      "生长极慢属正常特性"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏为生长期，保持温暖明亮环境",
+      "autumnWinter": "冬季保持 10°C 以上，减少浇水"
+    }
+  },
+  {
+    "id": "clivia-miniata",
+    "names": [
+      "君子兰",
+      "大花君子兰"
+    ],
+    "category": "开花植物",
+    "difficulty": "medium",
+    "briefDescription": "花朵橙红色伞形花序的耐阴多年生草本",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          5,
+          7
+        ],
+        "tip": "表土干透浇水，忌盆内积水"
+      },
+      "light": {
+        "level": "bright",
+        "tip": "明亮散射光，忌夏季强光直射"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "花前施磷钾肥促花，平时通用肥",
+        "seasonalNote": "花期停肥"
+      }
+    },
+    "commonIssues": [
+      "夹箭（花箭抽不出）多因温差不够或肥力不足",
+      "不开花可能是苗龄不够（需 4 年以上）",
+      "叶尖发黄多因直射光灼伤"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春季为花期后恢复生长，夏季遮阴通风",
+      "autumnWinter": "秋冬需 10°C 左右低温处理 30~40 天促花芽分化"
+    }
+  },
+  {
+    "id": "ficus-lyrata-bambino",
+    "names": [
+      "琴叶榕矮化版",
+      "小琴叶榕",
+      " bambino琴叶榕"
+    ],
+    "category": "观叶植物",
+    "difficulty": "easy",
+    "briefDescription": "琴叶榕的矮化品种，株型紧凑，叶片提琴形浓绿有光泽",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          5,
+          7
+        ],
+        "tip": "表土干至2厘米深处再浇透水，忌积水烂根"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "喜明亮散射光，可耐半阴，避免强光直射灼伤叶片"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长季每2~4周施一次稀薄液肥",
+        "seasonalNote": "秋冬停止施肥，避免新梢徒长"
+      }
+    },
+    "commonIssues": [
+      "叶片大面积脱落多为环境突变或浇水不当",
+      "叶缘焦枯常因空气干燥或光照过强",
+      "枝条徒长需增加光照并适当修剪"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏生长旺盛，保持稳定散射光和湿度，可旋转花盆使株型均匀",
+      "autumnWinter": "秋冬减少浇水，室温保持10°C以上，远离暖气和冷风口"
+    }
+  },
+  {
+    "id": "aglaonema-silver-queen",
+    "names": [
+      "银皇后",
+      "银后万年青",
+      "银后粗肋草"
+    ],
+    "category": "观叶植物",
+    "difficulty": "easy",
+    "briefDescription": "叶面银灰绿相间的经典观叶品种，耐阴力极强且净化空气",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          4,
+          7
+        ],
+        "tip": "保持土壤微湿，表层干了再浇，冬季偏干"
+      },
+      "light": {
+        "level": "low",
+        "tip": "极耐阴，散射光即可，强光会褪色和灼伤"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          21,
+          30
+        ],
+        "tip": "春夏每月施一次薄肥即可",
+        "seasonalNote": "秋冬停止施肥"
+      }
+    },
+    "commonIssues": [
+      "叶片发软下垂多为浇水过多导致烂根",
+      "叶尖发黑常因空气干燥或冷风直吹",
+      "茎基腐烂需控水并改善通风"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏可放北窗或室内明亮处，保持适当湿度，叶面偶尔喷雾",
+      "autumnWinter": "秋冬严格控水，室温不低于10°C，避免空调直吹"
+    }
+  },
+  {
+    "id": "caladium-water",
+    "names": [
+      "彩叶芋水培",
+      "水培彩叶芋",
+      "水培花叶芋"
+    ],
+    "category": "水培植物",
+    "difficulty": "medium",
+    "briefDescription": "彩叶芋的水培形式，叶片色彩斑斓如画，水中观赏效果佳",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          5,
+          7
+        ],
+        "tip": "每5~7天换水一次，保持水质清洁，水位没过根系2/3"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "喜明亮散射光，光照不足叶色暗淡，强光会灼伤"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "换水时滴入稀薄水培营养液，浓度减半使用",
+        "seasonalNote": "秋冬块茎休眠，停止施肥并减少换水"
+      }
+    },
+    "commonIssues": [
+      "水质浑浊发臭需立即换水并清洗容器",
+      "根系发黑腐烂需剪除烂根并消毒后重新水培",
+      "叶片褪色多为光照不足或营养缺乏"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏为观赏期，保持充足散射光和清洁水质，营养液定期添加",
+      "autumnWinter": "秋冬地上部分枯萎属正常休眠，取出块茎干燥储存，春暖再植"
+    }
+  },
+  {
+    "id": "clematis",
+    "names": [
+      "铁线莲",
+      "番莲",
+      "威灵仙"
+    ],
+    "category": "开花植物",
+    "difficulty": "hard",
+    "briefDescription": "藤本皇后，花大色艳品种繁多，需搭架攀援精心养护",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          2,
+          4
+        ],
+        "tip": "喜湿润忌积水，根系需保持凉爽湿润，夏季不可缺水"
+      },
+      "light": {
+        "level": "high",
+        "tip": "喜充足阳光，每天至少6小时直射光，但根部需遮阴"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "生长开花期每2~3周施一次磷钾肥",
+        "seasonalNote": "花后追肥促二次开花，冬前施基肥"
+      }
+    },
+    "commonIssues": [
+      "枯萎病突发致整株萎蔫，需立即剪除病枝并消毒",
+      "花少或不开花多为修剪不当或光照不足",
+      "根系过热需根部覆盖遮阴或加厚覆土"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏为盛花期，保持根部凉爽湿润，及时绑扎新蔓上架",
+      "autumnWinter": "秋冬依品种类型合理修剪，重剪品种留2~3节，轻剪品种去除枯枝"
+    }
+  },
+  {
+    "id": "lavandula",
+    "names": [
+      "薰衣草",
+      "香水植物",
+      "灵香草"
+    ],
+    "category": "香草食用",
+    "difficulty": "medium",
+    "briefDescription": "芳香灌木状草本，花序紫色芬芳，可制茶、精油和干花",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          5,
+          10
+        ],
+        "tip": "耐旱怕涝，表土干透再浇，宁干勿湿"
+      },
+      "light": {
+        "level": "high",
+        "tip": "喜全日照，每天至少6小时直射光，光照不足易徒长"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          60
+        ],
+        "tip": "需肥少，生长季少量施磷钾肥即可",
+        "seasonalNote": "秋冬不施肥，避免促生嫩梢越冬受冻"
+      }
+    },
+    "commonIssues": [
+      "基部木质化枝条枯死需定期修剪更新",
+      "夏季高温高湿易烂根，需通风和控水",
+      "徒长不开花多为光照不足或偏施氮肥"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏花期花后及时剪去残花和部分花穗下方叶片，促二次开花",
+      "autumnWinter": "秋末进行整形修剪，剪去1/3株幅，入冬注意防寒保暖"
+    }
+  },
+  {
+    "id": "rosmarinus",
+    "names": [
+      "迷迭香",
+      "海洋之露",
+      "艾菊"
+    ],
+    "category": "香草食用",
+    "difficulty": "medium",
+    "briefDescription": "常绿芳香灌木，针状叶香气浓郁，西餐烹饪和精油常用",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          5,
+          10
+        ],
+        "tip": "耐旱性强，表土干透再浇，积水必烂根"
+      },
+      "light": {
+        "level": "high",
+        "tip": "喜充足阳光，全日照最佳，室内需放南窗"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          45
+        ],
+        "tip": "需肥极少，生长季每月施一次稀薄通用肥",
+        "seasonalNote": "秋冬停止施肥"
+      }
+    },
+    "commonIssues": [
+      "叶片发黄脱落多为浇水过频或排水不畅",
+      "枝条基部变黑是根腐病信号，需控水修根",
+      "长期室内光照不足会徒长且香气减弱"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏可采收嫩枝使用，花后轻剪保持株型，注意通风防虫",
+      "autumnWinter": "秋冬减少浇水，室温5°C以上可安全越冬，避免霜冻"
+    }
+  },
+  {
+    "id": "mentha",
+    "names": [
+      "薄荷",
+      "银丹草",
+      "鱼香草"
+    ],
+    "category": "香草食用",
+    "difficulty": "easy",
+    "briefDescription": "生命力旺盛的芳香草本，清凉提神，可泡茶、调味和药用",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          2,
+          4
+        ],
+        "tip": "喜湿润，保持土壤始终微湿，缺水叶片迅速萎蔫"
+      },
+      "light": {
+        "level": "high",
+        "tip": "喜充足阳光，半日照也可生长，光照足则香气浓"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "生长快需肥多，每2~3周施一次稀薄液肥",
+        "seasonalNote": "秋冬生长减缓，减少施肥频次"
+      }
+    },
+    "commonIssues": [
+      "茎叶徒长瘦弱多为光照不足或氮肥过多",
+      "叶片发黄常因缺水或土壤贫瘠",
+      "地下茎蔓延过快需定期挖除或用盆限制"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏为生长旺季，可频繁采摘顶芽促分枝，保持充足水肥",
+      "autumnWinter": "秋冬地上部分可能枯萎，留根越冬，春暖自会萌发"
+    }
+  },
+  {
+    "id": "ocimum-basilicum",
+    "names": [
+      "罗勒",
+      "九层塔",
+      "金不换"
+    ],
+    "category": "香草食用",
+    "difficulty": "easy",
+    "briefDescription": "一年生芳香草本，叶片浓香扑鼻，意式料理和东南亚菜必备",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          2,
+          4
+        ],
+        "tip": "喜湿润，小苗期保持土壤微湿，成株见干见湿"
+      },
+      "light": {
+        "level": "high",
+        "tip": "喜全日照，每天至少6小时直射光，耐热不耐寒"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "生长季每2周施一次稀薄通用肥",
+        "seasonalNote": "开花后停止施肥，采收为主"
+      }
+    },
+    "commonIssues": [
+      "茎基发黑倒伏为猝倒病，需拔除病株并改善通风",
+      "早开花影响叶片产量，见花穗即摘除",
+      "叶缘发黑多为夜间温度过低"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏持续打顶摘心促分枝，采收叶片做菜，避免开花消耗养分",
+      "autumnWinter": "霜前采收完毕或移入室内，低于10°C生长停滞，可留种翌年春播"
+    }
+  },
+  {
+    "id": "thymus",
+    "names": [
+      "百里香",
+      "地花椒",
+      "山胡椒"
+    ],
+    "category": "香草食用",
+    "difficulty": "medium",
+    "briefDescription": "低矮芳香半灌木，叶小芳香持久，西餐调味和药用均佳",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          5,
+          10
+        ],
+        "tip": "极耐旱，表土干透再浇，宁干勿湿避免烂根"
+      },
+      "light": {
+        "level": "high",
+        "tip": "喜全日照，光照越足香气越浓，耐半阴但香气减弱"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          60
+        ],
+        "tip": "需肥极少，生长季少量施磷钾肥即可",
+        "seasonalNote": "秋冬不施肥"
+      }
+    },
+    "commonIssues": [
+      "枝条基部木质化枯死需修剪促新枝更新",
+      "叶片发黄脱落多为浇水过频或排水差",
+      "长期高湿环境易感染灰霉病"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏可采收嫩枝使用，花后轻剪整形，保持通风透光",
+      "autumnWinter": "秋冬减少浇水，耐寒性较好但严寒需覆盖保护，室温0°C以上可越冬"
+    }
+  },
+  {
+    "id": "perilla-frutescens",
+    "names": [
+      "紫苏",
+      "白苏",
+      "荏"
+    ],
+    "category": "香草食用",
+    "difficulty": "easy",
+    "briefDescription": "一年生芳香草本，叶面紫红或绿色，日韩料理和药食两用",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          2,
+          4
+        ],
+        "tip": "喜湿润，保持土壤微湿不积水，干旱叶片易粗糙"
+      },
+      "light": {
+        "level": "high",
+        "tip": "喜充足阳光，全日照最佳，耐半阴但叶色变淡"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "生长快需肥较多，每2周施一次稀薄液肥",
+        "seasonalNote": "开花结籽期减少施肥"
+      }
+    },
+    "commonIssues": [
+      "早开花抽薹影响叶产量，见花穗即摘除",
+      "叶片粗糙变硬多为缺水或生长后期自然老化",
+      "蚜虫易聚集嫩梢，需及时物理或药剂防治"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏为采收旺季，不断打顶促分枝，保持充足水肥",
+      "autumnWinter": "秋季可留种收籽，霜后枯萎属正常，翌年春播即可"
+    }
+  },
+  {
+    "id": "guzmania",
+    "names": [
+      "鸿运当头",
+      "果子蔓",
+      "凤梨花"
+    ],
+    "category": "开花植物",
+    "difficulty": "medium",
+    "briefDescription": "凤梨科观花观叶植物，花序鲜红持久，寓意吉祥好运",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          4,
+          7
+        ],
+        "tip": "叶杯中保持有水，土壤微湿即可，忌积水"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "喜明亮散射光，忌强光直射，耐半阴"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每2~4周向叶杯滴入稀薄液肥",
+        "seasonalNote": "秋冬减少施肥，开花期不施肥"
+      }
+    },
+    "commonIssues": [
+      "叶杯缺水导致叶尖干枯，需保持杯中有水",
+      "花序褪色变绿为开花末期属正常，母株将逐渐枯萎",
+      "基部心腐多为积水或冷水灌入叶心"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏保持叶杯有水和较高空气湿度，散射光下花序色泽最佳",
+      "autumnWinter": "秋冬减少浇水频次，保持15°C以上，花后母株旁会出蘖芽可分株"
+    }
+  },
+  {
+    "id": "phalaenopsis-mini",
+    "names": [
+      "蝴蝶兰迷你",
+      "迷你蝴蝶兰",
+      "小蝴蝶兰"
+    ],
+    "category": "开花植物",
+    "difficulty": "medium",
+    "briefDescription": "蝴蝶兰的迷你品种，花径3~5厘米，株型小巧适合桌面",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          7,
+          10
+        ],
+        "tip": "水苔微润即可，表干再浇，冬季严格控水"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "喜明亮散射光，忌强光直射，东窗或北窗为宜"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "生长季每2周施一次稀薄兰花专用肥",
+        "seasonalNote": "花期和秋冬休眠期停止施肥"
+      }
+    },
+    "commonIssues": [
+      "烂根多为浇水过频或水苔长期过湿",
+      "花苞消蕾常因温度骤变或光照不足",
+      "叶片发软发黄需检查根系健康并调整浇水"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏为新叶和新根生长期，适度遮阴，水苔见干再浇透",
+      "autumnWinter": "秋冬需昼夜温差刺激花芽分化，保持15~20°C，花期减少浇水"
+    }
+  },
+  {
+    "id": "cereus",
+    "names": [
+      "仙人柱",
+      "六角柱",
+      "天轮柱"
+    ],
+    "category": "多肉植物",
+    "difficulty": "easy",
+    "briefDescription": "高大柱状仙人掌，棱角分明，夜间开大白花极具观赏性",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          10,
+          20
+        ],
+        "tip": "极耐旱，生长期干透浇透，休眠期基本断水"
+      },
+      "light": {
+        "level": "high",
+        "tip": "喜强光全日照，光照不足会变细徒长"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          45
+        ],
+        "tip": "生长季每月施一次稀薄多肉专用肥",
+        "seasonalNote": "秋冬休眠期停止施肥"
+      }
+    },
+    "commonIssues": [
+      "柱体变细变弯为严重缺光徒长，无法恢复只能截顶重发",
+      "基部发黑发软为根腐或茎腐，需切除病变部分晾干重插",
+      "表面出现锈斑多为刺座附近积水所致"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏为生长和花期，保证充足光照和通风，花后正常浇水",
+      "autumnWinter": "秋冬进入休眠，严格控水断肥，保持5°C以上即可安全越冬"
+    }
+  },
+  {
+    "id": "hylocereus",
+    "names": [
+      "量天尺",
+      "霸王花",
+      "剑花"
+    ],
+    "category": "多肉植物",
+    "difficulty": "easy",
+    "briefDescription": "三棱柱状攀援仙人掌，花大而香，果实即火龙果",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          7,
+          14
+        ],
+        "tip": "耐旱但生长期需适量给水，干透浇透"
+      },
+      "light": {
+        "level": "high",
+        "tip": "喜充足阳光至半日照，需搭架供攀援"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          21,
+          30
+        ],
+        "tip": "生长季每3~4周施一次磷钾肥促花果",
+        "seasonalNote": "秋冬休眠期停止施肥"
+      }
+    },
+    "commonIssues": [
+      "茎节发黄变软多为低温冻伤或浇水过多",
+      "不开花常因株龄不足、光照不够或未经过低温催花",
+      "攀援不稳需绑扎固定，否则茎节易折断"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏生长快，及时绑扎新茎上架，充足光照促花芽分化",
+      "autumnWinter": "秋冬控水休眠，保持5°C以上，适当低温有助来年开花"
+    }
+  },
+  {
+    "id": "plectranthus-tomentosa",
+    "names": [
+      "碰碰香",
+      "绒毛香茶菜",
+      "苹果香草"
+    ],
+    "category": "观叶植物",
+    "difficulty": "easy",
+    "briefDescription": "触碰即散发苹果般清香，叶面密布白色绒毛，可泡茶驱蚊",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          4,
+          7
+        ],
+        "tip": "耐旱忌涝，表土干透再浇，叶片微蔫时浇水最佳"
+      },
+      "light": {
+        "level": "high",
+        "tip": "喜充足阳光，半日照亦可，光照足香气更浓"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          21,
+          30
+        ],
+        "tip": "需肥不多，生长季每月施一次稀薄通用肥",
+        "seasonalNote": "秋冬停止施肥"
+      }
+    },
+    "commonIssues": [
+      "茎条徒长叶片稀疏为缺光，需增加日照并修剪",
+      "叶片发黄脱落多为浇水过频导致烂根",
+      "绒毛沾水不易干，浇水避免淋叶面"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏生长快，可扦插繁殖，经常摘心促分枝使株型饱满",
+      "autumnWinter": "秋冬减少浇水，保持10°C以上越冬，长势减缓"
+    }
+  },
+  {
+    "id": "tradescantia-pallida",
+    "names": [
+      "紫竹梅",
+      "紫鸭跖草",
+      "紫叶草"
+    ],
+    "category": "观叶植物",
+    "difficulty": "easy",
+    "briefDescription": "叶片全年紫红色，枝条垂坠飘逸，光照越足色彩越艳",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          3,
+          5
+        ],
+        "tip": "喜湿润，保持土壤微湿，冬季稍控水"
+      },
+      "light": {
+        "level": "high",
+        "tip": "喜强光，光照越足叶色越紫艳，半阴处叶色变绿"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "生长季每2~3周施一次稀薄液肥",
+        "seasonalNote": "秋冬减少施肥"
+      }
+    },
+    "commonIssues": [
+      "叶色变绿褪紫为光照不足，需移至向阳处",
+      "基部茎叶脱落稀疏，需重剪促底部再发新枝",
+      "茎节过长徒长需打顶并增加光照"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏生长旺盛，保证强光和湿润，下垂枝条可作吊盆观赏",
+      "autumnWinter": "秋冬减少浇水，保持5°C以上可越冬，霜冻会冻伤"
+    }
+  },
+  {
+    "id": "asparagus-setaceus",
+    "names": [
+      "文竹",
+      "云片松",
+      "刺天冬"
+    ],
+    "category": "观叶植物",
+    "difficulty": "medium",
+    "briefDescription": "纤细枝叶层叠如云，清雅脱俗，书案茶几经典绿植",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          3,
+          5
+        ],
+        "tip": "喜湿润忌积水，保持土壤微湿，忌大水冲灌"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "喜明亮散射光，忌强光直射，半阴环境也可生长"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "生长季每2~3周施一次稀薄液肥",
+        "seasonalNote": "秋冬停止施肥"
+      }
+    },
+    "commonIssues": [
+      "枝叶发黄干枯多为强光直射或空气过于干燥",
+      "新枝细弱发黄为缺肥或光照不足",
+      "浇水过多导致烂根，需控水并检查排水"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏生长快，保持散射光和高湿度，适时修剪整形保持云片层叠效果",
+      "autumnWinter": "秋冬减少浇水，保持室温10°C以上，远离暖气防止焦叶"
+    }
+  },
+  {
+    "id": "mimosa-pudica",
+    "names": [
+      "含羞草",
+      "知羞草",
+      "怕丑草"
+    ],
+    "category": "观叶植物",
+    "difficulty": "easy",
+    "briefDescription": "触碰叶片即闭合下垂的趣味植物，粉红花球可爱萌趣",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          2,
+          4
+        ],
+        "tip": "喜湿润，保持土壤始终微湿，缺水叶片迅速萎蔫"
+      },
+      "light": {
+        "level": "high",
+        "tip": "喜充足阳光，全日照最佳，半阴处生长瘦弱"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "生长季每2周施一次稀薄通用肥",
+        "seasonalNote": "秋冬减少施肥"
+      }
+    },
+    "commonIssues": [
+      "频繁触碰导致感应迟钝属疲劳，需静置恢复",
+      "茎叶徒长瘦弱为缺光，需移至向阳处",
+      "冬季地上部分枯萎属正常，留根春暖再发"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏为观赏期，保证充足日照和水肥，花球陆续开放",
+      "autumnWinter": "秋冬不耐霜冻，低于10°C落叶休眠，室内可延长观赏期"
+    }
+  },
+  {
+    "id": "ananas-comosus",
+    "names": [
+      "凤梨花",
+      "观赏凤梨",
+      "菠萝花"
+    ],
+    "category": "开花植物",
+    "difficulty": "medium",
+    "briefDescription": "顶端着生迷你凤梨果的观赏品种，果叶兼赏趣味十足",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          4,
+          7
+        ],
+        "tip": "叶杯中保持有水，土壤微湿偏干，忌根际积水"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "喜明亮散射光，耐半阴，强光会灼伤叶片"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长季每2~4周向叶杯滴入稀薄液肥",
+        "seasonalNote": "秋冬减少施肥，结果期不施肥"
+      }
+    },
+    "commonIssues": [
+      "叶杯干涸导致叶尖枯黄，需保持杯中有水",
+      "基部心腐多为冷水灌心或积水，需改善浇水方式",
+      "果顶冠芽可切下扦插繁殖新株"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏保持叶杯有水和较高湿度，散射光下生长和着果最佳",
+      "autumnWinter": "秋冬减少浇水频次，保持15°C以上，果后母株出蘖芽可分株"
+    }
+  },
+  {
+    "id": "hydrocotyle-chinensis",
+    "names": [
+      "铜钱草",
+      "香菇草",
+      "小金钱草"
+    ],
+    "category": "水培植物",
+    "difficulty": "easy",
+    "briefDescription": "叶片圆如铜钱碧绿可爱，半水生植物水培土培皆宜",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          1,
+          2
+        ],
+        "tip": "喜水喜湿，水培保持水位没过根系，土培保持土壤始终湿润"
+      },
+      "light": {
+        "level": "high",
+        "tip": "喜充足阳光，半日照亦可，光照足叶柄矮壮叶色浓绿"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "生长快需肥多，每2周施一次稀薄液肥或水培营养液",
+        "seasonalNote": "秋冬长势减缓，减少施肥"
+      }
+    },
+    "commonIssues": [
+      "叶片发黄多为缺光或缺肥，增加日照并补肥",
+      "叶柄徒长细长为光照不足，需移至向阳处",
+      "水培水质变差需及时换水，避免根系发黑"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏生长爆发期，保证充足日照和水肥，定期修剪过密叶片",
+      "autumnWinter": "秋冬地上部分可能枯萎，留根越冬，保持水温5°C以上，春暖即萌发"
+    }
+  },
+  {
+    "id": "narcissus-tazetta",
+    "names": [
+      "水仙花",
+      "凌波仙子",
+      "金盏银台"
+    ],
+    "category": "开花植物",
+    "difficulty": "medium",
+    "briefDescription": "中国传统名花，花姿清雅芳香，水培即可开花，年宵必备",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          2,
+          4
+        ],
+        "tip": "水培时每1~2天换水一次，土培保持土壤湿润不积水"
+      },
+      "light": {
+        "level": "high",
+        "tip": "喜充足阳光，光照不足易徒长倒伏，花色暗淡"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "开花前可施稀薄磷钾肥促花，花后停肥",
+        "seasonalNote": "花谢后若留种可继续施肥养球，否则直接丢弃"
+      }
+    },
+    "commonIssues": [
+      "叶片徒长倒伏多为光照不足或温度过高",
+      "花苞干枯不开花通常是温差不够",
+      "水培水质浑浊发臭需及时换水"
+    ],
+    "seasonalNotes": {
+      "springSummer": "花后剪去残花留叶养球，减少浇水，待叶片自然枯黄后收球阴凉处贮藏",
+      "autumnWinter": "秋冬重新水培或种植，保持10~15°C低温促花，充足日照防徒长"
+    }
+  },
+  {
+    "id": "spathiphyllum-water-culture",
+    "names": [
+      "白掌水培",
+      "水培白掌",
+      "一帆风顺水培"
+    ],
+    "category": "水培植物",
+    "difficulty": "easy",
+    "briefDescription": "白掌的水培品种，洁白佛焰苞优雅清新，水培养护简单",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          5,
+          7
+        ],
+        "tip": "每周换水一次，水位浸没根系2/3即可，忌满水"
+      },
+      "light": {
+        "level": "low",
+        "tip": "耐阴性强，散射光即可，避免强光直射晒伤叶片"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          21,
+          30
+        ],
+        "tip": "每月滴加水培专用营养液2~3滴，宁少勿多",
+        "seasonalNote": "冬季停止施肥，春秋可正常添加营养液"
+      }
+    },
+    "commonIssues": [
+      "叶片下垂耷拉多为缺水或根系腐烂",
+      "叶尖发黑常因水质不洁或营养液过量",
+      "久不开花可能是光照太弱或缺肥"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏生长旺盛，勤换水保持水质清新，可适当增加营养液浓度",
+      "autumnWinter": "秋冬减少换水频率，保持水温与室温接近，避免冷水伤根"
+    }
+  },
+  {
+    "id": "nephrolepis-cordifolia",
+    "names": [
+      "肾蕨",
+      "圆羊齿",
+      "石黄皮"
+    ],
+    "category": "蕨类植物",
+    "difficulty": "medium",
+    "briefDescription": "叶形优美四季常绿，羽状复叶飘逸下垂，室内装饰佳品",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          2,
+          4
+        ],
+        "tip": "喜湿润环境，保持土壤持续微湿，不可干透"
+      },
+      "light": {
+        "level": "low",
+        "tip": "喜半阴散射光，强光会使叶片发黄焦边"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每2~4周施稀薄液肥一次，忌浓肥",
+        "seasonalNote": "秋冬生长缓慢时停止施肥"
+      }
+    },
+    "commonIssues": [
+      "叶片焦边干枯多为空气干燥或光照过强",
+      "整株萎蔫通常是根部积水腐烂",
+      "叶背出现褐色斑点多为孢子囊群属正常现象"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏保持高湿环境，经常喷雾增湿，避免强光直射",
+      "autumnWinter": "秋冬减少浇水但不可断水，保持室温10°C以上安全越冬"
+    }
+  },
+  {
+    "id": "davallia",
+    "names": [
+      "兔脚蕨",
+      "狼尾蕨",
+      "龙鳞蕨"
+    ],
+    "category": "蕨类植物",
+    "difficulty": "medium",
+    "briefDescription": "根茎密被银白色绒毛如兔脚，造型奇特，适合壁挂或吊盆",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          3,
+          5
+        ],
+        "tip": "保持基质微湿，兔脚状根茎忌长期泡水"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "喜明亮散射光，半阴环境也可生长，忌强光"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          21,
+          30
+        ],
+        "tip": "生长期每月施稀薄液肥一次即可，薄肥勤施",
+        "seasonalNote": "冬季休眠期停止施肥"
+      }
+    },
+    "commonIssues": [
+      "根茎绒毛变黑多为浇水过多腐烂",
+      "叶片干枯卷曲通常因空气湿度过低",
+      "生长停滞可能是温度过低或通风不良"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏为生长旺季，保持较高空气湿度，可喷雾但避免叶面积水",
+      "autumnWinter": "秋冬老叶自然枯黄可修剪，减少浇水保持偏干，室温不低于5°C"
+    }
+  },
+  {
+    "id": "kokedama",
+    "names": [
+      "苔玉",
+      "苔球",
+      "绿苔球"
+    ],
+    "category": "观叶植物",
+    "difficulty": "hard",
+    "briefDescription": "日式苔藓球种植艺术，植物根系包裹于苔藓球中，造型古朴",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          2,
+          4
+        ],
+        "tip": "将苔球浸入水中至无气泡冒出，取出沥干即可"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "依内部植物而定，一般喜明亮散射光，忌暴晒"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          21,
+          30
+        ],
+        "tip": "浸泡时在水中加入稀薄液肥，每月一次即可",
+        "seasonalNote": "冬季植物休眠时停止施肥"
+      }
+    },
+    "commonIssues": [
+      "苔球表面变硬干缩需及时浸泡补水",
+      "苔藓发黄变褐多为光照过强或湿度过低",
+      "苔球发霉需加强通风，减少喷水频率"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏蒸发快，增加浸泡频率，保持苔藓湿润，注意通风防霉",
+      "autumnWinter": "秋冬减少浸泡次数，避免低温时浇水，保持苔球微润即可"
+    }
+  },
+  {
+    "id": "sansevieria-silver-queen",
+    "names": [
+      "虎尾兰银后",
+      "银后虎皮兰",
+      "银后千岁兰"
+    ],
+    "category": "观叶植物",
+    "difficulty": "easy",
+    "briefDescription": "银白色宽叶品种，叶色清冷高雅，净化空气能力突出",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          10,
+          14
+        ],
+        "tip": "耐旱怕涝，土壤干透再浇透，宁干勿湿"
+      },
+      "light": {
+        "level": "low",
+        "tip": "极耐阴，散射光至半阴均可，强光会使叶色褪绿"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          60
+        ],
+        "tip": "生长期每月施薄肥一次即可，需肥量极少",
+        "seasonalNote": "冬季完全停止施肥"
+      }
+    },
+    "commonIssues": [
+      "叶片发软腐烂多为浇水过多导致根腐",
+      "叶尖干枯发黄常因冷风直吹或温度过低",
+      "叶片失去银白色光泽多为光照不足"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏可适当增加光照使银白斑纹更鲜明，控水避免烂根",
+      "autumnWinter": "秋冬严格控水，保持盆土偏干，室温不低于5°C可安全越冬"
+    }
+  },
+  {
+    "id": "philodendron-xanadu",
+    "names": [
+      "金钻蔓绿绒",
+      "金钻",
+      "喜树蕉"
+    ],
+    "category": "观叶植物",
+    "difficulty": "easy",
+    "briefDescription": "叶片深裂浓绿油亮，株形紧凑饱满，室内大型观叶佳品",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          4,
+          7
+        ],
+        "tip": "保持土壤微湿，表土干至2cm再浇水，忌积水"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "喜明亮散射光，耐半阴，强光直射会灼伤叶片"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每2~4周施一次观叶植物液肥",
+        "seasonalNote": "秋冬生长缓慢，减少施肥至停肥"
+      }
+    },
+    "commonIssues": [
+      "叶片下垂失去光泽多为根系积水腐烂",
+      "叶缘焦枯常因空气干燥或施肥过浓",
+      "新叶变小多为光照不足或缺肥"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏生长旺盛，保持充足散射光和水分，定期擦拭叶面保持油亮",
+      "autumnWinter": "秋冬减少浇水，保持盆土偏干，室温不低于10°C安全越冬"
+    }
+  },
+  {
+    "id": "trachelospermum-jasminoides",
+    "names": [
+      "花叶络石",
+      "斑叶络石",
+      "白花藤"
+    ],
+    "category": "观叶植物",
+    "difficulty": "medium",
+    "briefDescription": "叶片白粉斑驳如泼墨，藤蔓飘逸，兼具观叶与芳香白花",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          3,
+          5
+        ],
+        "tip": "喜湿润但不耐涝，保持土壤微湿，忌积水"
+      },
+      "light": {
+        "level": "high",
+        "tip": "喜充足光照，光照越强斑叶色彩越鲜明"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "生长期每2~3周施薄肥一次，以磷钾肥为主",
+        "seasonalNote": "秋冬停肥，早春可施催花肥"
+      }
+    },
+    "commonIssues": [
+      "斑叶返绿多为光照不足，需增加日照",
+      "叶片卷曲脱落常因空气过于干燥",
+      "藤蔓徒长细弱需修剪促分枝"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏为生长旺季，保证充足光照和水分，花后修剪整形",
+      "autumnWinter": "秋冬适当控水，入冬前施一次越冬肥，耐寒性较好可耐0°C"
+    }
+  },
+  {
+    "id": "philodendron-bipinnatifidum",
+    "names": [
+      "春羽",
+      "羽裂蔓绿绒",
+      "小天使"
+    ],
+    "category": "观叶植物",
+    "difficulty": "easy",
+    "briefDescription": "大型羽状深裂叶气势磅礴，株形舒展大气，客厅镇场之宝",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          4,
+          7
+        ],
+        "tip": "喜湿润，表土干即浇水，忌盆底积水"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "喜明亮散射光，耐半阴，弱光下叶片会变小"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          30
+        ],
+        "tip": "生长期每2~4周施一次观叶液肥，薄肥勤施",
+        "seasonalNote": "冬季停止施肥"
+      }
+    },
+    "commonIssues": [
+      "叶片发黄脱落多为浇水过多根系缺氧",
+      "叶尖褐变干枯常因空气过于干燥",
+      "茎干基部发软需检查是否根腐"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏生长旺盛期保证充足水肥，叶面常喷雾增湿，定期擦拭叶面",
+      "autumnWinter": "秋冬减少浇水频率，保持盆土微润偏干，室温不低于8°C"
+    }
+  },
+  {
+    "id": "strelitzia-reginae",
+    "names": [
+      "天堂鸟",
+      "极乐鸟花",
+      "鹤望兰"
+    ],
+    "category": "开花植物",
+    "difficulty": "medium",
+    "briefDescription": "花形似展翅飞鸟橙蓝双色，叶片宽大挺拔，热带风情十足",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          5,
+          7
+        ],
+        "tip": "生长期保持土壤湿润，冬季适当控水偏干"
+      },
+      "light": {
+        "level": "high",
+        "tip": "喜充足光照，每天至少4小时直射光才能开花"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "生长期每2~3周施磷钾肥促花，观叶期用通用肥",
+        "seasonalNote": "秋冬减少施肥，入冬前停肥"
+      }
+    },
+    "commonIssues": [
+      "久不开花多为光照不足或株龄不够需5年以上",
+      "叶缘干裂常因强风吹袭或空气干燥",
+      "叶片撕裂属自然现象不需过度干预"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏保证充足光照和水肥，是开花关键期，避免暴晒伤叶",
+      "autumnWinter": "秋冬需低温刺激促花芽分化，保持5°C以上越冬，适当控水"
+    }
+  },
+  {
+    "id": "viola-tricolor",
+    "names": [
+      "三色堇",
+      "蝴蝶花",
+      "猫脸花"
+    ],
+    "category": "开花植物",
+    "difficulty": "medium",
+    "briefDescription": "花瓣形似猫脸色彩丰富，耐寒性佳，秋冬春三季可赏花",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          2,
+          4
+        ],
+        "tip": "保持土壤微湿，不耐旱也怕积水，见干见湿"
+      },
+      "light": {
+        "level": "high",
+        "tip": "喜充足阳光，光照不足花少色淡，枝条徒长"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          10,
+          14
+        ],
+        "tip": "花期每10~14天施磷钾肥促花，薄肥勤施",
+        "seasonalNote": "夏季高温休眠停肥，秋冬可正常施肥"
+      }
+    },
+    "commonIssues": [
+      "花少色淡多为光照不足或缺磷钾肥",
+      "茎基腐烂常因浇水过多或通风不良",
+      "高温夏季容易枯萎死亡需遮阴降温"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春季为盛花期保证水肥充足，初夏高温后植株衰败可留种或更换",
+      "autumnWinter": "秋冬播种育苗，耐寒性好可露地越冬，充足光照促花芽分化"
+    }
+  },
+  {
+    "id": "petunia",
+    "names": [
+      "矮牵牛",
+      "碧冬茄",
+      "灵芝牡丹"
+    ],
+    "category": "开花植物",
+    "difficulty": "easy",
+    "briefDescription": "花量惊人色彩缤纷，阳台花坛主角，花期长达数月不停",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          2,
+          3
+        ],
+        "tip": "需水量大，表土微干即浇，夏季可能需每日浇水"
+      },
+      "light": {
+        "level": "high",
+        "tip": "喜全日照，光照越足开花越旺，半阴花量骤减"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          7,
+          10
+        ],
+        "tip": "花期每7~10天施磷钾肥，持续供肥才能不断开花",
+        "seasonalNote": "冬季低温停肥，春夏秋花期持续追肥"
+      }
+    },
+    "commonIssues": [
+      "花少枝长多为光照不足导致徒长",
+      "花朵淋雨后易烂需及时摘除残花",
+      "夏季高温多湿易发灰霉病需加强通风"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏为盛花期，保证全日照和充足水肥，勤摘残花促新花不断",
+      "autumnWinter": "秋冬花量渐少，可修剪整形保留株形，不耐霜冻需入室越冬"
+    }
+  },
+  {
+    "id": "pelargonium-zonale",
+    "names": [
+      "天竺葵",
+      "洋葵",
+      "石腊红"
+    ],
+    "category": "开花植物",
+    "difficulty": "easy",
+    "briefDescription": "花序球状簇拥色彩艳丽，叶片有独特香气，阳台花园必备",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          4,
+          6
+        ],
+        "tip": "稍耐旱怕积水，表土干透再浇透，叶片勿沾水"
+      },
+      "light": {
+        "level": "high",
+        "tip": "喜充足光照，半日照以上才能持续开花"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "生长期每2~3周施磷钾肥促花，忌偏施氮肥",
+        "seasonalNote": "夏季高温休眠停肥，春秋正常施肥"
+      }
+    },
+    "commonIssues": [
+      "枝叶疯长不开花多为氮肥过多或光照不足",
+      "叶片发黄脱落常因浇水过多或高温闷热",
+      "茎干发黑腐烂需切除病部并改善通风"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春季为盛花期保证充足光照和水肥，夏季遮阴通风度夏，避免闷热",
+      "autumnWinter": "秋季恢复生长可修剪整形追肥促花，冬季保持5°C以上可安全越冬"
+    }
+  },
+  {
+    "id": "rosa-chinensis-mini",
+    "names": [
+      "月季迷你",
+      "微型月季",
+      "迷你玫瑰"
+    ],
+    "category": "开花植物",
+    "difficulty": "hard",
+    "briefDescription": "株型娇小花朵精致，花色丰富四季可开，阳台党最爱挑战",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          2,
+          3
+        ],
+        "tip": "喜湿润但盆小易干，表土微干即浇，忌过干过湿"
+      },
+      "light": {
+        "level": "high",
+        "tip": "喜全日照，每天6小时以上直射光开花才好"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          7,
+          10
+        ],
+        "tip": "花期每7~10天施月季专用肥，需肥量大不可断肥",
+        "seasonalNote": "冬季休眠施一次有机底肥，春夏秋持续追肥"
+      }
+    },
+    "commonIssues": [
+      "红蜘蛛白粉病高发需定期预防喷药",
+      "花苞打不开即枯萎多为高温或营养不足",
+      "盲枝不开花需修剪促新枝分化花芽"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏为盛花期，花后及时修剪残花促复花，注意病虫害防治",
+      "autumnWinter": "秋冬重剪整形休眠，施底肥越冬，保持0°C以上可安全过冬"
+    }
+  },
+  {
+    "id": "haworthia-cooperi",
+    "names": [
+      "玉露",
+      "水晶掌",
+      "冰灯玉露"
+    ],
+    "category": "多肉植物",
+    "difficulty": "medium",
+    "briefDescription": "叶片顶端透明如窗晶莹剔透，光线透入如宝石般璀璨",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          7,
+          14
+        ],
+        "tip": "耐旱忌涝，干透浇透，夏季休眠期严格控水"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "喜明亮散射光，忌强光直射暴晒，窗面会发灰"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          45
+        ],
+        "tip": "生长期每月施一次稀薄多肉液肥即可",
+        "seasonalNote": "夏季休眠和冬季低温时停止施肥"
+      }
+    },
+    "commonIssues": [
+      "窗面浑浊发灰多为强光晒伤或根系不佳",
+      "叶片干瘪皱缩通常是根系腐烂需脱盆检查",
+      "徒长变长多为光照不足或水多"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春季为生长旺季正常浇水施肥，夏季休眠遮阴通风严格控水",
+      "autumnWinter": "秋季恢复生长可正常养护，冬季保持5°C以上，减少浇水偏干越冬"
+    }
+  },
+  {
+    "id": "aeonium-schwarzkopf",
+    "names": [
+      "黑法师",
+      "紫叶莲花掌",
+      "黑法师莲花掌"
+    ],
+    "category": "多肉植物",
+    "difficulty": "medium",
+    "briefDescription": "叶片紫黑如墨莲座状排列，色彩神秘高贵，多肉拼盘焦点",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          7,
+          10
+        ],
+        "tip": "生长期干透浇透，夏季休眠期严格断水"
+      },
+      "light": {
+        "level": "high",
+        "tip": "喜充足光照，光照越强叶色越黑紫，缺光会返绿"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          45
+        ],
+        "tip": "生长期每月施一次稀薄多肉肥，需求不高",
+        "seasonalNote": "夏季休眠和冬季低温时停止施肥"
+      }
+    },
+    "commonIssues": [
+      "叶片变绿拉长多为光照不足导致徒长",
+      "夏季叶片大量脱落属休眠正常现象",
+      "茎干发黑腐烂需砍头重新扦插"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春季为生长旺季保证全日照，夏季休眠遮阴通风断水，避免雨淋",
+      "autumnWinter": "秋季恢复生长正常养护，冬季保持5°C以上可继续生长，低温控水"
+    }
+  },
+  {
+    "id": "cotyledon-tomentosa",
+    "names": [
+      "熊童子",
+      "毛熊爪",
+      "熊爪"
+    ],
+    "category": "多肉植物",
+    "difficulty": "medium",
+    "briefDescription": "肥厚叶片密布白色绒毛，叶端有红褐色爪齿如小熊掌萌趣十足",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          7,
+          10
+        ],
+        "tip": "干透浇透，夏季休眠控水甚至断水，忌积水"
+      },
+      "light": {
+        "level": "high",
+        "tip": "喜充足光照，光照足叶端红爪明显，缺光徒长"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          45
+        ],
+        "tip": "生长期每月施一次稀薄多肉肥即可",
+        "seasonalNote": "夏季休眠和冬季低温时停肥"
+      }
+    },
+    "commonIssues": [
+      "叶片掉落多为浇水过多或夏季闷热",
+      "叶端红爪消失返绿需增加光照",
+      "茎干底部叶片干枯属正常新陈代谢"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春季正常养护，夏季高温休眠需遮阴通风严格控水，避免淋雨",
+      "autumnWinter": "秋季恢复生长增加光照，冬季保持5°C以上，适当控水偏干养护"
+    }
+  },
+  {
+    "id": "monilaria-obconica",
+    "names": [
+      "碧光环",
+      "小兔子",
+      "兔耳多肉"
+    ],
+    "category": "多肉植物",
+    "difficulty": "hard",
+    "briefDescription": "初生叶片对生如兔耳萌化人心，对温光水要求苛刻易挂",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          10,
+          14
+        ],
+        "tip": "生长期干透浇透，休眠期完全断水，极易因水大腐烂"
+      },
+      "light": {
+        "level": "high",
+        "tip": "喜充足但柔和的光照，忌暴晒也怕缺光徒长"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          30,
+          45
+        ],
+        "tip": "生长期每月施一次极稀薄的多肉液肥",
+        "seasonalNote": "休眠期完全停肥，生长期才可施肥"
+      }
+    },
+    "commonIssues": [
+      "夏季水大极易腐烂死亡需严格断水",
+      "兔耳拉长变丑多为光照不足徒长",
+      "休眠期叶片干枯属正常现象切勿浇水"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春季为生长旺季正常浇水施肥，初夏开始休眠叶片干枯后严格断水遮阴",
+      "autumnWinter": "秋季降温后苏醒开始生长，逐步恢复给水，冬季保持5°C以上正常养护"
+    }
+  },
+  {
+    "id": "tradescantia-fluminensis",
+    "names": [
+      "吊竹梅银",
+      "银线水竹草",
+      "白纹吊竹梅"
+    ],
+    "category": "观叶植物",
+    "difficulty": "easy",
+    "briefDescription": "叶片银白条纹与绿色交替，枝条悬垂飘逸，吊盆种植极美",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          3,
+          5
+        ],
+        "tip": "喜湿润环境，保持土壤微湿，稍耐旱但不耐涝"
+      },
+      "light": {
+        "level": "medium",
+        "tip": "喜明亮散射光，光照充足银纹更鲜明，耐半阴"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          14,
+          21
+        ],
+        "tip": "生长期每2~3周施一次观叶液肥，薄肥勤施",
+        "seasonalNote": "冬季生长缓慢减少至停肥"
+      }
+    },
+    "commonIssues": [
+      "银纹褪绿变全绿多为光照不足",
+      "茎节处叶片脱落常因空气过于干燥",
+      "茎蔓过长稀疏需摘心促分枝使株形饱满"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏生长迅速保持充足水分和散射光，定期修剪过长枝条促分枝",
+      "autumnWinter": "秋冬减少浇水保持盆土微润偏干，室温不低于5°C可安全越冬"
+    }
+  },
+  {
+    "id": "tillandsia-xerographica",
+    "names": [
+      "空气凤梨银叶",
+      "霸王凤梨",
+      "银叶铁兰"
+    ],
+    "category": "观叶植物",
+    "difficulty": "medium",
+    "briefDescription": "无需土壤的银色卷曲叶片植物，造型独特雕塑感强，懒人新宠",
+    "care": {
+      "watering": {
+        "intervalRange": [
+          5,
+          7
+        ],
+        "tip": "每周浸泡水中1~2小时后倒置沥干，忌叶心积水"
+      },
+      "light": {
+        "level": "high",
+        "tip": "喜明亮光照，银叶品种比绿叶更耐晒，避免正午暴晒"
+      },
+      "fertilizing": {
+        "intervalRange": [
+          21,
+          30
+        ],
+        "tip": "每月浸泡时加入空气凤梨专用肥或稀薄液肥",
+        "seasonalNote": "冬季生长缓慢减少施肥至停肥"
+      }
+    },
+    "commonIssues": [
+      "叶心积水腐烂是最常见死因，泡水后必须倒置沥干",
+      "叶片发黑变软多为腐烂需及时剪除病叶",
+      "基部干枯卷曲多为缺水需增加浸泡频率"
+    ],
+    "seasonalNotes": {
+      "springSummer": "春夏为生长旺季，保证通风和充足光照，每周浸泡补水一次",
+      "autumnWinter": "秋冬减少浸泡频率至每10~14天一次，保持10°C以上，避免冷风吹"
+    }
+  }
+]

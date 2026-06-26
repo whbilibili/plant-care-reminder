@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "convex/react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -9,11 +9,14 @@ import { navigate } from "../../app/router";
 import { PlantForm } from "./PlantForm";
 import { markCreatePlantSuccess } from "./createPlantSuccess";
 import { usePlantForm } from "./usePlantForm";
+import type { RecommendApplyPayload } from "./SpeciesRecommendCard";
 
 export function CreatePlantPage() {
   const createPlant = useMutation(api.plants.createPlant);
   const plantsData = useQuery(api.plants.listPlantsWithNextDue, {});
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  // KNOW-007: 物种关联状态
+  const speciesIdRef = useRef<string | null>(null);
 
   /** 从已有植物中提取去重位置建议（按频率降序）。 */
   const locationSuggestions = useMemo(() => {
@@ -28,6 +31,15 @@ export function CreatePlantPage() {
       .sort((a, b) => b[1] - a[1])
       .map(([loc]) => loc);
   }, [plantsData]);
+  const handleSpeciesChange = useCallback((id: string | null) => {
+    speciesIdRef.current = id;
+  }, []);
+
+  const handleRecommendApply = useCallback((_payload: RecommendApplyPayload) => {
+    // 推荐参数应用逻辑由 PlantForm 内部展示，这里仅确保 speciesId 已设置
+    // 未来可以在此处自动填充任务排期参数
+  }, []);
+
   const form = usePlantForm({
     onSubmit: async (payload) => {
       setErrorMessage(null);
@@ -36,6 +48,7 @@ export function CreatePlantPage() {
         await createPlant({
           ...payload,
           imageStorageId: payload.imageStorageId as Id<"_storage"> | null,
+          speciesId: speciesIdRef.current ?? undefined,
         });
         markCreatePlantSuccess();
         navigate("/plants", true);
@@ -67,7 +80,14 @@ export function CreatePlantPage() {
           </button>
         }
       />
-      <PlantForm form={form} submitLabel="保存植物" locationSuggestions={locationSuggestions} />
+      <PlantForm
+        form={form}
+        submitLabel="保存植物"
+        locationSuggestions={locationSuggestions}
+        onSpeciesChange={handleSpeciesChange}
+        onRecommendApply={handleRecommendApply}
+        mode="create"
+      />
       <div style={bottomErrorStyle}>
         <FormError message={errorMessage} />
       </div>

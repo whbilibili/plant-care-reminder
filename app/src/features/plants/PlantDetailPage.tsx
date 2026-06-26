@@ -29,6 +29,7 @@ import { Icon } from "../../components/ui/Icon";
 import { showToast } from "../../components/ui/GlobalToast";
 import { PlantManagementSection } from "./PlantManagementSection";
 import { CareHistorySection } from "./CareHistorySection";
+import { CareKnowledgeSection } from "./CareKnowledgeSection";
 import { ImagePreviewOverlay } from "./ImagePreviewOverlay";
 import { PlantGalleryStrip } from "./PlantGalleryStrip";
 import { GalleryFullscreenViewer } from "./GalleryFullscreenViewer";
@@ -66,6 +67,7 @@ interface PlantDetailResponse {
     location: string | null;
     name: string;
     note: string | null;
+    speciesId: string | null;
     updatedAt: number;
   };
   tasks: Array<{
@@ -629,8 +631,13 @@ export function PlantDetailPage({ plantId }: PlantDetailPageProps) {
         </GroupedSurface>
       </div>
 
-      {/* 养护记录折叠区（CARE-HIST-003 / CARE-HIST-005：L3.5 位置） */}
+      {/* 养护指南知识板块（KNOW-006：在 PlanSection 与 CareHistorySection 之间） */}
       <div style={{ ...sectionSpacingStyle, ...sectionAnimStyle(2) }}>
+        <CareKnowledgeSection speciesId={plant.speciesId} />
+      </div>
+
+      {/* 养护记录折叠区（CARE-HIST-003 / CARE-HIST-005：L3.5 位置） */}
+      <div style={{ ...sectionSpacingStyle, ...sectionAnimStyle(3) }}>
         <CareHistorySection plantId={plant.id as Id<"plants">} />
       </div>
 

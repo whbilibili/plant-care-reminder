@@ -1,0 +1,883 @@
+{
+  "project": "plant-care-reminder",
+  "prd": "docs/product-specs/2026-06-23-plant-knowledge-card-spec.md",
+  "ui_spec": "docs/product-specs/2026-06-24-plant-knowledge-card-ui-spec.md",
+  "created_at": "2026-06-24",
+  "tasks": [
+    {
+      "task_id": "KNOW-001",
+      "description": "Create PlantSpecies type definition and plant-species.json knowledge base with 80 common houseplant entries (including briefDescription field for description pre-fill).",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {
+              "PlantSpecies.id": "Unique species identifier, e.g. 'monstera-deliciosa'",
+              "PlantSpecies.names": "Array of Chinese names and aliases for fuzzy matching",
+              "PlantSpecies.category": "Plant category, e.g. '观叶植物'",
+              "PlantSpecies.difficulty": "'easy' | 'medium' | 'hard'",
+              "PlantSpecies.briefDescription": "One-sentence species description for 简介 pre-fill (v1.1)",
+              "PlantSpecies.care": "Nested object with watering/light/fertilizing/humidity/temperature",
+              "PlantSpecies.commonIssues": "Array of common issue strings",
+              "PlantSpecies.seasonalNotes": "{ springSummer, autumnWinter } seasonal care tips"
+            },
+            "indexes": [],
+            "relations": "Frontend-only static JSON, no backend storage.",
+            "notes": "Data file ~50KB, bundled with frontend. Covers 5 categories: 观叶(30) + 多肉(20) + 开花(15) + 草本蕨类(10) + 水培(5). Each entry must have briefDescription (v1.1 required for 简介预填)."
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change. Frontend-only static data."
+        },
+        "api_layer": {
+          "type": "N/A",
+          "endpoints": []
+        },
+        "component_tree": {
+          "entry_component": "N/A",
+          "children": [
+            "PlantSpecies type"
+          ]
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "N/A",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "JSON file parses correctly; all 80 entries match PlantSpecies interface; every entry has valid watering/light/fertilizing data and non-empty briefDescription.",
+        "visual": "N/A",
+        "manual": "Spot-check 10 species entries against gardening references for accuracy. Verify briefDescription is a meaningful one-sentence description."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/data/plant-species.types.ts",
+          "app/src/data/plant-species.json"
+        ],
+        "modules": [
+          "plant-knowledge-card"
+        ],
+        "layer": "data",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "PlantSpecies interface includes briefDescription: string field.",
+        "plant-species.json contains >= 80 entries covering 5 plant categories.",
+        "Each entry has valid watering.intervalRange, light.level, fertilizing.intervalRange (no null or empty).",
+        "Each entry has a non-empty briefDescription string (used for 简介预填 per PRD §3.3).",
+        "names array for each species includes common aliases.",
+        "JSON file passes TypeScript type validation via satisfies PlantSpecies[]."
+      ]
+    },
+    {
+      "task_id": "KNOW-002",
+      "description": "Add speciesId optional field to plants schema, extend createPlant and updatePlant mutations to accept and persist speciesId.",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "plants"
+            ],
+            "key_fields": {
+              "speciesId": "v.optional(v.string()) — species knowledge base ID"
+            },
+            "indexes": [],
+            "relations": "References PlantSpecies.id in frontend static JSON.",
+            "notes": "v.optional ensures backward compatibility."
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "createPlant: add optional speciesId; updatePlant: add optional speciesId (set/clear)"
+          },
+          "migration_strategy": "No data migration needed — v.optional backward compatible."
+        },
+        "api_layer": {
+          "type": "convex-mutation",
+          "endpoints": [
+            {
+              "name": "createPlant",
+              "change": "Add args.speciesId: v.optional(v.string())",
+              "breaking": false
+            },
+            {
+              "name": "updatePlant",
+              "change": "Add args.speciesId: v.optional(v.string()); support clearing",
+              "breaking": false
+            }
+          ]
+        },
+        "component_tree": {
+          "entry_component": "N/A",
+          "children": []
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "Convex plants table",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "N/A",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "Existing familyId isolation unchanged"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npx convex dev --once --typecheck enable",
+        "data": "Create plant with speciesId → persisted. Create without → undefined. Update → persisted. Clear → undefined.",
+        "visual": "N/A",
+        "manual": "Existing plants without speciesId load without errors."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/convex/lib/validators.ts",
+          "app/convex/plants.ts"
+        ],
+        "modules": [
+          "plant-knowledge-card"
+        ],
+        "layer": "backend",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "plantFields includes speciesId: v.optional(v.string()).",
+        "createPlant mutation accepts optional speciesId and writes it.",
+        "updatePlant mutation supports setting, changing, or clearing speciesId.",
+        "npx convex dev --once --typecheck enable passes.",
+        "Old plants without speciesId continue to work."
+      ]
+    },
+    {
+      "task_id": "KNOW-003",
+      "description": "Implement matchSpecies pure function with priority-based matching (exact > prefix > contains), input length gate (2-50 chars), and unit tests.",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "Pure function, no data layer dependency.",
+            "notes": "matchSpecies(query, speciesList, maxResults=3). Trigger: 2 <= query.length <= 50. Priority: exact > prefix > contains. Case-insensitive."
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "N/A"
+          },
+          "migration_strategy": "No schema change."
+        },
+        "api_layer": {
+          "type": "shared-contract",
+          "endpoints": []
+        },
+        "component_tree": {
+          "entry_component": "N/A",
+          "children": [
+            "matchSpecies"
+          ]
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "shared helper",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test -- --testPathPattern=speciesMatch",
+        "data": "N/A",
+        "visual": "N/A",
+        "manual": "matchSpecies('绿萝', list) → 绿萝 first; matchSpecies('a', list) → empty; matchSpecies('>50chars', list) → empty."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/lib/speciesMatch.ts",
+          "app/src/lib/speciesMatch.test.ts"
+        ],
+        "modules": [
+          "plant-knowledge-card"
+        ],
+        "layer": "shared",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Returns empty when query.length < 2 or > 50.",
+        "Exact match ranked before prefix, prefix before contains.",
+        "Case-insensitive, works with Chinese and Latin names.",
+        "maxResults defaults to 3; never exceeds.",
+        "Unit tests cover: exact/prefix/contains priority, no match, case insensitivity, length gates, maxResults truncation."
+      ]
+    },
+    {
+      "task_id": "KNOW-004",
+      "description": "Build SpeciesSuggestions component — autocomplete dropdown with candidate list micro-interactions (click flash, haptic, loading skeleton, silent empty dismiss), keyboard navigation, accessibility.",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "Consumes matchSpecies() and plant-species.json.",
+            "notes": "Absolute-positioned dropdown. Shared between create and edit pages."
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "N/A"
+          },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": {
+          "type": "N/A",
+          "endpoints": []
+        },
+        "component_tree": {
+          "entry_component": "SpeciesSuggestions",
+          "children": [
+            "SuggestionItem"
+          ]
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "matchResults, activeIndex, isOpen, isLoading"
+        },
+        "routing": {
+          "path": "N/A (embedded)",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        }
+      },
+      "design_contract": {
+        "container": "--color-surface bg, --radius-card 16px, 1px --color-line, --shadow-card, z-50, max-height calc(48px*3+2px), overflow hidden.",
+        "item": "48px h, flex row, padding 0 var(--space-md), gap var(--space-sm). 🪴 16px + name 14px w600 --color-ink + difficulty colored + ' · ' + category 12px --color-muted.",
+        "item_hover": "--color-mist bg, 120ms ease.",
+        "item_click": "Flash --color-leaf bg 50ms + haptic vibration 10ms (if available).",
+        "loading_skeleton": "1 shimmer row after 200ms delay, 48px h, --color-mist→--color-surface gradient, 800ms loop.",
+        "empty_result": "No panel. Previous panel fades 100ms.",
+        "animation_in": "opacity 0→1 + translateY(-4px→0), 150ms ease-out.",
+        "animation_out": "opacity 1→0, 100ms ease-in.",
+        "keyboard": "ArrowUp/Down navigate, Enter selects, Escape closes.",
+        "a11y": "role=listbox, option+aria-selected, aria-expanded, aria-activedescendant, aria-live=polite.",
+        "performance": "60fps, first match ≤250ms, max 3 DOM nodes."
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "N/A",
+        "visual": "Panel floats with shadow; 375px no overflow; difficulty colors correct; click flash visible; shimmer if JSON delayed.",
+        "manual": "Type '绿' → no panel. '绿萝' → panel. Arrow keys work. Enter selects. Click → green flash → panel exits. Long name → ellipsis."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/plants/SpeciesSuggestions.tsx"
+        ],
+        "modules": [
+          "plant-knowledge-card"
+        ],
+        "layer": "frontend",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Panel appears when matchSpecies returns >0 results (2-50 chars input).",
+        "Debounce 200ms on input.",
+        "Panel hides on blur after 200ms delay.",
+        "Item shows: 🪴 + species name (ellipsis if long) + difficulty (colored) + category.",
+        "Click feedback: --color-leaf flash 50ms + haptic 10ms.",
+        "Loading skeleton after 200ms if JSON not loaded.",
+        "Empty result: silent dismiss, no text.",
+        "Keyboard: ArrowUp/Down, Enter, Escape.",
+        "a11y: listbox/option roles, aria-expanded, aria-live.",
+        "All token variables, no hex. reduced-motion: instant.",
+        "60fps, ≤250ms response, max 3 DOM nodes."
+      ]
+    },
+    {
+      "task_id": "KNOW-005",
+      "description": "Build SpeciesRecommendCard — inline recommendation card with care grid, apply action (4-field pre-fill with conflict handling), stagger highlight, differentiated Toast, and dismiss action.",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "Reads PlantSpecies prop.",
+            "notes": "Mid-value: Math.ceil((min+max)/2). Pre-fill: watering/fertilizing always; description/notes only if empty."
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "N/A"
+          },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": {
+          "type": "N/A",
+          "endpoints": []
+        },
+        "component_tree": {
+          "entry_component": "SpeciesRecommendCard",
+          "children": [
+            "CardHeader",
+            "CareGrid",
+            "DismissLink"
+          ]
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "isVisible, isApplying"
+        },
+        "routing": {
+          "path": "N/A (in PlantForm)",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        }
+      },
+      "design_contract": {
+        "container": "--color-mist bg, --radius-card 16px, 1px --color-line, var(--space-md) padding, no shadow.",
+        "header": "🌿 18px + name Lora 16px w700 + difficulty pill + apply button (margin-left:auto).",
+        "apply_button": "--color-leaf bg, #fff 13px w600, 8px 16px, --radius-button, min-h 36px. Hover: --color-leaf-light + scale(0.97). Disabled: opacity 0.6.",
+        "care_grid": "3-col flex, gap var(--space-sm). Each: flex-1, --color-surface bg, --radius-button, var(--space-sm) padding. emoji→label→value(--color-leaf)→tip(ellipsis).",
+        "dismiss_link": "Right-aligned, 12px w400 --color-muted, hover --color-leaf-light. '仅供参考，不应用 →'.",
+        "prefill_rules": "Watering: ceil((min+max)/2) always. Fertilizing: same. Description: '{category}，{briefDescription}。{care.light.tip}' only if empty. Notes: '常见问题：{commonIssues[0]}。当季要点：{当季}' only if empty.",
+        "field_highlight": "border-color→--color-success, box-shadow 0 0 0 3px rgba(47,133,90,0.12), 300ms. Stagger 80ms between fields. Only filled fields highlighted.",
+        "toast": "Full: '已应用 {species} 的推荐养护参数 🌿' 3s. Partial: '已应用推荐（简介/备注已有内容，未覆盖）🌿' 3s.",
+        "feedback_chain": "0ms:disable btn+exit start → 250ms:collapsed → 300ms:highlight stagger → 350ms:toast → 600ms:revert → 700ms:focus next empty field.",
+        "animation_in": "opacity+max-height+translateY(-8px→0), 300ms ease-out.",
+        "animation_out": "Apply:250ms, Dismiss:200ms. opacity→0+max-height→0+scale(0.98)+margin→0.",
+        "responsive": "<360px: grid flex-wrap (2+1 rows).",
+        "a11y": "role=complementary, aria-label='品种养护推荐'. Button aria-label='应用{species}的推荐养护参数'."
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "N/A",
+        "visual": "Mist card, white sub-cards grid, leaf button right. Stagger highlight visible. <360px wraps.",
+        "manual": "Apply → card exits → fields filled (intervals always, desc/notes if empty) → stagger highlight → toast. Pre-filled desc: skip + different toast. Dismiss → card exits → no changes."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/plants/SpeciesRecommendCard.tsx"
+        ],
+        "modules": [
+          "plant-knowledge-card"
+        ],
+        "layer": "frontend",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Card shows species name (Lora), difficulty pill, 3-col care grid.",
+        "Care grid: watering/light/fertilizing with emojis and Chinese labels.",
+        "Light mapping: low=耐阴, medium=散射光, bright=明亮光, direct=直射光.",
+        "Apply pre-fills 4 fields with conflict handling (skip non-empty desc/notes).",
+        "Description format: '{category}，{briefDescription}。{care.light.tip}'.",
+        "Notes format: '常见问题：{commonIssues[0]}。当季要点：{seasonalNotes.当季}'.",
+        "Field highlight stagger 80ms (only filled fields).",
+        "Toast differentiates full vs partial pre-fill.",
+        "Focus moves to next empty field at 700ms.",
+        "Exit: 250ms (apply) / 200ms (dismiss).",
+        "<360px: grid wraps. All tokens, no hex. reduced-motion: instant."
+      ]
+    },
+    {
+      "task_id": "KNOW-006",
+      "description": "Build CareKnowledgeSection (collapsible) and CareKnowledgeBlock for plant detail page — 5 knowledge blocks (watering/light/fertilizing/seasonal/issues), fallback state, integrate into PlantDetailPage.",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "Reads speciesId from plant, looks up PlantSpecies from frontend JSON.",
+            "notes": "Between PlanSection and CareHistorySection."
+          },
+          "queries": {
+            "read": "N/A (frontend JSON lookup)",
+            "write": "N/A"
+          },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": {
+          "type": "N/A",
+          "endpoints": []
+        },
+        "component_tree": {
+          "entry_component": "CareKnowledgeSection",
+          "children": [
+            "CareKnowledgeBlock (×5)"
+          ]
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "isExpanded (default false)"
+        },
+        "routing": {
+          "path": "/plants/:id",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        }
+      },
+      "design_contract": {
+        "collapsed": "--color-surface, --radius-card, 1px --color-line, 48px h. Left: 🌱 + '养护指南 · {species}' 13px w600 --color-leaf-light. Right: Chevron 14px --color-muted. Hover: --color-mist bg 150ms.",
+        "expanded": "Content padding var(--space-sm) var(--space-md) var(--space-md), gap var(--space-sm). Separator 1px --color-line.",
+        "block": "--color-mist bg, --radius-button 12px. Title: emoji 16px + label 13px w600 --color-ink. Content: 13px w400 --color-muted, line-height 1.6.",
+        "seasonal": "Left border 3px --color-leaf-light. Season auto-detect by month.",
+        "issues": "Prefix ' · ', line-height 1.8. ⚠️. Only if commonIssues.length > 0.",
+        "collapse_anim": "grid-template-rows 0fr↔1fr, expand 300ms ease-out / collapse 200ms ease-in. Chevron rotate 0↔180deg 200ms.",
+        "fallback": "Non-collapsible, no chevron. '🌱 养护指南' title. '暂无该品种的养护指南' 14px centered. Sub: '编辑植物资料时可关联品种，获取养护建议' 12px centered.",
+        "entry_anim": "taskFadeSlideIn 360ms ease both, delay calc(80ms + index * 60ms).",
+        "json_load_fail": "Knowledge section not rendered (silent degradation).",
+        "a11y": "aria-expanded, aria-controls, role=region, aria-label='{species}养护指南'."
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "N/A",
+        "visual": "Collapsed: one line with chevron. Expanded: 5 blocks. Fallback: centered gray text. 375px all readable.",
+        "manual": "Click expand → grid-rows animation → chevron rotates. Season auto by month. Fallback for no speciesId. JSON fail → section absent."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/plants/CareKnowledgeSection.tsx",
+          "app/src/features/plants/CareKnowledgeBlock.tsx",
+          "app/src/features/plants/PlantDetailPage.tsx"
+        ],
+        "modules": [
+          "plant-knowledge-card"
+        ],
+        "layer": "frontend",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Renders between PlanSection and CareHistorySection.",
+        "Default collapsed, shows '🌱 养护指南 · {speciesName}' + chevron.",
+        "Expand/collapse: grid-template-rows animation, chevron rotates 180°.",
+        "5 blocks: watering, light, fertilizing, seasonal, issues.",
+        "Seasonal auto-detects month. Issues only if commonIssues.length > 0.",
+        "Fallback (no speciesId or not found): non-collapsible placeholder.",
+        "JSON load failure: section not rendered.",
+        "Entry animation stagger. Token-only colors. reduced-motion skips.",
+        "aria-expanded, role=region, aria-label."
+      ]
+    },
+    {
+      "task_id": "KNOW-007",
+      "description": "Build ConfirmedNameInput — species confirmed state for name input (background/border/icon/clear-button visual transition), shared between create and edit pages. Handles text completion, confirmed↔normal state transitions.",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "UI-only state component wrapping name input.",
+            "notes": "Confirmed state = species selected. Normal state = free text input. Transition triggered by: select species (→confirmed), click ×/modify text (→normal)."
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "N/A"
+          },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": {
+          "type": "N/A",
+          "endpoints": []
+        },
+        "component_tree": {
+          "entry_component": "ConfirmedNameInput (or integrated into PlantForm name field)",
+          "children": [
+            "SpeciesIcon (🌿 left)",
+            "ClearButton (× right)"
+          ]
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "isConfirmed (boolean), confirmedSpeciesName (string)"
+        },
+        "routing": {
+          "path": "N/A (embedded in PlantForm / EditPlantPage)",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        }
+      },
+      "design_contract": {
+        "normal_state": "bg: --color-surface, border-bottom: 1px --color-line, padding-left: var(--space-md), padding-right: var(--space-md), font-weight 400.",
+        "confirmed_state": "bg: --color-mist (#edf5f1), border-bottom: 2px --color-leaf, padding-left: calc(var(--space-md)+28px), padding-right: calc(var(--space-md)+32px), font-weight 600. Text = species names[0].",
+        "transition": "background/border-color/padding 150ms ease-out. font-weight instant.",
+        "left_icon": "🌿 18px, absolute left:var(--space-md) top:50% translateY(-50%). Enter: opacity 0→1 + scale(0.8→1) 150ms delay 50ms. Exit: opacity→0 100ms. aria-hidden=true.",
+        "clear_button": "× 16px SVG, color: --color-muted (default), --color-ink (hover), --color-error (active). 32×32 hit area, absolute right:var(--space-sm). --radius-pill bg on hover rgba(0,0,0,0.04). Enter: opacity 0→1 150ms delay 100ms. Exit: opacity→0 100ms. aria-label='取消品种关联'.",
+        "text_completion": "On select: input value immediately replaced with species names[0].",
+        "state_entry_sequence": "0ms:panel disappears+text replaces → 50ms:input style transitions → 150ms:left icon fades in → 200ms:clear button fades in → confirmed ready.",
+        "state_exit_sequence": "0ms:icon+clear start exit → 100ms:gone → 100ms:style transitions back → 250ms:normal state.",
+        "exit_triggers": "Click × clear button, modify input text (type/paste/delete), programmatic clear.",
+        "long_name": "Confirmed text ellipsis, left icon and × never compressed (flex-shrink:0)."
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "N/A",
+        "visual": "Select species → input bg turns mist-green, border turns leaf-green 2px, 🌿 appears left, × appears right, text is bold species name. Click × → reverts. 375px: no overflow even with 15+ char name.",
+        "manual": "Select → text completes to names[0]. Confirmed: modify text → immediately exits confirmed state. Paste new text → exits. Click × → exits + speciesId cleared. Transitions 150ms smooth."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/plants/PlantForm.tsx",
+          "app/src/features/plants/ConfirmedNameInput.tsx"
+        ],
+        "modules": [
+          "plant-knowledge-card"
+        ],
+        "layer": "frontend",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "Input transitions between normal↔confirmed state per UI spec §2.10.",
+        "Confirmed: bg --color-mist, border-bottom 2px --color-leaf, font-weight 600, paddings adjusted.",
+        "Text auto-completes to species names[0] on selection.",
+        "Left 🌿 icon: absolute, 18px, enters with scale+opacity delay 50ms.",
+        "Right × button: 32px hit area, color states (muted/ink/error), enters delay 100ms.",
+        "Transition 150ms ease-out for all properties except font-weight (instant).",
+        "Exit triggers: click ×, modify text, paste. All clear speciesId and revert to normal.",
+        "Long species names: text-overflow ellipsis, icons not compressed.",
+        "aria-label='取消品种关联' on × button. 🌿 is aria-hidden.",
+        "reduced-motion: instant state changes, no animation.",
+        "Shared logic works for both create page and edit page."
+      ]
+    },
+    {
+      "task_id": "KNOW-008",
+      "description": "Integrate SpeciesSuggestions, ConfirmedNameInput, and SpeciesRecommendCard into PlantForm/CreatePlantPage — full create-flow state machine (§13.1) with species selection, confirmed state, apply logic, and speciesId persistence.",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "plants"
+            ],
+            "key_fields": {
+              "speciesId": "Passed to createPlant on submit"
+            },
+            "indexes": [],
+            "relations": "PlantForm manages species selection state; CreatePlantPage passes speciesId to createPlant.",
+            "notes": "State machine per UI spec §13.1."
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "createPlant with speciesId"
+          },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": {
+          "type": "N/A",
+          "endpoints": []
+        },
+        "component_tree": {
+          "entry_component": "PlantForm",
+          "children": [
+            "ConfirmedNameInput",
+            "SpeciesSuggestions",
+            "SpeciesRecommendCard"
+          ]
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "selectedSpecies, isConfirmed, showRecommendCard, highlightedFields"
+        },
+        "routing": {
+          "path": "/plants/new",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        }
+      },
+      "design_contract": {
+        "name_input_container": "position: relative for SpeciesSuggestions absolute positioning.",
+        "recommend_card_position": "Between name card group and description card group.",
+        "state_machine": "Initial→InputShort→InputMatch→InputNoMatch→Confirmed→ConfirmedApplied→ConfirmedDismissed→ClearedReMatch. Per §13.1 matrix.",
+        "select_flow": "Click suggestion → panel exits + text completes + input enters confirmed state (150ms) → 200ms: recommend card enters (300ms).",
+        "clear_flow": "Click × or modify text → confirmed exits → recommend card removes → if text≥2 chars: re-match.",
+        "apply_flow": "Click apply → card exits → stagger highlight → toast → focus next empty.",
+        "dismiss_flow": "Click dismiss → card exits → no field changes, speciesId retained."
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "Create plant with species → speciesId written. Without → undefined.",
+        "visual": "Full flow: input→match→select(confirmed state)→recommend card→apply→highlight→toast. All at 375px.",
+        "manual": "Full state machine: all §13.1 transitions verified. After select: modify name → re-trigger. After apply: fields filled + speciesId. After dismiss: no field change + speciesId retained."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/plants/PlantForm.tsx",
+          "app/src/features/plants/usePlantForm.ts",
+          "app/src/features/plants/CreatePlantPage.tsx"
+        ],
+        "modules": [
+          "plant-knowledge-card"
+        ],
+        "layer": "frontend",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "PlantForm integrates ConfirmedNameInput, SpeciesSuggestions, SpeciesRecommendCard.",
+        "State machine implements all §13.1 transitions.",
+        "Select species: panel exits → text completes → confirmed state → card enters.",
+        "Apply: card exits → 4-field pre-fill → stagger highlight → toast → focus.",
+        "Dismiss: card exits, no field changes, speciesId retained.",
+        "Clear (× or edit text): confirmed exits, card removes, re-match if ≥2 chars.",
+        "speciesId passed to createPlant on submit.",
+        "Rapid re-selection: last selection wins, no residual state.",
+        "375px: all components fit without overflow."
+      ]
+    },
+    {
+      "task_id": "KNOW-009",
+      "description": "Build SpeciesTag and integrate into EditPlantPage — confirmed state on load, tag display, remove/re-associate flow, cancel-association Toast, no recommend card on edit page. Full §13.3 state machine.",
+      "priority": "2-Medium",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [
+              "plants"
+            ],
+            "key_fields": {
+              "speciesId": "Read from plant, updated via updatePlant on save"
+            },
+            "indexes": [],
+            "relations": "SpeciesTag reads species info from JSON by speciesId. EditPlantPage calls updatePlant with new/cleared speciesId.",
+            "notes": "No SpeciesRecommendCard on edit page. ConfirmedNameInput + SpeciesTag + SpeciesSuggestions."
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "updatePlant with speciesId"
+          },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": {
+          "type": "N/A",
+          "endpoints": []
+        },
+        "component_tree": {
+          "entry_component": "EditPlantPage",
+          "children": [
+            "ConfirmedNameInput",
+            "SpeciesTag",
+            "SpeciesSuggestions (reused)"
+          ]
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "currentSpeciesId, isConfirmed, pendingSpeciesId"
+        },
+        "routing": {
+          "path": "/plants/:id/edit",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        }
+      },
+      "design_contract": {
+        "tag": "inline-flex, align-items center, gap var(--space-xs). --color-mist bg, --radius-pill, padding 4px 8px 4px 10px. margin-top var(--space-xs).",
+        "tag_content": "🪴 14px → species name 12px w500 --color-leaf → ' · ' 12px --color-muted → difficulty text 12px w400 (colored) → ✕ 14px --color-muted, 28×28 hit area.",
+        "close_hover": "--color-error + scale(1.1).",
+        "tag_enter": "opacity 0→1 + scale(0.9→1), 150ms ease-out.",
+        "tag_exit": "opacity 1→0 + scale(1→0.9), 120ms ease-in.",
+        "initial_load_sequence": "0ms:skeleton → data loaded:text fills → +50ms:confirmed state → +100ms:tag enters.",
+        "cancel_toast": "'已取消品种关联', no emoji, 2s, GlobalToast style.",
+        "cancel_triggers": "Click tag ✕ OR click input × clear button → both clear speciesId + exit confirmed + tag exits + toast.",
+        "re_match_flow": "After cancel, if text≥2 chars → debounce 200ms → suggestions appear → select → confirmed state + new tag (no recommend card).",
+        "state_machine": "Per §13.3: loaded(confirmed+tag) → cancel(normal, toast) → re-match → select(confirmed+new tag) → save.",
+        "no_recommend_card": "Edit page NEVER shows SpeciesRecommendCard.",
+        "a11y": "Tag × aria-label='取消关联品种'. Input × aria-label='取消品种关联'."
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck",
+        "data": "Edit plant with speciesId → tag shown. Remove → save → cleared. Re-associate → save → new speciesId.",
+        "visual": "Pill tag with mist bg. ✕ red on hover. Confirmed input on load. 375px fits.",
+        "manual": "Full §13.3: load → confirmed+tag → click ✕ → normal+toast → modify name → match → select → new confirmed+tag → save. Also: speciesId not in JSON → normal state, no tag."
+      },
+      "metadata": {
+        "files_affected": [
+          "app/src/features/plants/SpeciesTag.tsx",
+          "app/src/features/plants/EditPlantPage.tsx"
+        ],
+        "modules": [
+          "plant-knowledge-card"
+        ],
+        "layer": "frontend",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "SpeciesTag: pill shape, --color-mist bg, 🪴 + name + difficulty + ✕.",
+        "✕ hover: --color-error + scale(1.1). Click clears speciesId.",
+        "Tag enter/exit: scale+opacity 150ms/120ms.",
+        "Edit page loads with confirmed state if plant has speciesId.",
+        "Load sequence: data → confirmed input → tag enters (+100ms stagger).",
+        "Cancel (tag ✕ or input ×): speciesId cleared + confirmed exits + tag exits + Toast '已取消品种关联' 2s.",
+        "After cancel: if name≥2 chars → re-match → select new species → confirmed + new tag.",
+        "No SpeciesRecommendCard on edit page ever.",
+        "updatePlant called with speciesId on save.",
+        "speciesId not found in JSON: normal state, no tag, allow re-match.",
+        "§13.3 state machine fully implemented."
+      ]
+    },
+    {
+      "task_id": "KNOW-010",
+      "description": "End-to-end verification — TypeScript compilation, unit tests, Convex type check, full-flow validation across create/detail/edit pages, confirmed state transitions, pre-fill scenarios, backward compatibility, accessibility and performance audit.",
+      "priority": "1-High",
+      "status": "completed",
+      "plan_path": null,
+      "contracts": {
+        "data_layer": {
+          "schema": {
+            "tables_or_collections": [],
+            "key_fields": {},
+            "indexes": [],
+            "relations": "Verification task, no new data layer changes.",
+            "notes": "Covers all KNOW-001~009 deliverables including v1.1 additions."
+          },
+          "queries": {
+            "read": "N/A",
+            "write": "N/A"
+          },
+          "migration_strategy": "N/A"
+        },
+        "api_layer": {
+          "type": "N/A",
+          "endpoints": []
+        },
+        "component_tree": {
+          "entry_component": "N/A",
+          "children": []
+        },
+        "state_management": {
+          "global_store": "N/A",
+          "server_state": "N/A",
+          "local_state": "N/A"
+        },
+        "routing": {
+          "path": "N/A",
+          "guard": "N/A",
+          "middleware": "N/A"
+        },
+        "auth": {
+          "provider": "N/A",
+          "strategy": "N/A",
+          "rls_or_rbac": "N/A"
+        }
+      },
+      "verification": {
+        "auto": "cd app && npm run typecheck && npm run test && npx convex dev --once --typecheck enable",
+        "data": "Create plant with speciesId → detail shows knowledge card → edit shows confirmed+tag → clear speciesId → detail shows fallback. Old plants load without errors.",
+        "visual": "All 25 visual acceptance items from UI spec §15 verified at 375px width.",
+        "manual": "1) Create: input→match→select(confirmed state+text complete)→recommend→apply(4-field+stagger+toast)→save→speciesId. 2) Create partial: description pre-filled→apply→skip desc+different toast. 3) Detail: collapse/expand, season correct, fallback. 4) Edit: load confirmed+tag→remove(toast)→re-match→select→save. 5) Backward compat: old plants no error. 6) JSON load fail: create flow normal. 7) Confirmed state: modify text→exits. 8) Performance: first match ≤250ms, 60fps. 9) A11y: listbox, aria-expanded, contrast ≥4.5:1. 10) reduced-motion: all animations instant."
+      },
+      "metadata": {
+        "files_affected": [],
+        "modules": [
+          "plant-knowledge-card"
+        ],
+        "layer": "verification",
+        "source_issue_id": null
+      },
+      "acceptance_criteria": [
+        "npm run typecheck passes with zero new errors.",
+        "npm run test passes with zero new test failures.",
+        "npx convex dev --once --typecheck enable passes.",
+        "Create page full path including confirmed state and 4-field pre-fill.",
+        "Create page partial pre-fill (skip non-empty fields) with correct Toast.",
+        "Confirmed state: text completes, visual changes, × clears, edit text clears.",
+        "Detail page knowledge card: expand/collapse, content correct, season auto.",
+        "Detail page fallback: plants without speciesId show placeholder.",
+        "Edit page: confirmed state on load, tag visible, cancel→toast→re-match→save.",
+        "Edit page: no recommend card ever shown.",
+        "Backward compat: old plants without speciesId load without errors.",
+        "Species JSON load failure: all pages degrade gracefully.",
+        "375px width: all components display without overflow.",
+        "All colors use CSS token variables, zero hardcoded hex.",
+        "prefers-reduced-motion: all animations skip.",
+        "Performance: first match ≤250ms, panel animations 60fps.",
+        "Accessibility: listbox, aria-expanded, aria-label, contrast ≥4.5:1.",
+        "Field highlight stagger working (80ms intervals, only filled fields).",
+        "Candidate click feedback (flash + haptic) working.",
+        "All 25 items from UI spec §15 acceptance criteria pass."
+      ]
+    }
+  ]
+}

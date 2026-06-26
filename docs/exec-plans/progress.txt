@@ -1,4 +1,11 @@
 ### [Current Focus]
+[2026-06-26] doc-sync 全量对齐完成。更新了 5 个文档文件：
+  - AGENTS.md：修复链接路径（日常临时目录→相对路径），后端表新增 4 文件，前端新增 src/data/ 等
+  - ARCHITECTURE.md：新增后端文件条目、三级角色体系、图标/文本/物种约束章节、已废弃方案 2 条，目录树补充 src/data/ 和 src/lib/ 缺失文件
+  - PLANS.md：进度从 80/80 更新为 146/239，新增 M3.5/M4 里程碑
+  - docs/caveats.md：PDETAIL2 smoke 测试标记已修复，新增 Clipboard API 和 ☆ 图标 2 条
+  - docs/exec-plans/tech-debt-tracker.md：新增 border 简写和 smoke 测试 2 条，smoke 测试标记已修复
+
 `care-task-flexibility` 模块任务拆解完成（2026-06-22），FLEX-001~021 共 21 个 Task 已生成，全部 pending。
   - 模块文件：docs/exec-plans/modules/care-task-flexibility.json
   - PRD：docs/product-specs/2026-06-22-care-task-flexibility-spec.md

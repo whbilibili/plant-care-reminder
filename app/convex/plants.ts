@@ -86,6 +86,8 @@ export const createPlant = mutation({
     note: v.union(v.string(), v.null()),
     location: v.union(v.string(), v.null()),
     imageStorageId: v.union(v.id("_storage"), v.null()),
+    // KNOW-002: 可选关联物种知识库 ID
+    speciesId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const currentUserContext = await requireCurrentFamilyMember(ctx);
@@ -99,6 +101,7 @@ export const createPlant = mutation({
       notes: args.note ?? undefined,
       location: args.location ?? undefined,
       imageStorageId: args.imageStorageId ?? undefined,
+      speciesId: args.speciesId ?? undefined,
       createdBy: currentUserContext.userId,
       createdAt,
       updatedAt: createdAt,
@@ -136,6 +139,7 @@ export const getPlantForEdit = query({
       location: plant.location ?? null,
       imageStorageId: plant.imageStorageId ?? null,
       imagePreviewUrl,
+      speciesId: plant.speciesId ?? null,
     };
   },
 });
@@ -209,6 +213,7 @@ export const getPlantDetail = query({
         location: plant.location ?? null,
         imageStorageId: plant.imageStorageId ?? null,
         imageUrl,
+        speciesId: plant.speciesId ?? null,
         createdAt: plant.createdAt,
         updatedAt: plant.updatedAt,
         isArchived: plant.isArchived,
@@ -298,6 +303,8 @@ export const updatePlant = mutation({
     note: v.union(v.string(), v.null()),
     location: v.union(v.string(), v.null()),
     imageStorageId: v.union(v.id("_storage"), v.null()),
+    // KNOW-002: 可选关联物种知识库 ID（传 null 清除绑定）
+    speciesId: v.optional(v.union(v.string(), v.null())),
   },
   handler: async (ctx, args) => {
     const currentUserContext = await requireCurrentFamilyMember(ctx);
@@ -309,14 +316,21 @@ export const updatePlant = mutation({
 
     const { name } = assertPlantTextWithinLimits(args);
 
-    await ctx.db.patch(args.plantId, {
+    const patch: Record<string, unknown> = {
       name,
       description: args.description ?? undefined,
       notes: args.note ?? undefined,
       location: args.location ?? undefined,
       imageStorageId: args.imageStorageId ?? undefined,
       updatedAt: Date.now(),
-    });
+    };
+
+    // speciesId: undefined=不变, null=清除, string=设置
+    if (args.speciesId !== undefined) {
+      patch.speciesId = args.speciesId ?? undefined;
+    }
+
+    await ctx.db.patch(args.plantId, patch);
 
     return {
       ok: true as const,

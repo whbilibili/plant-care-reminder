@@ -93,6 +93,8 @@ export const plantFields = {
       }),
     ),
   ),
+  // KNOW-002: 关联静态物种知识库的 ID，用于匹配 plant-species.json 中条目。
+  speciesId: v.optional(v.string()),
   createdBy: v.id("users"),
   createdAt: utcTimestampValidator,
   updatedAt: utcTimestampValidator,

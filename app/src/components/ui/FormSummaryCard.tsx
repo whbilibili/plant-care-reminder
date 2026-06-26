@@ -9,6 +9,8 @@ interface FormSummaryCardProps {
   subtitle?: ReactNode;
   /** 额外描述（如简介摘要），与 subtitle 同行用 · 分隔。 */
   description?: string;
+  /** 卡片底部区域（如品种标签），分割线分隔。 */
+  footer?: ReactNode;
 }
 
 /**
@@ -22,6 +24,7 @@ export function FormSummaryCard({
   title,
   subtitle,
   description,
+  footer,
 }: FormSummaryCardProps) {
   const hasSecondLine = !!(subtitle || description);
 
@@ -45,6 +48,9 @@ export function FormSummaryCard({
             )}
           </div>
         </div>
+        {footer && (
+          <div style={footerStyle}>{footer}</div>
+        )}
       </div>
     </div>
   );
@@ -110,6 +116,11 @@ const metaSepStyle: CSSProperties = {
 const descSpanStyle: CSSProperties = {
   overflow: "hidden",
   textOverflow: "ellipsis",
+};
+
+const footerStyle: CSSProperties = {
+  borderTop: "1px solid var(--color-line)",
+  padding: "8px 14px",
 };
 
 /** 缩略图占位（无图片时使用）。 */

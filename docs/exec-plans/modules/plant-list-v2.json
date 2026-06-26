@@ -14,7 +14,7 @@
       "task_id": "PLIST2-001",
       "description": "后端排序改造：listPlantsWithNextDue 改为按 nextDueAt 升序排列（无任务植物沉底，沉底内按 _creationTime 降序），替代当前按名称排序。",
       "priority": "1-High",
-      "status": "done",
+      "status": "completed",
       "plan_path": null,
       "contracts": {
         "data_layer": {
@@ -73,7 +73,7 @@
       "task_id": "PLIST2-002",
       "description": "归档植物查询：新增 listArchivedPlants query（isArchived===true，按归档时间降序），供归档折叠区使用。",
       "priority": "1-High",
-      "status": "done",
+      "status": "completed",
       "plan_path": null,
       "contracts": {
         "data_layer": {
@@ -131,7 +131,7 @@
       "task_id": "PLIST2-003",
       "description": "PlantCard 重写：从竖向大图布局改为横向紧凑布局（左图 80×80 + 右文三行：名称+编辑图标、位置、任务状态），整卡可点击进详情。",
       "priority": "1-High",
-      "status": "done",
+      "status": "completed",
       "plan_path": null,
       "contracts": {
         "data_layer": {
@@ -191,7 +191,7 @@
       "task_id": "PLIST2-004",
       "description": "任务状态行与逾期色条：卡片第三行展示最紧迫任务（emoji + 类型 + 到期文案），逾期时文字用 --color-warning 并在卡片左侧显示 3px 暖橙色条。",
       "priority": "1-High",
-      "status": "done",
+      "status": "completed",
       "plan_path": null,
       "contracts": {
         "data_layer": {
@@ -260,7 +260,7 @@
       "task_id": "PLIST2-005",
       "description": "编辑图标交互：右上角铅笔图标（16×16 视觉，44×44 热区），点击进入编辑页并阻止冒泡，默认 opacity 0.4，按下时 opacity 1.0。",
       "priority": "2-Medium",
-      "status": "done",
+      "status": "completed",
       "plan_path": null,
       "contracts": {
         "data_layer": {
@@ -320,7 +320,7 @@
       "task_id": "PLIST2-006",
       "description": "归档折叠区组件：ArchivedSection（折叠触发器 + 展开/收起动效）+ ArchivedPlantCard（灰态卡片 + 恢复按钮），消费 PLIST2-002 的 query。",
       "priority": "1-High",
-      "status": "done",
+      "status": "completed",
       "plan_path": null,
       "contracts": {
         "data_layer": {
@@ -391,7 +391,7 @@
       "task_id": "PLIST2-007",
       "description": "列表 Stagger 渐入动效：首次加载完成后卡片依次 fade-in + translateY(8px→0)，stagger 50ms，单卡 250ms，前 6 张有延迟第 7 张起同时出现，尊重 reduced-motion。",
       "priority": "2-Medium",
-      "status": "done",
+      "status": "completed",
       "plan_path": null,
       "contracts": {
         "data_layer": {
@@ -456,7 +456,7 @@
       "task_id": "PLIST2-008",
       "description": "卡片按压反馈：整卡 :active 态 scale(0.98) + 底色微变（surface→mist），按下 120ms ease-out，松开 200ms 回弹缓动。",
       "priority": "2-Medium",
-      "status": "done",
+      "status": "completed",
       "plan_path": null,
       "contracts": {
         "data_layer": {
@@ -518,7 +518,7 @@
       "task_id": "PLIST2-009",
       "description": "图片渐显与占位态：无图时显示 --color-mist 底 + 🌿 居中；有图时 onLoad 后 opacity 0→1（200ms）；加载失败回退占位态。",
       "priority": "2-Medium",
-      "status": "done",
+      "status": "completed",
       "plan_path": null,
       "contracts": {
         "data_layer": {
@@ -583,7 +583,7 @@
       "task_id": "PLIST2-010",
       "description": "PlantListPage 整合与搜索栏视觉优化：集成新 PlantCard + ArchivedSection，调整列表间距为 8px，搜索栏改为无边框 mist 底色 + 聚焦内描边，标题栏改为 Lora 24px + 文字型添加按钮。",
       "priority": "1-High",
-      "status": "done",
+      "status": "completed",
       "plan_path": null,
       "contracts": {
         "data_layer": {

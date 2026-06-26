@@ -302,6 +302,21 @@
         "todo-page-v2",
         "plant-detail-v2"
       ]
+    },
+    {
+      "module": "plant-knowledge-card",
+      "file": "docs/exec-plans/modules/plant-knowledge-card.json",
+      "description": "植物知识卡片（v1.1）：引入前端静态品种知识库（80种，含 briefDescription），创建页品种匹配+确认态输入框（文本补全+视觉状态切换）+推荐卡片（4字段预填含简介/备注+冲突处理+stagger高亮+分场景Toast），详情页可折叠养护知识卡片，编辑页确认态+品种标签+取消关联Toast+重匹配流程。候选列表微交互（点击闪烁/haptic/骨架屏/空结果静默）。Schema plants 表新增 speciesId 可选字段。",
+      "prd": "docs/product-specs/2026-06-23-plant-knowledge-card-spec.md",
+      "ui_spec": "docs/product-specs/2026-06-24-plant-knowledge-card-ui-spec.md",
+      "task_count": 10,
+      "completed": 10,
+      "depends_on": [
+        "plant-registry",
+        "care-reminders",
+        "frontend-refresh",
+        "plant-detail-v2"
+      ]
     }
   ],
   "tasks_summary": [
@@ -1443,42 +1458,42 @@
       "task_id": "CARE-HIST-001",
       "module": "care-history-timeline-v0.9",
       "description": "数据层基建：schema 新增 by_plantId_and_completedAt 索引 + listPlantCompletionLogs / listFamilyRecentActivity 两个 Convex query。",
-      "status": "done",
+      "status": "completed",
       "priority": "1-High"
     },
     {
       "task_id": "CARE-HIST-002",
       "module": "care-history-timeline-v0.9",
       "description": "前端类型定义 + formatRelativeTime 相对时间工具函数。",
-      "status": "done",
+      "status": "completed",
       "priority": "1-High"
     },
     {
       "task_id": "CARE-HIST-003",
       "module": "care-history-timeline-v0.9",
       "description": "植物详情页养护记录折叠区：CareHistorySection + CompletionLogRow 组件，集成 usePaginatedQuery 分页。",
-      "status": "done",
+      "status": "completed",
       "priority": "1-High"
     },
     {
       "task_id": "CARE-HIST-004",
       "module": "care-history-timeline-v0.9",
       "description": "待办页家庭动态区：FamilyRecentActivity 组件，展示最近 5 条全家庭养护活动流。",
-      "status": "done",
+      "status": "completed",
       "priority": "2-Medium"
     },
     {
       "task_id": "CARE-HIST-005",
       "module": "care-history-timeline-v0.9",
       "description": "植物详情页集成：CareHistorySection 嵌入 PlantDetailPage L3.5 位置。",
-      "status": "done",
+      "status": "completed",
       "priority": "1-High"
     },
     {
       "task_id": "CARE-HIST-006",
       "module": "care-history-timeline-v0.9",
       "description": "回归验证 + 端到端验收：全链路完成/撤销→时间线更新、familyId 隔离、空状态、加载更多、边界场景。",
-      "status": "done",
+      "status": "completed",
       "priority": "1-High"
     },
     {
@@ -1907,6 +1922,76 @@
       "description": "Update caveats.md with schedule mode known caveats and tech-debt notes.",
       "status": "pending",
       "priority": "3-Low"
+    },
+    {
+      "task_id": "KNOW-001",
+      "module": "plant-knowledge-card",
+      "description": "Create PlantSpecies type definition and plant-species.json knowledge base with 80 common houseplant entries (including briefDescription field for description pre-fill).",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "KNOW-002",
+      "module": "plant-knowledge-card",
+      "description": "Add speciesId optional field to plants schema, extend createPlant and updatePlant mutations to accept and persist speciesId.",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "KNOW-003",
+      "module": "plant-knowledge-card",
+      "description": "Implement matchSpecies pure function with priority-based matching (exact > prefix > contains), input length gate (2-50 chars), and unit tests.",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "KNOW-004",
+      "module": "plant-knowledge-card",
+      "description": "Build SpeciesSuggestions component — autocomplete dropdown with candidate list micro-interactions (click flash, haptic, loading skeleton, silent empty dismiss), keyboard navigation, accessibility.",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "KNOW-005",
+      "module": "plant-knowledge-card",
+      "description": "Build SpeciesRecommendCard — inline recommendation card with care grid, apply action (4-field pre-fill with conflict handling), stagger highlight, differentiated Toast, and dismiss action.",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "KNOW-006",
+      "module": "plant-knowledge-card",
+      "description": "Build CareKnowledgeSection (collapsible container) and CareKnowledgeBlock (individual knowledge block) for plant detail page, integrate into PlantDetailPage.",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "KNOW-007",
+      "module": "plant-knowledge-card",
+      "description": "Build ConfirmedNameInput — species confirmed state for name input (background/border/icon/clear-button visual transition), text completion, confirmed↔normal state transitions. Shared between create and edit pages.",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "KNOW-008",
+      "module": "plant-knowledge-card",
+      "description": "Integrate SpeciesSuggestions, ConfirmedNameInput, and SpeciesRecommendCard into PlantForm/CreatePlantPage — full create-flow state machine (§13.1) with species selection, confirmed state, apply logic, and speciesId persistence.",
+      "status": "completed",
+      "priority": "1-High"
+    },
+    {
+      "task_id": "KNOW-009",
+      "module": "plant-knowledge-card",
+      "description": "Build SpeciesTag and integrate into EditPlantPage — confirmed state on load, tag display, remove/re-associate flow, cancel-association Toast, no recommend card on edit page. Full §13.3 state machine.",
+      "status": "completed",
+      "priority": "2-Medium"
+    },
+    {
+      "task_id": "KNOW-010",
+      "module": "plant-knowledge-card",
+      "description": "End-to-end verification — TypeScript, unit tests, Convex type check, full-flow validation (confirmed state, pre-fill scenarios, stagger, Toast variants), backward compat, a11y and performance audit.",
+      "status": "completed",
+      "priority": "1-High"
     }
   ],
   "cross_module_dependencies": [
@@ -2659,6 +2744,31 @@
       "from": "FLEX-014",
       "to": "CARE-007",
       "reason": "checkDueTasks cron 季节模式处理依赖 care-reminders CARE-007 建立的定时任务扫描。"
+    },
+    {
+      "from": "KNOW-002",
+      "to": "PLANT-003",
+      "reason": "plantFields 新增 speciesId 字段依赖 plant-registry PLANT-003 建立的 createPlant/updatePlant mutation 基础。"
+    },
+    {
+      "from": "KNOW-006",
+      "to": "PD2-001",
+      "reason": "CareKnowledgeSection 插入 PlantDetailPage 布局，依赖 plant-detail-v2 PD2-001 建立的详情页区域结构。"
+    },
+    {
+      "from": "KNOW-006",
+      "to": "HIST-003",
+      "reason": "CareKnowledgeSection 位于 PlanSection 与 CareHistorySection 之间，依赖 care-history-timeline HIST-003 建立的 CareHistorySection 位置。"
+    },
+    {
+      "from": "KNOW-007",
+      "to": "PLANT-003",
+      "reason": "CreatePlantPage 调用 createPlant mutation 传入 speciesId，依赖 plant-registry PLANT-003 建立的创建流程。"
+    },
+    {
+      "from": "KNOW-008",
+      "to": "PLANT-003",
+      "reason": "EditPlantPage 调用 updatePlant mutation 传入 speciesId，依赖 plant-registry PLANT-003 建立的编辑流程。"
     }
   ]
 }
